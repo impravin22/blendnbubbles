@@ -4,17 +4,19 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#003333" />
     <meta
       name="description"
-      content="BlendNBubbles - Premium Bubble Tea shop in Kolkata, India. Importing authentic bubble tea from Taiwan."
+      content="BlendNBubbles - Premium Bubble Tea in Kolkata, India"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+      user's mobile device or desktop.
     -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
@@ -25,6 +27,27 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>BlendNBubbles - Premium Bubble Tea</title>
+    
+    <!-- Open Graph Meta Tags for better sharing on social media -->
+    <meta property="og:title" content="BlendNBubbles - Premium Bubble Tea" />
+    <meta property="og:description" content="Authentic Taiwanese bubble tea in the heart of Kolkata, India." />
+    <meta property="og:image" content="%PUBLIC_URL%/logo512.png" />
+    <meta property="og:url" content="https://blendnbubbles.com" />
+    <meta property="og:type" content="website" />
+    
+    <!-- GitHub Pages redirect script -->
+    <script type="text/javascript">
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
