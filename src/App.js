@@ -293,7 +293,7 @@ function Homepage() {
       {/* Footer with Social Media Links */}
       <footer className="bg-dark text-white py-4">
         <div className="container text-center">
-          <p>© 2023 BlendNBubbles. All rights reserved.</p>
+          <p>© 2025 BlendNBubbles. All rights reserved.</p>
           <p>Premium Bubble Tea in Kolkata, India</p>
           <div className="social-links mt-3">
             <a href="https://www.facebook.com/share/168pyB8Bbb/?mibextid=wwXIfr" className="text-white me-3" target="_blank" rel="noopener noreferrer">
