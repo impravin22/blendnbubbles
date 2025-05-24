@@ -274,7 +274,7 @@ function Menu() {
                   <div className="menu-item-content">
                     <h4>Green Mango Iced Tea</h4>
                     <p>Tangy green mango infused iced tea.</p>
-                    <p className="menu-options">Suggested Toppings: Kachha Mango slices (if available), Green Apple popping boba</p>
+                    <p className="menu-options">Suggested Toppings: Kachha Mango slices, Green Apple popping boba</p>
                     <div className="menu-item-footer">
                       <div className="price">₹105</div>
                     </div>
@@ -307,7 +307,7 @@ function Menu() {
                   <div className="menu-item-content">
                     <h4>Hawaii Iced Tea <span className="menu-tag">Tropical</span></h4>
                     <p>Tropical blend of flavors reminiscent of Hawaiian fruits.</p>
-                    <p className="menu-options">Suggested Toppings: Pineapple popping Boba (if available), Orange Popping Boba, Tapioca + Coconut jelly</p>
+                    <p className="menu-options">Suggested Toppings: Pineapple popping Boba, Orange Popping Boba, Tapioca + Coconut jelly</p>
                     <div className="menu-item-footer">
                       <div className="price">₹145</div>
                     </div>
