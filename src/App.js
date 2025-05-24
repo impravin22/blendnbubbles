@@ -212,9 +212,9 @@ function Homepage() {
                   <img src="/images/classic-milk-tea.jpg" className="card-img-top" alt="Classic Milk Tea" />
                 </div> */}
                 <div className="card-body">
-                  <h5 className="card-title">Classic Milk Tea <span className="menu-tag">Popular</span></h5>
-                  <p className="card-text">Our signature milk tea with chewy tapioca pearls imported from Taiwan.</p>
-                  <p className="card-text"><small className="text-muted">₹180</small></p>
+                  <h5 className="card-title">Taiwan Signature Milk Tea <span className="menu-tag">Signature</span></h5>
+                  <p className="card-text">Authentic Taiwanese signature milk tea with tapioca pearls.</p>
+                  <p className="card-text"><small className="text-muted">₹165</small></p>
                 </div>
               </div>
             </div>
@@ -224,9 +224,9 @@ function Homepage() {
                   <img src="/images/taro-milk-tea.jpg" className="card-img-top" alt="Taro Milk Tea" />
                 </div> */}
                 <div className="card-body">
-                  <h5 className="card-title">Taro Milk Tea</h5>
-                  <p className="card-text">Creamy taro flavor with chewy tapioca pearls. A Taiwanese classic.</p>
-                  <p className="card-text"><small className="text-muted">₹200</small></p>
+                  <h5 className="card-title">Passion Fruit Green Tea <span className="menu-tag">Signature</span></h5>
+                  <p className="card-text">Zesty passion fruit blended with green tea.</p>
+                  <p className="card-text"><small className="text-muted">₹160</small></p>
                 </div>
               </div>
             </div>
@@ -236,9 +236,9 @@ function Homepage() {
                   <img src="/images/matcha-bubble-tea.jpg" className="card-img-top" alt="Matcha Bubble Tea" />
                 </div> */}
                 <div className="card-body">
-                  <h5 className="card-title">Matcha Bubble Tea</h5>
-                  <p className="card-text">Premium Japanese matcha green tea with milk and pearls.</p>
-                  <p className="card-text"><small className="text-muted">₹220</small></p>
+                  <h5 className="card-title">Mango Smoothie <span className="menu-tag">Popular</span></h5>
+                  <p className="card-text">Creamy mango smoothie with your choice of toppings.</p>
+                  <p className="card-text"><small className="text-muted">₹160</small></p>
                 </div>
               </div>
             </div>
