@@ -213,7 +213,7 @@ function Homepage() {
                 </div> */}
                 <div className="card-body">
                   <h5 className="card-title">Taiwan Signature Milk Tea <span className="menu-tag">Signature</span></h5>
-                  <p className="card-text">Authentic Taiwanese signature milk tea with tapioca pearls.</p>
+                  <p className="card-text">Authentic Taiwanese signature milk tea.</p>
                   <p className="card-text"><small className="text-muted">₹165</small></p>
                 </div>
               </div>
@@ -237,7 +237,7 @@ function Homepage() {
                 </div> */}
                 <div className="card-body">
                   <h5 className="card-title">Mango Smoothie <span className="menu-tag">Popular</span></h5>
-                  <p className="card-text">Creamy mango smoothie with your choice of toppings.</p>
+                  <p className="card-text">Creamy mango smoothie.</p>
                   <p className="card-text"><small className="text-muted">₹160</small></p>
                 </div>
               </div>
