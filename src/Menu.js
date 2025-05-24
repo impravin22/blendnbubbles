@@ -118,16 +118,10 @@ function Menu() {
               All
             </button>
             <button 
-              className={`menu-filter ${activeCategory === 'black-tea' ? 'active' : ''}`} 
-              onClick={(e) => scrollToFilter(e, 'black-tea')}
+              className={`menu-filter ${activeCategory === 'iced-tea' ? 'active' : ''}`} 
+              onClick={(e) => scrollToFilter(e, 'iced-tea')}
             >
-              Black Tea
-            </button>
-            <button 
-              className={`menu-filter ${activeCategory === 'green-tea' ? 'active' : ''}`} 
-              onClick={(e) => scrollToFilter(e, 'green-tea')}
-            >
-              Green Tea
+              Iced Tea
             </button>
             <button 
               className={`menu-filter ${activeCategory === 'milk-tea' ? 'active' : ''}`} 
@@ -142,12 +136,6 @@ function Menu() {
               Fruit Tea
             </button>
             <button 
-              className={`menu-filter ${activeCategory === 'juice' ? 'active' : ''}`} 
-              onClick={(e) => scrollToFilter(e, 'juice')}
-            >
-              Juice
-            </button>
-            <button 
               className={`menu-filter ${activeCategory === 'smoothie' ? 'active' : ''}`} 
               onClick={(e) => scrollToFilter(e, 'smoothie')}
             >
@@ -160,72 +148,68 @@ function Menu() {
               Coffee
             </button>
             <button 
-              className={`menu-filter ${activeCategory === 'fizzy' ? 'active' : ''}`} 
-              onClick={(e) => scrollToFilter(e, 'fizzy')}
+              className={`menu-filter ${activeCategory === 'add-ons' ? 'active' : ''}`} 
+              onClick={(e) => scrollToFilter(e, 'add-ons')}
             >
-              Fizzy
+              Add-Ons
             </button>
           </div>
           
           <div className="menu-categories">
-            {/* Black Tea Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'black-tea' ? '' : 'd-none'}`} id="black-tea">
-              <h3 className="category-title">Black Tea</h3>
+            {/* Iced Tea Category */}
+            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'iced-tea' ? '' : 'd-none'}`} id="iced-tea">
+              <h3 className="category-title">Iced Tea</h3>
               <div className="menu-items">
                 <div className="menu-item">
-                  {/* <div className="menu-item-image">
-                    <img src="/images/menu/black-tea-classic.jpg" alt="Classic Black Tea" />
-                  </div> */}
                   <div className="menu-item-content">
-                    <h4>Classic Black Tea <span className="menu-tag">Popular</span></h4>
-                    <p>Traditional black tea, served hot or cold.</p>
+                    <h4>Jasmine Iced Tea</h4>
+                    <p>Refreshing jasmine-infused iced tea.</p>
+                    <p className="menu-options">Suggested Toppings: Tapioca</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹120</div>
+                      <div className="price">₹85</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
-                  {/* <div className="menu-item-image">
-                    <img src="/images/menu/black-tea-assam.jpg" alt="Assam Black Tea" />
-                  </div> */}
                   <div className="menu-item-content">
-                    <h4>Assam Black Tea</h4>
-                    <p>Robust and malty Assam tea, served hot or cold.</p>
+                    <h4>Taiwan Black Iced Tea</h4>
+                    <p>Authentic Taiwanese black iced tea.</p>
+                    <p className="menu-options">Suggested Toppings: Chia Seeds, Orange Popping Boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹130</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Green Tea Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'green-tea' ? '' : 'd-none'}`} id="green-tea">
-              <h3 className="category-title">Green Tea</h3>
-              <div className="menu-items">
-                <div className="menu-item">
-                  {/* <div className="menu-item-image">
-                    <img src="/images/menu/green-tea-jasmine.jpg" alt="Jasmine Green Tea" />
-                  </div> */}
-                  <div className="menu-item-content">
-                    <h4>Jasmine Green Tea</h4>
-                    <p>Fragrant jasmine-infused green tea, served hot or cold.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹140</div>
+                      <div className="price">₹125</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
-                  {/* <div className="menu-item-image">
-                    <img src="/images/menu/green-tea-dew.jpg" alt="With Dew Green Tea" />
-                  </div> */}
                   <div className="menu-item-content">
-                    <h4>With Dew Green Tea</h4>
-                    <p>Refreshing green tea with a hint of dew-like sweetness.</p>
+                    <h4>Lemon Iced Tea</h4>
+                    <p>Classic refreshing lemon iced tea.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹150</div>
+                      <div className="price">₹95</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Honey Lemon Iced Tea</h4>
+                    <p>Sweet and tangy honey lemon iced tea.</p>
+                    <p className="menu-options">Suggested Toppings: Lemon slice (round) + Aloe vera Jelly (1/2) + Chia seed (1/2)</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹125</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Ginger Iced Tea</h4>
+                    <p>Warming ginger-infused iced tea.</p>
+                    <p className="menu-options">Suggested Toppings: Ginger Slice, Passion fruit popping boba / Orange popping boba</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹115</div>
                     </div>
                   </div>
                 </div>
@@ -237,68 +221,34 @@ function Menu() {
               <h3 className="category-title">Milk Tea</h3>
               <div className="menu-items">
                 <div className="menu-item">
-                  {/* <div className="menu-item-image">
-                    <img src="/images/menu/milk-tea-darjeeling.jpg" alt="Darjeeling Milk Tea" />
-                  </div> */}
-                  <div className="menu-item-content">
-                    <h4>Darjeeling Milk Tea <span className="menu-tag">Best Seller</span></h4>
-                    <p>Delicate Darjeeling tea blended with milk.</p>
-                    <p className="menu-options">Toppings: Coconut Jelly / Boba</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹180</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  {/* <div className="menu-item-image">
-                    <img src="/images/menu/milk-tea-assam.jpg" alt="Assam Milk Tea" />
-                  </div> */}
                   <div className="menu-item-content">
                     <h4>Assam Milk Tea</h4>
-                    <p>Strong Assam tea combined with creamy milk.</p>
-                    <p className="menu-options">Toppings: Coconut Jelly / Boba</p>
+                    <p>Rich Assam tea blended with creamy milk.</p>
+                    <p className="menu-options">Suggested Toppings: 1/2 Tapioca + 1/2 Coconut jelly</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹170</div>
+                      <div className="price">₹145</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
-                  {/* <div className="menu-item-image">
-                    <img src="/images/menu/milk-tea-taiwan.jpg" alt="Taiwan Original Boba Milk Tea" />
-                  </div> */}
                   <div className="menu-item-content">
-                    <h4>Taiwan Original Boba Milk Tea <span className="menu-tag">Authentic</span></h4>
-                    <p>Authentic Taiwanese milk tea made with creamer and classic boba pearls.</p>
+                    <h4>Taiwan Signature Milk Tea <span className="menu-tag">Signature</span></h4>
+                    <p>Authentic Taiwanese signature milk tea.</p>
+                    <p className="menu-options">Suggested Toppings: Tapioca</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹200</div>
+                      <div className="price">₹165</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
-                  {/* <div className="menu-item-image">
-                    <img src="/images/menu/milk-tea-latte.jpg" alt="Black Tea Latte" />
-                  </div> */}
                   <div className="menu-item-content">
                     <h4>Black Tea Latte</h4>
-                    <p>A harmonious mix of coffee and black tea with creamer.</p>
+                    <p>Smooth black tea with creamy milk in latte style.</p>
+                    <p className="menu-options">Suggested Toppings: Coconut Jelly</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹190</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  {/* <div className="menu-item-image">
-                    <img src="/images/menu/milk-tea-ginger.jpg" alt="Ginger Coconut Milk Tea" />
-                  </div> */}
-                  <div className="menu-item-content">
-                    <h4>Ginger Coconut Milk Tea <span className="menu-tag">Winter Special</span></h4>
-                    <p>Warming ginger-infused milk tea with a hint of coconut, perfect for winter.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹210</div>
+                      <div className="price">₹135</div>
                     </div>
                   </div>
                 </div>
@@ -307,35 +257,46 @@ function Menu() {
             
             {/* Fruit Tea Category */}
             <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'fruit-tea' ? '' : 'd-none'}`} id="fruit-tea">
-              <h3 className="category-title">Fruit Tea</h3>
+              <h3 className="category-title">Fruit Iced Tea</h3>
               <div className="menu-items">
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Peach Iced Tea</h4>
+                    <p>Refreshing iced tea with sweet peach flavor.</p>
+                    <p className="menu-options">Suggested Toppings: Peach flavor coconut jelly</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹135</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Green Mango Iced Tea</h4>
+                    <p>Tangy green mango infused iced tea.</p>
+                    <p className="menu-options">Suggested Toppings: Kachha Mango slices (if available), Green Apple popping boba</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹105</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Mango Jasmine Iced Tea</h4>
+                    <p>Sweet mango flavor combined with jasmine iced tea.</p>
+                    <p className="menu-options">Suggested Toppings: Mango flavor coconut jelly / Amsotto cubes / Mango popping boba</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹145</div>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="menu-item">
                   <div className="menu-item-content">
                     <h4>Passion Fruit Green Tea <span className="menu-tag">Signature</span></h4>
                     <p>Zesty passion fruit blended with green tea.</p>
-                    <p className="menu-options">Toppings: Boba and Coconut Jelly with Passion Fruit Jam</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹220</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Honey Lemon Black/Green Tea</h4>
-                    <p>Choice of black or green tea infused with honey and lemon.</p>
-                    <p className="menu-options">Toppings: Honey Aloe Vera Jelly</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹180</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Lemon Iced Tea</h4>
-                    <p>Refreshing iced tea with a splash of lemon.</p>
-                    <p className="menu-options">Toppings: Honey Aloe Vera Jelly</p>
+                    <p className="menu-options">Suggested Toppings: Tapioca + Coconut jelly + Passion fruit popping boba (5~6 pieces)</p>
                     <div className="menu-item-footer">
                       <div className="price">₹160</div>
                     </div>
@@ -346,8 +307,9 @@ function Menu() {
                   <div className="menu-item-content">
                     <h4>Hawaii Iced Tea <span className="menu-tag">Tropical</span></h4>
                     <p>Tropical blend of flavors reminiscent of Hawaiian fruits.</p>
+                    <p className="menu-options">Suggested Toppings: Pineapple popping Boba (if available), Orange Popping Boba, Tapioca + Coconut jelly</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹190</div>
+                      <div className="price">₹145</div>
                     </div>
                   </div>
                 </div>
@@ -356,9 +318,9 @@ function Menu() {
                   <div className="menu-item-content">
                     <h4>Lychee Rose Green Tea</h4>
                     <p>Elegant combination of lychee and rose with green tea.</p>
-                    <p className="menu-options">Optional Add-on: Lychee Jelly (+₹8)</p>
+                    <p className="menu-options">Suggested Toppings: Cherry Popping boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹210</div>
+                      <div className="price">₹145</div>
                     </div>
                   </div>
                 </div>
@@ -367,72 +329,41 @@ function Menu() {
                   <div className="menu-item-content">
                     <h4>Blueberry Green Tea</h4>
                     <p>Tangy blueberry infused green tea.</p>
-                    <p className="menu-options">Toppings: Popping Boba</p>
+                    <p className="menu-options">Suggested Toppings: Blueberry popping boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹200</div>
+                      <div className="price">₹155</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Mango Green Tea <span className="menu-tag">Seasonal</span></h4>
-                    <p>Sweet mango blended with green tea.</p>
-                    <p className="menu-options">Optional Add-on: Mango Jelly (+₹10)</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹190</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Peach Green Tea</h4>
-                    <p>Juicy peach flavor combined with green tea.</p>
-                    <p className="menu-options">Toppings: Green Apple Popping Boba</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹195</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Red Guava Yogurt Green Tea <span className="menu-tag">New</span></h4>
+                    <h4>Red Guava Yogurt Green Tea</h4>
                     <p>Exotic red guava mixed with yogurt and green tea.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹230</div>
+                      <div className="price">₹125</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Kiwi Green Tea</h4>
-                    <p>Tangy kiwi infused green tea.</p>
-                    <p className="menu-note">*Kiwi to be procured from the market.</p>
+                    <h4>Sugarcane Mint Green Tea</h4>
+                    <p>Refreshing combination of sugarcane and mint with green tea.</p>
+                    <p className="menu-options">Suggested Toppings: Honey Aloe vera Jelly</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹210</div>
+                      <div className="price">₹135</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Sugar Cane Green Tea</h4>
-                    <p>Natural sweetness of sugar cane blended with green tea.</p>
+                    <h4>Sugarcane Lemon Green Tea</h4>
+                    <p>Sweet sugarcane with tangy lemon and green tea.</p>
+                    <p className="menu-options">Suggested Toppings: Lemon Slice, Honey Aloe vera jelly</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹180</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Sugar Cane Lemon Green Tea</h4>
-                    <p>Refreshing mix of sugar cane, lemon, and green tea.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹190</div>
+                      <div className="price">₹145</div>
                     </div>
                   </div>
                 </div>
@@ -441,57 +372,9 @@ function Menu() {
                   <div className="menu-item-content">
                     <h4>Grapefruit Green Tea</h4>
                     <p>Citrusy grapefruit flavor combined with green tea.</p>
-                    <p className="menu-options">Toppings: Available upon request</p>
+                    <p className="menu-options">Suggested Toppings: Grapefruit (pulp/slice), Orange Popping Boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹200</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Pomegranate Green Tea</h4>
-                    <p>Rich pomegranate infused green tea.</p>
-                    <p className="menu-note">*Syrup currently unavailable; expected in next lot.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹210</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Juice Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'juice' ? '' : 'd-none'}`} id="juice">
-              <h3 className="category-title">Juice & Refreshing Beverages</h3>
-              <div className="menu-items">
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Honey Lemon</h4>
-                    <p>Soothing honey and lemon drink.</p>
-                    <p className="menu-options">Toppings: Honey Aloe Vera Jelly</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹170</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Ginger Tea (Mild)</h4>
-                    <p>Gentle ginger-infused tea for a subtle warmth.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹160</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Grapefruit Juice</h4>
-                    <p>Fresh grapefruit juice with pulp.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹190</div>
+                      <div className="price">₹155</div>
                     </div>
                   </div>
                 </div>
@@ -505,9 +388,21 @@ function Menu() {
                 <div className="menu-item">
                   <div className="menu-item-content">
                     <h4>Mango Smoothie <span className="menu-tag">Popular</span></h4>
-                    <p>Creamy mango smoothie made with mango syrup and snow bubble powder.</p>
+                    <p>Creamy mango smoothie.</p>
+                    <p className="menu-options">Suggested Toppings: Mango slice / Amsotto cubes</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹230</div>
+                      <div className="price">₹160</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Mango Cheese Smoothie</h4>
+                    <p>Creamy mango smoothie with cheese flavor.</p>
+                    <p className="menu-options">Suggested Toppings: Mango slice</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹160</div>
                     </div>
                   </div>
                 </div>
@@ -515,20 +410,32 @@ function Menu() {
                 <div className="menu-item">
                   <div className="menu-item-content">
                     <h4>Strawberry Smoothie</h4>
-                    <p>Refreshing strawberry smoothie with optional yogurt.</p>
-                    <p className="menu-options">Ingredients: Strawberry grain, snow bubble powder</p>
+                    <p>Sweet and creamy strawberry smoothie.</p>
+                    <p className="menu-options">Suggested Toppings: Cherry popping boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹240</div>
+                      <div className="price">₹165</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Grape Smoothie</h4>
-                    <p>Sweet and tangy grape-flavored smoothie.</p>
+                    <h4>Strawberry Yogurt Smoothie</h4>
+                    <p>Refreshing strawberry smoothie with yogurt.</p>
+                    <p className="menu-options">Suggested Toppings: Orange Popping Boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹220</div>
+                      <div className="price">₹165</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Blueberry Smoothie</h4>
+                    <p>Tangy and sweet blueberry smoothie.</p>
+                    <p className="menu-options">Suggested Toppings: Blueberry popping boba</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹170</div>
                     </div>
                   </div>
                 </div>
@@ -536,70 +443,8 @@ function Menu() {
                 <div className="menu-item">
                   <div className="menu-item-content">
                     <h4>Cocoa Smoothie</h4>
-                    <p>Rich cocoa smoothie with sea salted caramel.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹250</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Coffee Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'coffee' ? '' : 'd-none'}`} id="coffee">
-              <h3 className="category-title">Coffee</h3>
-              <div className="menu-items">
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Biscoff Boba Coffee <span className="menu-tag">New</span></h4>
-                    <p>Smooth coffee infused with Biscoff flavor, sea salted caramel, and boba.</p>
-                    <p className="menu-options">Toppings: Coffee Popping Boba</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹260</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Caramel Macchiato</h4>
-                    <p>Espresso with steamed milk and caramel drizzle.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹240</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Caffe Mocha</h4>
-                    <p>Blend of espresso, steamed milk, and chocolate.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹230</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Cold Coffee</h4>
-                    <p>Chilled coffee served over ice.</p>
-                    <div className="menu-item-footer">
-                      <div className="price">₹220</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Fizzy Drinks Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'fizzy' ? '' : 'd-none'}`} id="fizzy">
-              <h3 className="category-title">Fizzy Drinks</h3>
-              <div className="menu-items">
-                <div className="menu-item">
-                  <div className="menu-item-content">
-                    <h4>Minty Syrup Soda <span className="menu-tag">Refreshing</span></h4>
-                    <p>Refreshing mint-flavored soda.</p>
+                    <p>Rich chocolate flavored smoothie.</p>
+                    <p className="menu-options">Suggested Toppings: KitKat/Perk, Chocolate Popping Boba</p>
                     <div className="menu-item-footer">
                       <div className="price">₹180</div>
                     </div>
@@ -608,11 +453,201 @@ function Menu() {
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Green Apple Soda</h4>
-                    <p>Crisp green apple flavored soda.</p>
-                    <p className="menu-options">Toppings: Green Apple Popping Boba</p>
+                    <h4>Blackcurrant Smoothie</h4>
+                    <p>Tangy blackcurrant flavored smoothie.</p>
+                    <p className="menu-options">Suggested Toppings: Blueberry popping boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹190</div>
+                      <div className="price">₹150</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Coffee Category */}
+            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'coffee' ? '' : 'd-none'}`} id="coffee">
+              <h3 className="category-title">Cold Coffee</h3>
+              <div className="menu-items">
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Caffe Mocha</h4>
+                    <p>Blend of espresso, steamed milk, and chocolate.</p>
+                    <p className="menu-options">Suggested Toppings: Chocolate boba</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹145</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Caramel Boba Coffee</h4>
+                    <p>Smooth coffee with caramel flavor and boba.</p>
+                    <p className="menu-options">Suggested Toppings: Coffee boba</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹155</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Add-Ons Category */}
+            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'add-ons' ? '' : 'd-none'}`} id="add-ons">
+              <h3 className="category-title">Add-Ons & Toppings</h3>
+              <div className="menu-items">
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Boba (Tapioca)</h4>
+                    <p>Chewy tapioca pearls.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Coconut Jelly</h4>
+                    <p>Soft coconut flavored jelly.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹40</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Chocolate Popping Boba</h4>
+                    <p>Bursting boba with chocolate flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Coffee Popping Boba</h4>
+                    <p>Bursting boba with coffee flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Orange Popping Boba</h4>
+                    <p>Bursting boba with orange flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Blueberry Popping Boba</h4>
+                    <p>Bursting boba with blueberry flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Cherry Popping Boba</h4>
+                    <p>Bursting boba with cherry flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Green Apple Boba</h4>
+                    <p>Bursting boba with green apple flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Passion Fruit Popping Boba</h4>
+                    <p>Bursting boba with passion fruit flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Mango Popping Boba</h4>
+                    <p>Bursting boba with mango flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Peach Popping Boba</h4>
+                    <p>Bursting boba with peach flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Honey Aloe Vera Jelly</h4>
+                    <p>Sweet aloe vera jelly with honey flavor.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹30</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Chia Seeds</h4>
+                    <p>Nutritious chia seeds.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹15</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Packing</h4>
+                    <p>Take-away packaging.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹10</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Special Items Category */}
+            <div className={`menu-category ${activeCategory === 'all' ? '' : 'd-none'}`} id="special">
+              <h3 className="category-title">Special Items</h3>
+              <div className="menu-items">
+                <div className="menu-item">
+                  <div className="menu-item-content">
+                    <h4>Goodies</h4>
+                    <p>Special treats and goodies.</p>
+                    <div className="menu-item-footer">
+                      <div className="price">₹100</div>
                     </div>
                   </div>
                 </div>
@@ -641,18 +676,6 @@ function Menu() {
                   <span className="option-item">30% (Light Ice)</span>
                   <span className="option-item recommended">70% (Regular Ice)</span>
                   <span className="option-item">100% (Extra Ice)</span>
-                </div>
-              </div>
-              
-              <div className="option-group">
-                <h4>Add-ons</h4>
-                <div className="options-list">
-                  <span className="option-item">Tapioca Pearls (+₹20)</span>
-                  <span className="option-item">Coconut Jelly (+₹15)</span>
-                  <span className="option-item">Popping Boba (+₹25)</span>
-                  <span className="option-item">Aloe Vera Jelly (+₹20)</span>
-                  <span className="option-item">Lychee Jelly (+₹20)</span>
-                  <span className="option-item">Coffee Jelly (+₹20)</span>
                 </div>
               </div>
             </div>
