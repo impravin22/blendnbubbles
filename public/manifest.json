@@ -1,0 +1,25 @@
+{
+  "short_name": "BlendNBubbles",
+  "name": "BlendNBubbles - Premium Bubble Tea",
+  "icons": [
+    {
+      "src": "logo for cup 2.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "logo for cup 2.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo for cup 2.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#003333",
+  "background_color": "#F9F6F0"
+}
