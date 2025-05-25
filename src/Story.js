@@ -93,25 +93,33 @@ function Story() {
                 </div> */}
                 
                 <div className="story-text">
-                  <p>Alright, gather 'round and let us spin you a proper yarn about how Blend N Bubbles came to be.</p>
+                  <h2 className="mb-4">The Journey of Three Dreams and One Cup</h2>
                   
-                  <p>Picture this: three blokes from India, bright-eyed and bushy-tailed, land in Taiwan for their master's studies. Between hitting the books and grafting as AI developers, they stumble upon the local delight—bubble tea. One sip, and blimey, they're hooked! This stuff's the dog's bollocks, they reckon.</p>
+                  <p>Far from the familiar sounds of home—no morning calls of <em>chai wallahs</em>, no evening conversations over steaming cups—three young men from India found themselves in Taiwan, thousands of miles away from everything they knew and loved.</p>
+                  
+                  <p>Like countless Indian students before them, they had left behind family gatherings, mother's cooking, and the comfort of home for the promise of education and a better future. Days blended into nights as they juggled their master's studies with work as AI developers, sending money home and building dreams one day at a time.</p>
+                  
+                  <p>Then came that first sip of bubble tea.</p>
+                  
+                  <p>In that moment, something magical happened. It wasn't just the sweet, creamy texture or the playful pearls—it was the warmth of finding something that felt like <em>home</em> in a foreign land. Just as a perfectly brewed cup of chai can transport you back to your mother's kitchen, this bubble tea became their bridge between two worlds.</p>
                   
                   <div className="story-quote">
                     <blockquote>
-                      "One sip, and blimey, they're hooked! This stuff's the dog's bollocks, they reckon."
+                      "<em>Yaar</em>, India needs to taste this," they whispered to each other, their eyes lighting up with the kind of excitement that only comes when you discover something truly special.
                     </blockquote>
                   </div>
                   
-                  <p>Now, these lads aren't the type to faff about. They clock that India's missing out on this top-notch bevvy. So, they hatch a plan to bring the authentic Taiwanese bubble tea experience back home.</p>
+                  <p>They imagined their friends back home, their families, their entire country experiencing this same joy.</p>
                   
-                  {/* <div className="story-image my-5">
-                    <img src="/images/story/bubble-tea-preparation.jpg" alt="Authentic Taiwanese bubble tea preparation" className="img-fluid rounded" />
-                  </div> */}
+                  <p>But this wasn't just about business—it was about <em>seva</em>, about sharing something beautiful with the people they loved most. They reached out to a friend in Kolkata, someone who understood the pulse of Indian hearts and the dreams that bind us all together.</p>
                   
-                  <p>Enter another mate from Kolkata, a proper diamond geezer. With his local savvy and their shared passion, they set the wheels in motion. They sort out importing the finest teas and bubbles straight from Taiwan—no dodgy imitations here.</p>
+                  <p>Together, they made a promise: to bring not just any bubble tea, but the <em>real</em> Taiwan experience home. Every ingredient sourced with love, every recipe perfected with passion, every cup served with the same warmth that welcomed them as strangers in a strange land.</p>
                   
-                  <p>And just like that, Blend N Bubbles was born—a cracking spot where Indian tea lovers can get a taste of Taiwan's finest, right in their own backyard. So, pop in, have a natter, and enjoy a cuppa that's truly top-notch. Cheers!</p>
+                  <p>Today, when you step into Blend N Bubbles, you're not just buying a drink. You're becoming part of a story that began with homesickness and ended with homecoming. You're tasting the dreams of three young Indians who refused to let distance dim their love for their motherland.</p>
+                  
+                  <p>Because sometimes, the most beautiful journeys begin with missing home and end with bringing the world back to share with everyone you love.</p>
+                  
+                  <p className="text-center"><em>Come, be part of our story. Let every sip remind you that no dream is too far, no distance too great, when it's flavored with love for home.</em></p>
                   
                   <div className="story-cta text-center mt-5">
                     <Link to="/menu" className="btn btn-primary">Explore Our Menu</Link>
