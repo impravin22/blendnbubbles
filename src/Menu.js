@@ -194,11 +194,11 @@ function Menu() {
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Honey Lemon Iced Tea</h4>
+                    <h4>Honey Lemon Tea</h4>
                     <p>Sweet and tangy honey lemon iced tea.</p>
                     <p className="menu-options">Suggested Toppings: Lemon slice (round) + Aloe vera Jelly (1/2) + Chia seed (1/2)</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹125</div>
+                      <div className="price">₹160</div>
                     </div>
                   </div>
                 </div>
@@ -209,7 +209,7 @@ function Menu() {
                     <p>Warming ginger-infused iced tea.</p>
                     <p className="menu-options">Suggested Toppings: Ginger Slice, Passion fruit popping boba / Orange popping boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹115</div>
+                      <div className="price">₹150</div>
                     </div>
                   </div>
                 </div>
@@ -222,22 +222,22 @@ function Menu() {
               <div className="menu-items">
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Assam Milk Tea</h4>
+                    <h4>Assam Boba Tea</h4>
                     <p>Rich Assam tea blended with creamy milk.</p>
                     <p className="menu-options">Suggested Toppings: 1/2 Tapioca + 1/2 Coconut jelly</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹145</div>
+                      <div className="price">₹200</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Taiwan Signature Milk Tea <span className="menu-tag">Signature</span></h4>
+                    <h4>Taiwan Classic Boba <span className="menu-tag">Signature</span></h4>
                     <p>Authentic Taiwanese signature milk tea.</p>
                     <p className="menu-options">Suggested Toppings: Tapioca</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹165</div>
+                      <div className="price">₹215</div>
                     </div>
                   </div>
                 </div>
@@ -261,55 +261,55 @@ function Menu() {
               <div className="menu-items">
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Peach Iced Tea</h4>
+                    <h4>Sweet Peach Bubble Tea</h4>
                     <p>Refreshing iced tea with sweet peach flavor.</p>
                     <p className="menu-options">Suggested Toppings: Peach flavor coconut jelly</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹135</div>
+                      <div className="price">₹180</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Green Mango Iced Tea</h4>
+                    <h4>Raw Mango Mist Pop</h4>
                     <p>Tangy green mango infused iced tea.</p>
                     <p className="menu-options">Suggested Toppings: Kachha Mango slices, Green Apple popping boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹105</div>
+                      <div className="price">₹175</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Mango Jasmine Iced Tea</h4>
+                    <h4>Jasmine Mango Bubble Tea</h4>
                     <p>Sweet mango flavor combined with jasmine iced tea.</p>
                     <p className="menu-options">Suggested Toppings: Mango flavor coconut jelly / Amsotto cubes / Mango popping boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹145</div>
+                      <div className="price">₹190</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Passion Fruit Green Tea <span className="menu-tag">Signature</span></h4>
+                    <h4>Passion Fruit Blast <span className="menu-tag">Signature</span></h4>
                     <p>Zesty passion fruit blended with green tea.</p>
                     <p className="menu-options">Suggested Toppings: Tapioca + Coconut jelly + Passion fruit popping boba (5~6 pieces)</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹160</div>
+                      <div className="price">₹200</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Hawaii Iced Tea <span className="menu-tag">Tropical</span></h4>
+                    <h4>Hawaiian Sunset Bubble <span className="menu-tag">Tropical</span></h4>
                     <p>Tropical blend of flavors reminiscent of Hawaiian fruits.</p>
                     <p className="menu-options">Suggested Toppings: Pineapple popping Boba, Orange Popping Boba, Tapioca + Coconut jelly</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹145</div>
+                      <div className="price">₹190</div>
                     </div>
                   </div>
                 </div>
@@ -338,10 +338,10 @@ function Menu() {
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Red Guava Yogurt Green Tea</h4>
+                    <h4>Red Guava Yogurt Tea</h4>
                     <p>Exotic red guava mixed with yogurt and green tea.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹125</div>
+                      <div className="price">₹200</div>
                     </div>
                   </div>
                 </div>
@@ -370,11 +370,11 @@ function Menu() {
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Grapefruit Green Tea</h4>
+                    <h4>Red Grapefruit Tea Pop</h4>
                     <p>Citrusy grapefruit flavor combined with green tea.</p>
                     <p className="menu-options">Suggested Toppings: Grapefruit (pulp/slice), Orange Popping Boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹155</div>
+                      <div className="price">₹200</div>
                     </div>
                   </div>
                 </div>
@@ -398,11 +398,11 @@ function Menu() {
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Mango Cheese Smoothie</h4>
+                    <h4>Cheesey Mango Melt</h4>
                     <p>Creamy mango smoothie with cheese flavor.</p>
                     <p className="menu-options">Suggested Toppings: Mango slice</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹160</div>
+                      <div className="price">₹230</div>
                     </div>
                   </div>
                 </div>
@@ -420,29 +420,29 @@ function Menu() {
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Strawberry Yogurt Smoothie</h4>
+                    <h4>Strawberry Yogurt</h4>
                     <p>Refreshing strawberry smoothie with yogurt.</p>
                     <p className="menu-options">Suggested Toppings: Orange Popping Boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹165</div>
+                      <div className="price">₹215</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Blueberry Smoothie</h4>
+                    <h4>Blueberry Blend</h4>
                     <p>Tangy and sweet blueberry smoothie.</p>
                     <p className="menu-options">Suggested Toppings: Blueberry popping boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹170</div>
+                      <div className="price">₹220</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Cocoa Smoothie</h4>
+                    <h4>Choco Ice Swirl</h4>
                     <p>Rich chocolate flavored smoothie.</p>
                     <p className="menu-options">Suggested Toppings: KitKat/Perk, Chocolate Popping Boba</p>
                     <div className="menu-item-footer">
@@ -453,11 +453,11 @@ function Menu() {
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Blackcurrant Smoothie</h4>
+                    <h4>Black Currant Cheese</h4>
                     <p>Tangy blackcurrant flavored smoothie.</p>
                     <p className="menu-options">Suggested Toppings: Blueberry popping boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹150</div>
+                      <div className="price">₹210</div>
                     </div>
                   </div>
                 </div>
@@ -470,11 +470,11 @@ function Menu() {
               <div className="menu-items">
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Caffe Mocha</h4>
+                    <h4>Cafe Mocha</h4>
                     <p>Blend of espresso, steamed milk, and chocolate.</p>
                     <p className="menu-options">Suggested Toppings: Chocolate boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹145</div>
+                      <div className="price">₹200</div>
                     </div>
                   </div>
                 </div>
@@ -485,7 +485,7 @@ function Menu() {
                     <p>Smooth coffee with caramel flavor and boba.</p>
                     <p className="menu-options">Suggested Toppings: Coffee boba</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹155</div>
+                      <div className="price">₹215</div>
                     </div>
                   </div>
                 </div>
@@ -498,10 +498,10 @@ function Menu() {
               <div className="menu-items">
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Boba (Tapioca)</h4>
+                    <h4>Tapioca (Boba)</h4>
                     <p>Chewy tapioca pearls.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹50</div>
                     </div>
                   </div>
                 </div>
@@ -511,7 +511,7 @@ function Menu() {
                     <h4>Coconut Jelly</h4>
                     <p>Soft coconut flavored jelly.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹40</div>
+                      <div className="price">₹50</div>
                     </div>
                   </div>
                 </div>
@@ -521,7 +521,7 @@ function Menu() {
                     <h4>Chocolate Popping Boba</h4>
                     <p>Bursting boba with chocolate flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
@@ -531,7 +531,7 @@ function Menu() {
                     <h4>Coffee Popping Boba</h4>
                     <p>Bursting boba with coffee flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
@@ -541,7 +541,7 @@ function Menu() {
                     <h4>Orange Popping Boba</h4>
                     <p>Bursting boba with orange flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
@@ -551,7 +551,7 @@ function Menu() {
                     <h4>Blueberry Popping Boba</h4>
                     <p>Bursting boba with blueberry flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
@@ -561,17 +561,17 @@ function Menu() {
                     <h4>Cherry Popping Boba</h4>
                     <p>Bursting boba with cherry flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Green Apple Boba</h4>
+                    <h4>Green Apple Popping Boba</h4>
                     <p>Bursting boba with green apple flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
@@ -581,7 +581,7 @@ function Menu() {
                     <h4>Passion Fruit Popping Boba</h4>
                     <p>Bursting boba with passion fruit flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
@@ -591,7 +591,7 @@ function Menu() {
                     <h4>Mango Popping Boba</h4>
                     <p>Bursting boba with mango flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
@@ -601,17 +601,17 @@ function Menu() {
                     <h4>Peach Popping Boba</h4>
                     <p>Bursting boba with peach flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="menu-item">
                   <div className="menu-item-content">
-                    <h4>Honey Aloe Vera Jelly</h4>
+                    <h4>Honey Aloevera Jelly</h4>
                     <p>Sweet aloe vera jelly with honey flavor.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹30</div>
+                      <div className="price">₹40</div>
                     </div>
                   </div>
                 </div>
@@ -621,7 +621,7 @@ function Menu() {
                     <h4>Chia Seeds</h4>
                     <p>Nutritious chia seeds.</p>
                     <div className="menu-item-footer">
-                      <div className="price">₹15</div>
+                      <div className="price">₹25</div>
                     </div>
                   </div>
                 </div>
