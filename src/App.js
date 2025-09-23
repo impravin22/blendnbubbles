@@ -133,7 +133,7 @@ function Homepage() {
                 <a className="nav-link" href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Visit Us</a>
               </li>
               <li className="nav-item ms-lg-2">
-                <a className="nav-link btn-order" href="#order">Order Now</a>
+                <a className="nav-link btn-order" href="https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore/order" target="_blank" rel="noopener noreferrer">Order Now</a>
               </li>
             </ul>
           </div>
