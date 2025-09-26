@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import Menu from './Menu';
 import Story from './Story';
+import DurgaPuja2025 from './DurgaPuja2025';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -43,6 +44,7 @@ function AnimatedRoutes() {
             <Route path="/" element={<Homepage />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/story" element={<Story />} />
+            <Route path="/DurgaPuja2025" element={<DurgaPuja2025 />} />
           </Routes>
         </div>
       </CSSTransition>

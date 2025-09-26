@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^13.5.0",
     "bootstrap": "^5.3.3",
     "gh-pages": "^6.3.0",
+    "qrcode": "^1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.4.1",
@@ -20,6 +21,7 @@
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
+    "qr": "node scripts/generate-qr.js",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
