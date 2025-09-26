@@ -1011,6 +1011,15 @@ section h2::after {
   .display-4 {
     font-size: 2.5rem;
   }
+  /* Ensure page sections don’t hide under fixed navbar on small screens */
+  section {
+    scroll-margin-top: 90px;
+  }
+
+  /* Extra top spacing helper for promo pages */
+  .promo-top-pad {
+    padding-top: 110px !important;
+  }
   
   .py-5 {
     padding-top: 3rem !important;

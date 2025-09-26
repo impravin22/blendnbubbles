@@ -43,10 +43,15 @@ function DurgaPuja2025() {
         </div>
       </nav>
 
-      <section className="py-5" style={{ paddingTop: '120px' }}>
+      <section className="py-5 promo-top-pad">
         <div className="container">
-          <h2 className="text-center mb-4">Durga Puja 2025 Special</h2>
-          <p className="text-center">Scan the QR code to open this page: <a href="/DurgaPuja2025">blendnbubbles.com/DurgaPuja2025</a></p>
+          <div className="text-center mb-4" style={{
+            background: 'var(--teal-gradient)',
+            borderRadius: '16px',
+            padding: '30px 20px'
+          }}>
+            <h2 className="mb-0" style={{ color: 'white' }}>Durga Puja 2025 Special</h2>
+          </div>
           <div className="row justify-content-center">
             <div className="col-lg-8">
               <img src="/pujo-menu.png" alt="Pujo Special Menu" className="img-fluid rounded shadow" />
