@@ -10,6 +10,7 @@ const TARGET_URL = 'https://blendnbubbles.com/DurgaPuja2025';
 // Brand-aligned colors from src/index.css
 const COLOR_DARK = '#003333'; // primary
 const COLOR_LIGHT = '#F9F6F0'; // background
+const COLOR_GOLD = '#BB8750'; // secondary
 
 async function ensureDir(dir) {
   await fs.promises.mkdir(dir, { recursive: true });
@@ -34,33 +35,68 @@ async function generate() {
   await QRCode.toFile(pngPath, TARGET_URL, options);
   await QRCode.toFile(svgPath, TARGET_URL, { ...options, type: 'svg' });
 
-  // Overlay center logo onto PNG
-  const logoPath = path.resolve(__dirname, '..', 'public', 'logo512.png');
+  // Common base to composite on
   const base = sharp(pngPath);
   const { width, height } = await base.metadata();
-  const overlaySize = Math.round(Math.min(width, height) * 0.22); // ~22% of QR size
-  const roundedCorner = Buffer.from(
-    `<svg><rect x="0" y="0" width="${overlaySize}" height="${overlaySize}" rx="${Math.round(overlaySize*0.2)}" ry="${Math.round(overlaySize*0.2)}" /></svg>`
-  );
-  const resizedLogo = await sharp(logoPath)
-    .resize(overlaySize, overlaySize, { fit: 'cover' })
-    .composite([{ input: roundedCorner, blend: 'dest-in' }])
-    .png()
-    .toBuffer();
 
-  const qrWithLogoPath = path.join(OUTPUT_DIR, 'durga-puja-2025-with-logo.png');
-  await base
-    .composite([
-      {
-        input: resizedLogo,
-        top: Math.round((height - overlaySize) / 2),
-        left: Math.round((width - overlaySize) / 2)
-      }
-    ])
-    .png()
-    .toFile(qrWithLogoPath);
+  async function createOverlayed(overlaySourcePath, suffix) {
+    const qrBase = sharp(pngPath);
+    const minDim = Math.min(width, height);
+    const boxSize = Math.round(minDim * 0.28); // badge size
+    const cornerRadius = Math.round(boxSize * 0.22);
+    const padding = Math.round(boxSize * 0.14); // inner padding
 
-  console.log('QRs created at:', pngPath, 'and', svgPath, 'and', qrWithLogoPath);
+    // Badge background with gold border
+    const badgeSvg = Buffer.from(
+      `<svg width="${boxSize}" height="${boxSize}" xmlns="http://www.w3.org/2000/svg">
+         <rect x="0.5" y="0.5" width="${boxSize - 1}" height="${boxSize - 1}"
+               rx="${cornerRadius}" ry="${cornerRadius}"
+               fill="${COLOR_LIGHT}" stroke="${COLOR_GOLD}" stroke-width="2"/>
+       </svg>`
+    );
+
+    // Prepare logo (supports SVG or PNG)
+    let logoSharp = sharp(overlaySourcePath);
+    // Convert to PNG buffer at target size
+    const logoSize = boxSize - padding * 2;
+    const logoPngBuffer = await logoSharp
+      .resize(logoSize, logoSize, { fit: 'contain', withoutEnlargement: false })
+      .png()
+      .toBuffer();
+
+    // Compose logo onto badge background
+    const badgeWithLogo = await sharp(badgeSvg)
+      .composite([
+        {
+          input: logoPngBuffer,
+          top: padding,
+          left: padding
+        }
+      ])
+      .png()
+      .toBuffer();
+
+    // Center composite on QR
+    const outPath = path.join(OUTPUT_DIR, `durga-puja-2025-with-${suffix}.png`);
+    await qrBase
+      .composite([
+        {
+          input: badgeWithLogo,
+          top: Math.round((height - boxSize) / 2),
+          left: Math.round((width - boxSize) / 2)
+        }
+      ])
+      .png()
+      .toFile(outPath);
+    return outPath;
+  }
+
+  const svgLogoPath = path.resolve(__dirname, '..', 'logo.svg');
+  const cupPngPath = path.resolve(__dirname, '..', 'logo for cup 2.png');
+  const outSvg = await createOverlayed(svgLogoPath, 'logo-svg');
+  const outCup = await createOverlayed(cupPngPath, 'logo-cup');
+
+  console.log('QRs created at:', pngPath, 'and', svgPath, 'and', outSvg, 'and', outCup);
 }
 
 generate().catch((err) => {
