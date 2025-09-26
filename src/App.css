@@ -945,6 +945,22 @@ section h2::after {
 
 /* Mobile optimizations for menu filters */
 @media (max-width: 768px) {
+  /* Global content offset below fixed navbar */
+  .page-wrapper,
+  .story-section,
+  #full-menu,
+  .menu-section,
+  .promo-top-pad,
+  section {
+    scroll-margin-top: 90px;
+  }
+
+  /* Ensure main sections have top padding so headings aren’t covered */
+  .story-section,
+  #full-menu,
+  .menu-section {
+    padding-top: 120px !important;
+  }
   .menu-filters {
     display: flex;
     flex-wrap: nowrap;

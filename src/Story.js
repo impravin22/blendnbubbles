@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ZOMATO_URL } from './config';
 import './App.css';
 
 function Story() {
@@ -70,7 +71,7 @@ function Story() {
                 <a className="nav-link" href="/#contact" onClick={handleVisitUsClick}>Visit Us</a>
               </li>
               <li className="nav-item ms-lg-2">
-                <a className="nav-link btn-order" href="#order">Order Now</a>
+                <a className="nav-link btn-order" href={ZOMATO_URL} target="_blank" rel="noopener noreferrer">Order Now</a>
               </li>
             </ul>
           </div>

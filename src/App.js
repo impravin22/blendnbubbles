@@ -6,6 +6,7 @@ import './App.css';
 import Menu from './Menu';
 import Story from './Story';
 import DurgaPuja2025 from './DurgaPuja2025';
+import { ZOMATO_URL } from './config';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -135,7 +136,7 @@ function Homepage() {
                 <a className="nav-link" href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Visit Us</a>
               </li>
               <li className="nav-item ms-lg-2">
-                <a className="nav-link btn-order" href="#order">Order Now</a>
+                <a className="nav-link btn-order" href={ZOMATO_URL} target="_blank" rel="noopener noreferrer">Order Now</a>
               </li>
             </ul>
           </div>
