@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blend N Bubbles Winter Leaflet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&family=Great+Vibes&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #e5e5e5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Lato', sans-serif;
+        }
+
+        /* Leaflet Container */
+        .leaflet {
+            width: 100%;
+            max-width: 420px;
+            /* Updated to White background for crisp look */
+            background: #FFFFFF;
+            color: #000000;
+            box-shadow: 0 20px 40px rgba(28, 194, 179, 0.2); /* Teal Shadow */
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border-radius: 2px;
+        }
+
+        /* Subtle Texture */
+        .leaflet::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/snow.png');
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* Brand Teal Border */
+        .brand-border {
+            border: 2px solid #1CC2B3; /* Teal */
+            margin: 12px;
+            height: calc(100% - 24px);
+            position: absolute;
+            width: calc(100% - 24px);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .font-luxury {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .font-script {
+            font-family: 'Great Vibes', cursive;
+        }
+
+        .text-brand-teal {
+            color: #1CC2B3;
+        }
+        
+        .bg-brand-teal {
+            background-color: #1CC2B3;
+        }
+
+        .text-black-accent {
+            color: #000000;
+        }
+
+        .menu-item-img {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            border: 3px solid #1CC2B3; /* Teal Border */
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .price-badge {
+            background-color: #000000; /* Black badge for contrast */
+            color: #1CC2B3; /* Teal text */
+            padding: 4px 10px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border: 1px solid #1CC2B3;
+        }
+
+        /* Decorative Splashes */
+        .splash {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(50px);
+            z-index: 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- The Flyer/Leaflet -->
+    <div class="leaflet relative">
+        <div class="brand-border"></div>
+        
+        <!-- Header -->
+        <div class="text-center pt-10 pb-4 px-6 relative z-10">
+            <div class="text-[10px] tracking-[0.4em] uppercase text-black-accent mb-2">Barrackpore</div>
+            
+            <!-- Logo Simulation -->
+            <div class="inline-block mb-3">
+                 <h1 class="text-3xl font-bold tracking-tight uppercase text-black-accent" style="text-shadow: 2px 2px 0px rgba(28, 194, 179, 0.2);">
+                    Blend N <span class="text-brand-teal">Bubbles</span>
+                </h1>
+            </div>
+
+            <h2 class="font-script text-5xl text-brand-teal mt-2 relative inline-block">
+                Winter Chill
+                <span class="absolute -top-2 -right-4 text-xl animate-pulse text-black-accent">❄️</span>
+            </h2>
+            <p class="text-gray-600 text-sm mt-2 italic">Cool breezes & warm sips.</p>
+        </div>
+
+        <!-- Hero Image Area -->
+        <div class="relative h-56 w-full mb-8 mt-2 mx-auto w-[92%] rounded-t-[100px] rounded-b-[20px] overflow-hidden shadow-lg group border-b-4 border-brand-teal">
+            <img src="https://images.unsplash.com/photo-1572490122747-3968b75cc699?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
+                 alt="Winter Special" 
+                 class="w-full h-full object-cover transform group-hover:scale-105 transition duration-700">
+            
+            <!-- Overlay Gradient -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+            
+            <div class="absolute bottom-4 left-0 w-full text-center">
+                <span class="bg-white text-black px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-full shadow-lg border border-brand-teal">
+                    Winter Edition
+                </span>
+            </div>
+        </div>
+
+        <!-- Menu Items -->
+        <div class="px-8 pb-10 space-y-7 relative z-10">
+
+            <!-- Item 1 -->
+            <div class="flex items-center space-x-4 relative">
+                <img src="https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" class="menu-item-img" alt="Classic Warmth">
+                <div class="flex-1">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="font-luxury text-xl text-black font-bold">Classic Warmth</h3>
+                        <span class="price-badge">₹165</span>
+                    </div>
+                    <p class="text-[10px] text-brand-teal font-bold uppercase tracking-wide">Signature Hot Milk Tea</p>
+                    <p class="text-gray-600 text-xs leading-tight mt-1">Authentic Assam tea base, silky milk, and warm, slow-cooked tapioca pearls.</p>
+                </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="flex items-center space-x-4 relative">
+                <img src="https://images.unsplash.com/photo-1626202157971-b97c11d04429?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" class="menu-item-img" alt="Berry Blush">
+                <div class="flex-1">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="font-luxury text-xl text-black font-bold">Teal Frost</h3>
+                        <span class="price-badge">₹180</span>
+                    </div>
+                    <p class="text-[10px] text-brand-teal font-bold uppercase tracking-wide">Blue Curacao & Cream</p>
+                    <p class="text-gray-600 text-xs leading-tight mt-1">Icy blue curacao blend topped with our signature salty-sweet cream cheese foam.</p>
+                </div>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="flex items-center space-x-4 relative">
+                <img src="https://images.unsplash.com/photo-1605333553423-e18e38520371?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" class="menu-item-img" alt="Dark Desire">
+                <div class="flex-1">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="font-luxury text-xl text-black font-bold">Dark Desire</h3>
+                        <span class="price-badge">₹190</span>
+                    </div>
+                    <p class="text-[10px] text-brand-teal font-bold uppercase tracking-wide">Hazelnut Chocolate</p>
+                    <p class="text-gray-600 text-xs leading-tight mt-1">Velvety 70% dark chocolate infused with roasted hazelnut syrup.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer / CTA -->
+        <div class="mt-auto bg-gray-50 p-5 text-center border-t border-gray-200 relative z-10">
+            <div class="flex justify-center items-center gap-2 mb-2 text-black text-lg">
+                <i class="fas fa-star text-xs text-brand-teal"></i>
+                <span class="font-script">Taste the Magic</span>
+                <i class="fas fa-star text-xs text-brand-teal"></i>
+            </div>
+            <p class="text-xs text-gray-500 tracking-wider uppercase mb-3">Senjuti Apt, Feeder Road, Barrackpore</p>
+            
+            <div class="flex justify-center space-x-6 text-black">
+                 <a href="#" class="hover:text-brand-teal transition transform hover:scale-110"><i class="fab fa-instagram text-xl"></i></a>
+                 <a href="#" class="hover:text-brand-teal transition transform hover:scale-110"><i class="fab fa-facebook text-xl"></i></a>
+                 <a href="#" class="hover:text-brand-teal transition transform hover:scale-110"><i class="fas fa-utensils text-xl"></i></a>
+            </div>
+        </div>
+
+        <!-- Background Splashes -->
+        <div class="splash w-64 h-64 top-[-50px] left-[-50px] bg-[#1CC2B3] opacity-10"></div>
+        <div class="splash w-48 h-48 bottom-[100px] right-[-20px] bg-[#1CC2B3] opacity-10"></div>
+    </div>
+
+</body>
+</html>
