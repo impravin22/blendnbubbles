@@ -165,11 +165,39 @@
             display: block;
             aspect-ratio: 9/16;
             object-fit: contain;
-            background: #000;
+            background: var(--primary);
         }
 
         .video-card {
             border: 2px solid var(--secondary);
+            background: var(--primary);
+        }
+
+        /* Loading animation while video loads */
+        .video-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            margin: -15px 0 0 -15px;
+            border: 3px solid rgba(187, 135, 80, 0.3);
+            border-top-color: var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 5;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-card.loaded::after {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .video-card-overlay {
@@ -275,8 +303,8 @@
             <div class="video-grid">
                 
                 <!-- Video 1: Hot Cocoa Cloud -->
-                <div class="video-card">
-                    <video autoplay muted loop playsinline>
+                <div class="video-card" id="vc1">
+                    <video autoplay muted loop playsinline preload="auto" oncanplay="this.parentElement.classList.add('loaded')">
                         <source src="HOT_CHOCOLATE.MOV" type="video/quicktime">
                         <source src="HOT_CHOCOLATE.MOV" type="video/mp4">
                     </video>
@@ -287,8 +315,8 @@
                 </div>
 
                 <!-- Video 2: Signature Cafe Mocha -->
-                <div class="video-card">
-                    <video autoplay muted loop playsinline>
+                <div class="video-card" id="vc2">
+                    <video autoplay muted loop playsinline preload="auto" oncanplay="this.parentElement.classList.add('loaded')">
                         <source src="CAFE MOCHA.MOV" type="video/quicktime">
                         <source src="CAFE MOCHA.MOV" type="video/mp4">
                     </video>
@@ -299,8 +327,8 @@
                 </div>
 
                 <!-- Video 3: Taiwan Signature Boba -->
-                <div class="video-card">
-                    <video autoplay muted loop playsinline>
+                <div class="video-card" id="vc3">
+                    <video autoplay muted loop playsinline preload="auto" oncanplay="this.parentElement.classList.add('loaded')">
                         <source src="MILKTEA.MOV" type="video/quicktime">
                         <source src="MILKTEA.MOV" type="video/mp4">
                     </video>
