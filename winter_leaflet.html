@@ -155,8 +155,8 @@
             position: relative;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            background: #000;
+            box-shadow: 0 10px 24px rgba(0, 51, 51, 0.15);
+            background: var(--background);
         }
 
         .video-card video {
@@ -202,21 +202,24 @@
 
         .video-card-overlay {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
-            padding: 30px 8px 10px 8px;
+            bottom: 8px;
+            left: 8px;
+            right: 8px;
+            padding: 10px 10px;
             text-align: center;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(187, 135, 80, 0.25);
+            border-radius: 10px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 4px 12px rgba(0, 51, 51, 0.12);
         }
 
         .video-card-title {
             font-family: 'Playfair Display', serif;
-            font-size: 0.7rem;
-            color: white;
+            font-size: 0.75rem;
+            color: var(--primary);
             font-weight: 700;
             margin-bottom: 4px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
         .video-card-badge {
