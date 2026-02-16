@@ -105,7 +105,7 @@ function Story() {
             <div className="col-lg-10">
               <div className="section-header text-center reveal">
                 <h1 className="section-title">Our Story</h1>
-                <p className="section-subtitle">How Blend N Bubbles Came To Be</p>
+                <p className="section-subtitle">How We Brought Authentic Bubble Tea from Taiwan to Kolkata</p>
               </div>
 
               <div className="story-content reveal reveal-delay-1">

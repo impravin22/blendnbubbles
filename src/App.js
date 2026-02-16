@@ -186,7 +186,7 @@ function Homepage() {
           <div className="container">
             <div className="row align-items-center">
               <div className="col-lg-6 hero-text-container">
-                <h1 className="hero-title">Premium Bubble Tea Experience</h1>
+                <h1 className="hero-title">Premium Bubble Tea in Kolkata</h1>
                 <p className="hero-subtitle">Where every bubble tells you a story</p>
                 <p className="hero-text">Authentic Taiwanese bubble tea in the heart of Kolkata</p>
                 <div className="hero-buttons">
@@ -223,12 +223,12 @@ function Homepage() {
             </div>
             <div className="col-md-6 reveal-right">
               <p>
-                BlendNBubbles is Kolkata's premier bubble tea destination, bringing the authentic taste of Taiwan to India.
-                Our carefully selected ingredients are imported directly from Taiwan to ensure the highest quality and authentic flavor.
+                BlendNBubbles is Kolkata's first authentic Taiwanese bubble tea shop, located in Barrackpore.
+                We bring the real taste of Taiwan to India with ingredients imported directly from Taipei to ensure every sip is genuine.
               </p>
               <p>
-                Founded with a passion for bubble tea and a commitment to quality, we're proud to introduce Kolkata
-                to the wonderful world of bubble tea. Each cup is carefully crafted to provide a unique experience where every bubble tells a story.
+                From classic boba milk tea to fruit teas and smoothies, we're proud to be Kolkata's go-to bubble tea destination.
+                Each cup is carefully crafted to provide a unique experience where every bubble tells a story.
               </p>
               <div className="text-end mt-4">
                 <Link to="/story" className="btn btn-outline-primary">Read Our Full Story</Link>
