@@ -186,6 +186,29 @@
             background: var(--primary);
         }
 
+        /* Hot Cocoa Cloud: show top and bottom together */
+        .video-duo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            z-index: 0;
+        }
+
+        .video-card .video-half {
+            width: 100%;
+            min-height: 0;
+            aspect-ratio: auto;
+            object-fit: cover !important;
+            background: var(--primary);
+        }
+
+        .video-top { flex: 39; object-position: center -10%; transform: scale(1.15); }
+        .video-bottom { flex: 61; object-position: center 40%; transform: scale(1.2); }
+
         .video-card {
             border: 2px solid var(--secondary);
             background: var(--primary);
@@ -295,10 +318,16 @@
                 
                 <!-- Video 1: Hot Cocoa Cloud -->
                 <div class="video-card" id="vc1">
-                    <video muted playsinline preload="auto" id="vid1">
-                        <source src="HOT_CHOCOLATE.MOV" type="video/quicktime">
-                        <source src="HOT_CHOCOLATE.MOV" type="video/mp4">
-                    </video>
+                    <div class="video-duo">
+                        <video class="video-half video-top" muted playsinline preload="auto">
+                            <source src="hot_cocoa_top.mov" type="video/quicktime">
+                            <source src="hot_cocoa_top.mov" type="video/mp4">
+                        </video>
+                        <video class="video-half video-bottom" muted playsinline preload="auto">
+                            <source src="hot_cocoa_bottom.mov" type="video/quicktime">
+                            <source src="hot_cocoa_bottom.mov" type="video/mp4">
+                        </video>
+                    </div>
                     <!-- Print fallback image -->
                     <img class="print-fallback" src="winter_leaflet_hot_chocolate.jpg" alt="Hot Cocoa Cloud">
                     <div class="video-card-overlay">
@@ -381,7 +410,7 @@
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <!-- Location QR -->
                 <div class="qr-box">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Senjuti+Apt+Barrackpore" class="w-16 h-16 mx-auto mb-1" alt="Map QR">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://maps.app.goo.gl/2kgVWv4EoshMffVv5" class="w-16 h-16 mx-auto mb-1" alt="Map QR">
                     <p class="text-[9px] font-semibold uppercase tracking-wide" style="color: var(--primary);">Find Us</p>
                 </div>
                 <!-- Menu QR -->
@@ -411,19 +440,13 @@
 
     <!-- Script to play videos once and stop at end -->
     <script>
+        // Play each video once; freeze on last frame.
         document.addEventListener('DOMContentLoaded', function() {
             const videos = document.querySelectorAll('video');
-            
             videos.forEach(video => {
-                // Play the video once when it can play
-                video.addEventListener('canplay', function() {
-                    video.play();
-                }, { once: true });
-                
-                // Stop at the last frame when ended
-                video.addEventListener('ended', function() {
-                    // Seek to the last frame (just before the end)
-                    video.currentTime = video.duration - 0.1;
+                video.addEventListener('canplay', () => video.play(), { once: true });
+                video.addEventListener('ended', () => {
+                    video.currentTime = Math.max(0, video.duration - 0.1);
                     video.pause();
                 });
             });

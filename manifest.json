@@ -1,25 +1,28 @@
 {
   "short_name": "BlendNBubbles",
-  "name": "BlendNBubbles - Premium Bubble Tea",
+  "name": "BlendNBubbles - Authentic Taiwanese Bubble Tea",
+  "description": "Kolkata's premier bubble tea destination. Authentic Taiwanese boba tea, fruit teas, smoothies & cold coffee in Barrackpore.",
   "icons": [
     {
-      "src": "logo for cup 2.png",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "src": "logo192.png",
+      "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "logo for cup 2.png",
-      "type": "image/png",
-      "sizes": "192x192"
+      "src": "logo512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     },
     {
-      "src": "logo for cup 2.png",
+      "src": "logo512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#003333",
-  "background_color": "#F9F6F0"
+  "background_color": "#F9F6F0",
+  "categories": ["food", "drink", "shopping"]
 }
