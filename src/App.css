@@ -490,11 +490,6 @@
   margin-top: 50px;
 }
 
-.menu-category {
-  margin-bottom: 60px;
-  transition: all 0.5s ease;
-}
-
 .category-title {
   font-family: 'Playfair Display', serif;
   font-size: 2rem;
@@ -750,33 +745,229 @@
   min-height: 100vh;
 }
 
-/* Page transition animations - refined for smoother effect */
+/* Page transition animations - smooth crossfade */
 .page-transition-enter {
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(12px);
 }
 
 .page-transition-enter-active {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 700ms cubic-bezier(0.165, 0.84, 0.44, 1), 
-              transform 700ms cubic-bezier(0.165, 0.84, 0.44, 1); /* Increased from 500ms to 700ms */
+  transition: opacity 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .page-transition-exit {
   opacity: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
 }
 
 .page-transition-exit-active {
   opacity: 0;
-  transform: translateY(-30px);
-  transition: opacity 600ms cubic-bezier(0.165, 0.84, 0.44, 1), 
-              transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1); /* Increased from 400ms to 600ms */
+  transition: opacity 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* Ensure smooth scroll behavior globally */
 html {
   scroll-behavior: smooth;
+}
+
+/* ===== Scroll Reveal Animations ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+/* Reveal from left */
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Reveal from right */
+.reveal-right {
+  opacity: 0;
+  transform: translateX(30px);
+  transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.reveal-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Scale reveal */
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.reveal-scale.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ===== Menu Category Fade Transitions ===== */
+.menu-category {
+  margin-bottom: 60px;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.menu-category.category-hidden {
+  display: none;
+}
+
+.menu-category.category-fading-out {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.menu-category.category-fading-in {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* ===== Button Ripple Effect ===== */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn .ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0);
+  animation: ripple-effect 0.6s ease-out;
+  pointer-events: none;
+}
+
+@keyframes ripple-effect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Better active/pressed state */
+.btn:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.1s ease !important;
+}
+
+.menu-filter:active {
+  transform: scale(0.95) !important;
+  transition: transform 0.1s ease !important;
+}
+
+/* ===== Navbar mobile menu smooth open ===== */
+.navbar-collapse {
+  transition: none;
+}
+
+.navbar-collapse.collapsing {
+  transition: height 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Navbar toggler animation */
+.navbar-toggler {
+  border: none !important;
+  padding: 8px;
+  transition: transform 0.3s ease;
+}
+
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+
+.navbar-toggler:active {
+  transform: scale(0.9);
+}
+
+.navbar-toggler-icon {
+  transition: opacity 0.3s ease;
+}
+
+/* ===== Staggered card animations ===== */
+.menu-item {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: stagger-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.menu-item:nth-child(1) { animation-delay: 0.05s; }
+.menu-item:nth-child(2) { animation-delay: 0.1s; }
+.menu-item:nth-child(3) { animation-delay: 0.15s; }
+.menu-item:nth-child(4) { animation-delay: 0.2s; }
+.menu-item:nth-child(5) { animation-delay: 0.25s; }
+.menu-item:nth-child(6) { animation-delay: 0.3s; }
+.menu-item:nth-child(7) { animation-delay: 0.35s; }
+.menu-item:nth-child(8) { animation-delay: 0.4s; }
+.menu-item:nth-child(9) { animation-delay: 0.45s; }
+.menu-item:nth-child(10) { animation-delay: 0.5s; }
+.menu-item:nth-child(11) { animation-delay: 0.55s; }
+.menu-item:nth-child(12) { animation-delay: 0.6s; }
+
+@keyframes stagger-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Smooth focus outlines ===== */
+*:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+  transition: outline-offset 0.2s ease;
+}
+
+/* ===== Footer link hover underline animation ===== */
+.social-links a {
+  position: relative;
+}
+
+.social-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--secondary-light);
+  transition: width 0.3s ease;
+}
+
+.social-links a:hover::after {
+  width: 100%;
 }
 
 /* Card styles */

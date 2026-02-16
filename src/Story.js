@@ -27,6 +27,18 @@ function Story() {
     navigate('/#contact');
   };
 
+  // Scroll reveal
+  useEffect(() => {
+    const els = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+    if (els.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } }),
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  });
+
   // Per-route SEO: set page title and meta description
   useEffect(() => {
     document.title = 'Our Story - BlendNBubbles | From Taiwan to Kolkata';
@@ -91,16 +103,12 @@ function Story() {
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-lg-10">
-              <div className="section-header text-center">
+              <div className="section-header text-center reveal">
                 <h1 className="section-title">Our Story</h1>
                 <p className="section-subtitle">How Blend N Bubbles Came To Be</p>
               </div>
-              
-              <div className="story-content">
-                {/* <div className="story-image mb-5">
-                  <img src="/images/story/founders-taiwan.jpg" alt="BlendNBubbles founders in Taiwan" className="img-fluid rounded" />
-                </div> */}
-                
+
+              <div className="story-content reveal reveal-delay-1">
                 <div className="story-text">
                   <h2 className="mb-4">The Journey of Three Dreams and One Cup</h2>
                   

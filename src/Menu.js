@@ -1,48 +1,57 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './App.css';
 
 function Menu() {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [displayedCategory, setDisplayedCategory] = useState('all');
+  const [transitioning, setTransitioning] = useState(false);
   const filterContainerRef = useRef(null);
   const navigate = useNavigate();
-  
-  const filterMenu = (category) => {
-    setActiveCategory(category);
-    
-    // If on mobile, scroll to the selected category
-    if (window.innerWidth <= 768) {
-      const categoryElement = document.getElementById(category);
-      if (categoryElement) {
-        // Add a small delay to allow state update
+
+  // Animated category switching
+  const filterMenu = useCallback((category) => {
+    if (category === activeCategory) return;
+    setTransitioning(true);
+    setTimeout(() => {
+      setActiveCategory(category);
+      setDisplayedCategory(category);
+      setTransitioning(false);
+      if (window.innerWidth <= 768 && category !== 'all') {
         setTimeout(() => {
-          categoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+          const el = document.getElementById(category);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
       }
-    }
-  };
-  
-  // Add click listener to scroll the filters when a button is tapped
+    }, 250);
+  }, [activeCategory]);
+
+  // Helper: should this category be visible?
+  const isCategoryVisible = useCallback((cat) => {
+    const current = transitioning ? displayedCategory : activeCategory;
+    if (current === 'all') return true;
+    if (cat === 'special') return current === 'all';
+    return current === cat;
+  }, [activeCategory, displayedCategory, transitioning]);
+
+  // Helper: get category classes
+  const categoryClass = useCallback((cat) => {
+    const visible = isCategoryVisible(cat);
+    if (!visible) return 'menu-category category-hidden';
+    if (transitioning) return 'menu-category category-fading-out';
+    return 'menu-category';
+  }, [isCategoryVisible, transitioning]);
+
   const scrollToFilter = (event, category) => {
     const filterContainer = filterContainerRef.current;
     if (filterContainer) {
-      // Get the button that was clicked
       const button = event.currentTarget;
-      // Get the position of the button relative to the container
       const buttonLeft = button.offsetLeft;
-      // Calculate the center position
       const containerWidth = filterContainer.offsetWidth;
       const buttonWidth = button.offsetWidth;
       const scrollPosition = buttonLeft - (containerWidth / 2) + (buttonWidth / 2);
-      
-      // Scroll to the button position (centered)
-      filterContainer.scrollTo({
-        left: scrollPosition,
-        behavior: 'smooth'
-      });
+      filterContainer.scrollTo({ left: scrollPosition, behavior: 'smooth' });
     }
-    
-    // Call the original filter function
     filterMenu(category);
   };
   
@@ -166,7 +175,7 @@ function Menu() {
           
           <div className="menu-categories">
             {/* Iced Tea Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'iced-tea' ? '' : 'd-none'}`} id="iced-tea">
+            <div className={categoryClass('iced-tea')} id="iced-tea">
               <h3 className="category-title">Iced Tea</h3>
               <div className="menu-items">
                 <div className="menu-item">
@@ -226,7 +235,7 @@ function Menu() {
             </div>
             
             {/* Milk Tea Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'milk-tea' ? '' : 'd-none'}`} id="milk-tea">
+            <div className={categoryClass('milk-tea')} id="milk-tea">
               <h3 className="category-title">Milk Tea</h3>
               <div className="menu-items">
                 <div className="menu-item">
@@ -265,7 +274,7 @@ function Menu() {
             </div>
             
             {/* Fruit Tea Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'fruit-tea' ? '' : 'd-none'}`} id="fruit-tea">
+            <div className={categoryClass('fruit-tea')} id="fruit-tea">
               <h3 className="category-title">Fruit Iced Tea</h3>
               <div className="menu-items">
                 <div className="menu-item">
@@ -391,7 +400,7 @@ function Menu() {
             </div>
             
             {/* Smoothies Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'smoothie' ? '' : 'd-none'}`} id="smoothie">
+            <div className={categoryClass('smoothie')} id="smoothie">
               <h3 className="category-title">Smoothies</h3>
               <div className="menu-items">
                 <div className="menu-item">
@@ -474,7 +483,7 @@ function Menu() {
             </div>
             
             {/* Coffee Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'coffee' ? '' : 'd-none'}`} id="coffee">
+            <div className={categoryClass('coffee')} id="coffee">
               <h3 className="category-title">Cold Coffee</h3>
               <div className="menu-items">
                 <div className="menu-item">
@@ -502,7 +511,7 @@ function Menu() {
             </div>
             
             {/* Add-Ons Category */}
-            <div className={`menu-category ${activeCategory === 'all' || activeCategory === 'add-ons' ? '' : 'd-none'}`} id="add-ons">
+            <div className={categoryClass('add-ons')} id="add-ons">
               <h3 className="category-title">Add-Ons & Toppings</h3>
               <div className="menu-items">
                 <div className="menu-item">
@@ -648,7 +657,7 @@ function Menu() {
             </div>
             
             {/* Special Items Category */}
-            <div className={`menu-category ${activeCategory === 'all' ? '' : 'd-none'}`} id="special">
+            <div className={categoryClass('special')} id="special">
               <h3 className="category-title">Special Items</h3>
               <div className="menu-items">
                 <div className="menu-item">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -13,7 +13,6 @@ function ScrollToTop() {
     if (!hash) {
       window.scrollTo(0, 0);
     } else {
-      // Slight delay to ensure the page loads before scrolling
       setTimeout(() => {
         const element = document.getElementById(hash.substring(1));
         if (element) {
@@ -26,10 +25,61 @@ function ScrollToTop() {
   return null;
 }
 
-// This wrapper will apply transitions to all routes
+// Scroll reveal hook - observes elements and adds 'visible' class when in viewport
+function useScrollReveal() {
+  useEffect(() => {
+    const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+    if (revealElements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    );
+
+    revealElements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  });
+}
+
+// Button ripple effect hook
+function useRippleEffect() {
+  useEffect(() => {
+    function handleClick(e) {
+      const btn = e.currentTarget;
+      const circle = document.createElement('span');
+      const diameter = Math.max(btn.clientWidth, btn.clientHeight);
+      const radius = diameter / 2;
+      const rect = btn.getBoundingClientRect();
+
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${e.clientX - rect.left - radius}px`;
+      circle.style.top = `${e.clientY - rect.top - radius}px`;
+      circle.classList.add('ripple');
+
+      const existingRipple = btn.querySelector('.ripple');
+      if (existingRipple) existingRipple.remove();
+
+      btn.appendChild(circle);
+      setTimeout(() => circle.remove(), 600);
+    }
+
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach((btn) => btn.addEventListener('click', handleClick));
+    return () => buttons.forEach((btn) => btn.removeEventListener('click', handleClick));
+  });
+}
+
+// Animated routes with matched transition timing
 function AnimatedRoutes() {
   const location = useLocation();
-  
+
   return (
     <TransitionGroup>
       <CSSTransition
@@ -51,11 +101,10 @@ function AnimatedRoutes() {
 }
 
 function Homepage() {
-  // Add scroll state to change navbar appearance on scroll
   const [scrolled, setScrolled] = useState(false);
   const navbarCollapseRef = useRef(null);
 
-  // Per-route SEO: set page title and meta description
+  // Per-route SEO
   useEffect(() => {
     document.title = 'BlendNBubbles - Authentic Taiwanese Bubble Tea in Kolkata, India';
     const meta = document.querySelector('meta[name="description"]');
@@ -64,60 +113,40 @@ function Homepage() {
     if (canonical) canonical.setAttribute('href', 'https://blendnbubbles.com');
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
+  // Scroll-reveal & ripple
+  useScrollReveal();
+  useRippleEffect();
 
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Function to handle smooth scrolling to sections
-  const scrollToSection = (event, sectionId) => {
+  const scrollToSection = useCallback((event, sectionId) => {
     event.preventDefault();
-    
-    // Close the mobile navbar if it's open
     const navbarCollapse = navbarCollapseRef.current;
     if (navbarCollapse && navbarCollapse.classList.contains('show')) {
-      // This will be handled by Bootstrap's collapse API
       const bsCollapse = window.bootstrap && window.bootstrap.Collapse.getInstance(navbarCollapse);
-      if (bsCollapse) {
-        bsCollapse.hide();
-      }
+      if (bsCollapse) bsCollapse.hide();
     }
-    
     const section = document.getElementById(sectionId);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+    if (section) section.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
-  // Add Bootstrap JS for mobile navbar
+  // Bootstrap JS
   useEffect(() => {
-    // Add Bootstrap JS for mobile navbar toggle
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js';
     script.integrity = 'sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p';
     script.crossOrigin = 'anonymous';
     document.body.appendChild(script);
-    
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
+    return () => { if (document.body.contains(script)) document.body.removeChild(script); };
   }, []);
 
   return (
     <div className="App">
-      {/* Enhanced Navigation */}
+      {/* Navigation */}
       <nav className={`navbar navbar-expand-lg fixed-top ${scrolled ? 'scrolled' : ''}`}>
         <div className="container">
           <Link className="navbar-brand" to="/">
@@ -149,7 +178,7 @@ function Homepage() {
         </div>
       </nav>
 
-      {/* Hero Section with Logo */}
+      {/* Hero Section */}
       <header className="hero" id="home">
         <div className="hero-content">
           <div className="container">
@@ -180,18 +209,17 @@ function Homepage() {
         </div>
       </header>
 
-      {/* About Section - Just a brief preview with link to full story */}
+      {/* About Section */}
       <section className="py-5" id="about">
         <div className="container">
-          <h2 className="text-center mb-4">About BlendNBubbles</h2>
+          <h2 className="text-center mb-4 reveal">About BlendNBubbles</h2>
           <div className="row">
-            <div className="col-md-6 mb-4 mb-md-0">
-              {/* About image */}
+            <div className="col-md-6 mb-4 mb-md-0 reveal-left">
               <div className="rounded about-image">
                 <img src="/authentic_bubble_tea_with_logo.png" alt="BlendNBubbles Authentic Bubble Tea" className="img-fluid rounded" />
               </div>
             </div>
-            <div className="col-md-6">
+            <div className="col-md-6 reveal-right">
               <p>
                 BlendNBubbles is Kolkata's premier bubble tea destination, bringing the authentic taste of Taiwan to India.
                 Our carefully selected ingredients are imported directly from Taiwan to ensure the highest quality and authentic flavor.
@@ -208,18 +236,14 @@ function Homepage() {
         </div>
       </section>
 
-      {/* Featured Menu Section - Simplified version of the menu */}
+      {/* Featured Menu Section */}
       <section className="py-5 bg-light" id="products">
         <div className="container">
-          <h2 className="text-center mb-4">Featured Menu Items</h2>
-          <p className="text-center mb-5">Our most popular bubble tea selections - <Link to="/menu" className="view-full-menu">View Full Menu</Link></p>
+          <h2 className="text-center mb-4 reveal">Featured Menu Items</h2>
+          <p className="text-center mb-5 reveal reveal-delay-1">Our most popular bubble tea selections - <Link to="/menu" className="view-full-menu">View Full Menu</Link></p>
           <div className="row">
-            {/* Featured Product cards */}
-            <div className="col-md-4 mb-4">
+            <div className="col-md-4 mb-4 reveal reveal-delay-1">
               <div className="card h-100">
-                {/* <div className="card-img-wrap">
-                  <img src="/images/classic-milk-tea.jpg" className="card-img-top" alt="Classic Milk Tea" />
-                </div> */}
                 <div className="card-body">
                   <h5 className="card-title">Taiwan Signature Milk Tea <span className="menu-tag">Signature</span></h5>
                   <p className="card-text">Authentic Taiwanese signature milk tea.</p>
@@ -227,11 +251,8 @@ function Homepage() {
                 </div>
               </div>
             </div>
-            <div className="col-md-4 mb-4">
+            <div className="col-md-4 mb-4 reveal reveal-delay-2">
               <div className="card h-100">
-                {/* <div className="card-img-wrap">
-                  <img src="/images/taro-milk-tea.jpg" className="card-img-top" alt="Taro Milk Tea" />
-                </div> */}
                 <div className="card-body">
                   <h5 className="card-title">Passion Fruit Green Tea <span className="menu-tag">Signature</span></h5>
                   <p className="card-text">Zesty passion fruit blended with green tea.</p>
@@ -239,11 +260,8 @@ function Homepage() {
                 </div>
               </div>
             </div>
-            <div className="col-md-4 mb-4">
+            <div className="col-md-4 mb-4 reveal reveal-delay-3">
               <div className="card h-100">
-                {/* <div className="card-img-wrap">
-                  <img src="/images/matcha-bubble-tea.jpg" className="card-img-top" alt="Matcha Bubble Tea" />
-                </div> */}
                 <div className="card-body">
                   <h5 className="card-title">Mango Smoothie <span className="menu-tag">Popular</span></h5>
                   <p className="card-text">Creamy mango smoothie.</p>
@@ -252,7 +270,7 @@ function Homepage() {
               </div>
             </div>
           </div>
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 reveal reveal-delay-4">
             <Link to="/menu" className="btn btn-primary">View Our Full Menu</Link>
           </div>
         </div>
@@ -261,9 +279,9 @@ function Homepage() {
       {/* Contact Section */}
       <section className="py-5" id="contact">
         <div className="container">
-          <h2 className="text-center mb-4">Visit Us</h2>
+          <h2 className="text-center mb-4 reveal">Visit Us</h2>
           <div className="row">
-            <div className="col-md-6 mb-4 mb-md-0">
+            <div className="col-md-6 mb-4 mb-md-0 reveal-left">
               <h4>Location</h4>
               <p>Senjuti Apt. Shop No -6, 68/16, Feeder Road, Barrackpore, Kolkata</p>
               <p>PIN: 700120</p>
@@ -272,11 +290,8 @@ function Homepage() {
               <h4>Contact</h4>
               <p>Phone: +91 7980233537</p>
               <p>Email: blendnbubbles@yahoo.com</p>
-              {/* <div className="location-map mt-4">
-                <img src="/images/map-location.jpg" alt="Map showing shop location" className="img-fluid rounded" />
-              </div> */}
             </div>
-            <div className="col-md-6">
+            <div className="col-md-6 reveal-right">
               <div className="card">
                 <div className="card-body">
                   <h5 className="card-title">Send us a message</h5>
@@ -299,7 +314,7 @@ function Homepage() {
         </div>
       </section>
 
-      {/* Footer with Social Media Links */}
+      {/* Footer */}
       <footer className="bg-dark text-white py-4">
         <div className="container text-center">
           <p>© 2025-2026 BlendNBubbles. All rights reserved.</p>
