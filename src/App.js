@@ -290,7 +290,7 @@ function Homepage() {
               <h4>Hours</h4>
               <p>Monday - Sunday: 11am - 9pm</p>
               <h4>Contact</h4>
-              <p>Phone: +91 7980233537</p>
+              <p>Phone: +91 9330697501</p>
               <p>Email: blendnbubbles@yahoo.com</p>
             </div>
             <div className="col-md-6 reveal-right">
