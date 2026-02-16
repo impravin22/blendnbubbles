@@ -27,6 +27,15 @@ function Story() {
     navigate('/#contact');
   };
 
+  // Per-route SEO: set page title and meta description
+  useEffect(() => {
+    document.title = 'Our Story - BlendNBubbles | From Taiwan to Kolkata';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', 'Discover how BlendNBubbles was born — three Indian students in Taiwan fell in love with bubble tea and brought authentic Taiwanese boba to Kolkata, India. Read our journey.');
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', 'https://blendnbubbles.com/story');
+  }, []);
+
   // Add Bootstrap JS for mobile navbar
   useEffect(() => {
     // Add Bootstrap JS for mobile navbar toggle
@@ -135,7 +144,7 @@ function Story() {
       {/* Footer */}
       <footer className="bg-dark text-white py-4">
         <div className="container text-center">
-          <p>© 2025 BlendNBubbles. All rights reserved.</p>
+          <p>© 2025-2026 BlendNBubbles. All rights reserved.</p>
           <p>Premium Bubble Tea in Kolkata, India</p>
           <div className="social-links mt-3">
             <a href="https://www.facebook.com/share/168pyB8Bbb/?mibextid=wwXIfr" className="text-white me-3" target="_blank" rel="noopener noreferrer">

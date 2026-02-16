@@ -1,3 +1,6 @@
-# https://www.robotstxt.org/robotstxt.html
+# BlendNBubbles - https://blendnbubbles.com
 User-agent: *
+Allow: /
 Disallow:
+
+Sitemap: https://blendnbubbles.com/sitemap.xml

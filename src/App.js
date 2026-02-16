@@ -54,7 +54,16 @@ function Homepage() {
   // Add scroll state to change navbar appearance on scroll
   const [scrolled, setScrolled] = useState(false);
   const navbarCollapseRef = useRef(null);
-  
+
+  // Per-route SEO: set page title and meta description
+  useEffect(() => {
+    document.title = 'BlendNBubbles - Authentic Taiwanese Bubble Tea in Kolkata, India';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', 'BlendNBubbles serves authentic Taiwanese bubble tea in Barrackpore, Kolkata. Enjoy boba milk tea, fruit teas, smoothies, and cold coffee with real Taiwanese ingredients. Order on Zomato or visit us today.');
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', 'https://blendnbubbles.com');
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 50) {
@@ -63,7 +72,7 @@ function Homepage() {
         setScrolled(false);
       }
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -293,7 +302,7 @@ function Homepage() {
       {/* Footer with Social Media Links */}
       <footer className="bg-dark text-white py-4">
         <div className="container text-center">
-          <p>© 2025 BlendNBubbles. All rights reserved.</p>
+          <p>© 2025-2026 BlendNBubbles. All rights reserved.</p>
           <p>Premium Bubble Tea in Kolkata, India</p>
           <div className="social-links mt-3">
             <a href="https://www.facebook.com/share/168pyB8Bbb/?mibextid=wwXIfr" className="text-white me-3" target="_blank" rel="noopener noreferrer">

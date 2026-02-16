@@ -52,6 +52,15 @@ function Menu() {
     navigate('/#contact');
   };
   
+  // Per-route SEO: set page title and meta description
+  useEffect(() => {
+    document.title = 'Menu - BlendNBubbles | Bubble Tea, Fruit Tea, Smoothies & Coffee in Kolkata';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', 'Explore the full BlendNBubbles menu: authentic Taiwanese iced teas, boba milk teas, fruit teas, smoothies, cold coffee, and toppings. Prices from ₹85. Customize sugar and ice levels. Order on Zomato in Kolkata.');
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', 'https://blendnbubbles.com/menu');
+  }, []);
+
   // Add effect to ensure Bootstrap JS is loaded for mobile navbar
   useEffect(() => {
     // Add Bootstrap JS for mobile navbar toggle
@@ -686,7 +695,7 @@ function Menu() {
       {/* Footer */}
       <footer className="bg-dark text-white py-4">
         <div className="container text-center">
-          <p>© 2025 BlendNBubbles. All rights reserved.</p>
+          <p>© 2025-2026 BlendNBubbles. All rights reserved.</p>
           <p>Premium Bubble Tea in Kolkata, India</p>
           <div className="social-links mt-3">
             <a href="https://www.facebook.com/share/168pyB8Bbb/?mibextid=wwXIfr" className="text-white me-3" target="_blank" rel="noopener noreferrer">
