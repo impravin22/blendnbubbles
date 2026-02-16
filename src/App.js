@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import Menu from './Menu';
 import Story from './Story';
+import BobaCatcher from './BobaCatcher';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -93,6 +94,7 @@ function AnimatedRoutes() {
             <Route path="/" element={<Homepage />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/story" element={<Story />} />
+            <Route path="/play" element={<BobaCatcher />} />
           </Routes>
         </div>
       </CSSTransition>
