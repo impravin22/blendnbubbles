@@ -6,7 +6,8 @@
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
+  height: 100vh; /* fallback for older browsers */
   background-color: var(--background);
   z-index: 9999;
   overflow: hidden;
@@ -16,12 +17,21 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+@supports (height: 100dvh) {
+  .boba-game-container { height: 100dvh; }
+}
+
 /* Canvas */
 .boba-canvas {
   display: block;
   width: 100%;
-  height: calc(100vh - 60px);
+  height: calc(100dvh - 60px);
+  height: calc(100vh - 60px); /* fallback */
   touch-action: none;
+}
+
+@supports (height: 100dvh) {
+  .boba-canvas { height: calc(100dvh - 60px); }
 }
 
 /* ===== Shared Screen Layout ===== */

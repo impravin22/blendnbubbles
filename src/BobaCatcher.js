@@ -176,9 +176,9 @@ function BobaCatcher() {
     canvasHeight: h,
     cup: {
       x: w / 2,
-      y: h - 70,
-      width: 68,
-      height: 48,
+      y: h - 130,
+      width: 72,
+      height: 52,
       targetX: w / 2,
       isFrozen: false,
       frozenTimer: 0,
