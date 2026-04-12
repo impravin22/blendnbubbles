@@ -1,6 +1,42 @@
 # BlendNBubbles - https://blendnbubbles.com
+
+# Allow all search engine crawlers
 User-agent: *
 Allow: /
 Disallow:
+
+# Explicitly allow AI crawlers for Generative Engine Optimization (GEO)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
 
 Sitemap: https://blendnbubbles.com/sitemap.xml
