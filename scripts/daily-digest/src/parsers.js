@@ -1,23 +1,29 @@
-const REVIEW_SENDER_ADDRESSES = new Set([
+const GOOGLE_REVIEW_SENDERS = new Set([
   'noreply@business.google.com',
   'googlecommunityteam-noreply@google.com',
   'business-profile-noreply@google.com',
 ]);
 const PETPOOJA_DOMAIN_SUFFIX = '@petpooja.com';
 const PETPOOJA_SUBJECT_PREFIX = 'Report Notification:';
+const ZOMATO_DOMAIN_SUFFIX = '@zomato.com';
 
-const REVIEW_SUBJECT_SINGLE_RE = /^(.+?)\s+left a review for\s+(.+)$/i;
-const REVIEW_SUBJECT_BATCH_RE = /^(.+?),\s*you got (\d+) new reviews?$/i;
+const GOOGLE_REVIEW_SINGLE_RE = /^(.+?)\s+left a review for\s+(.+)$/i;
+const GOOGLE_REVIEW_BATCH_RE = /^(.+?),\s*you got (\d+) new reviews?$/i;
+const ZOMATO_REVIEW_RE = /^\[Zomato\]\s+New Review for\s+(.+?)\s+by\s+(.+)$/i;
+const ZOMATO_WEEKLY_RE = /^Zomato weekly business report\s+-\s+(.+)$/i;
+const ZOMATO_SETTLEMENT_RE = /^Zomato\s+\|\s+Statement of account\s+\|\s+(.+)$/i;
 
 /**
  * @typedef {object} ReviewSingle
  * @property {'review-single'} kind
+ * @property {'google' | 'zomato'} source
  * @property {string} reviewer
  * @property {string} business
  * @property {1} count
  *
  * @typedef {object} ReviewBatch
  * @property {'review-batch'} kind
+ * @property {'google'} source
  * @property {string} business
  * @property {number} count
  *
@@ -27,30 +33,20 @@ const REVIEW_SUBJECT_BATCH_RE = /^(.+?),\s*you got (\d+) new reviews?$/i;
  * @property {Array<{filename: string, mimeType: string, attachmentId: string, size: number}>} attachments
  * @property {string} messageId
  *
- * @typedef {object} UnrecognisedReview
- * @property {'review-unrecognised'} kind
- * @property {string} subject
- * @property {string} from
+ * @typedef {object} ZomatoWeeklyReport
+ * @property {'zomato-weekly'} kind
+ * @property {string} title
+ * @property {Array<{filename: string, mimeType: string, attachmentId: string, size: number}>} attachments
  * @property {string} messageId
+ * @property {string} snippet
  *
- * @typedef {object} UnrecognisedPetPooja
- * @property {'petpooja-unrecognised'} kind
- * @property {string} subject
- * @property {string} from
+ * @typedef {object} ZomatoSettlement
+ * @property {'zomato-settlement'} kind
+ * @property {string} title
+ * @property {Array<{filename: string, mimeType: string, attachmentId: string, size: number}>} attachments
  * @property {string} messageId
- *
- * @typedef {object} UnknownMessage
- * @property {'unknown'} kind
- * @property {string} subject
- * @property {string} from
- * @property {string} messageId
- *
- * @typedef {ReviewSingle | ReviewBatch | PetPoojaReport | UnrecognisedReview | UnrecognisedPetPooja | UnknownMessage} ParsedMessage
  */
 
-/**
- * Read a header value case-insensitively. Returns '' when missing.
- */
 export function extractHeader(message, name) {
   const headers = message?.payload?.headers ?? [];
   const target = name.toLowerCase();
@@ -58,52 +54,47 @@ export function extractHeader(message, name) {
   return found?.value ?? '';
 }
 
-/**
- * Extract the bare email address from a header like `"Name" <addr@host>` or plain `addr@host`.
- */
 export function extractEmailAddress(headerValue) {
   const angle = headerValue.match(/<([^>]+)>/);
-  const raw = (angle ? angle[1] : headerValue).trim().toLowerCase();
-  return raw;
+  return (angle ? angle[1] : headerValue).trim().toLowerCase();
 }
 
-/**
- * Classify a Gmail message into one of the ParsedMessage variants.
- * @returns {ParsedMessage}
- */
 export function classifyMessage(message) {
   const fromRaw = extractHeader(message, 'From');
   const from = extractEmailAddress(fromRaw);
   const subject = extractHeader(message, 'Subject');
   const messageId = message?.id ?? '';
+  const snippet = (message?.snippet ?? '').trim();
 
-  if (REVIEW_SENDER_ADDRESSES.has(from)) {
-    return parseReview({ subject, from, messageId });
+  if (GOOGLE_REVIEW_SENDERS.has(from)) {
+    return parseGoogleReview({ subject, from, messageId });
   }
   if (from.endsWith(PETPOOJA_DOMAIN_SUFFIX)) {
     return parsePetPooja(message, { subject, from, messageId });
   }
+  if (from.endsWith(ZOMATO_DOMAIN_SUFFIX)) {
+    return parseZomato(message, { subject, from, messageId, snippet });
+  }
   return { kind: 'unknown', subject, from, messageId };
 }
 
-/**
- * @returns {ReviewSingle | ReviewBatch | UnrecognisedReview}
- */
-export function parseReview({ subject, from = '', messageId = '' }) {
-  const single = subject.match(REVIEW_SUBJECT_SINGLE_RE);
+export function parseGoogleReview({ subject, from = '', messageId = '' }) {
+  const single = subject.match(GOOGLE_REVIEW_SINGLE_RE);
   if (single) {
     return {
       kind: 'review-single',
+      source: 'google',
       reviewer: single[1].trim(),
       business: single[2].trim(),
       count: 1,
     };
   }
-  const batch = subject.match(REVIEW_SUBJECT_BATCH_RE);
+  const batch = subject.match(GOOGLE_REVIEW_BATCH_RE);
   if (batch) {
     const count = Number.parseInt(batch[2], 10);
     return {
       kind: 'review-batch',
+      source: 'google',
       business: batch[1].trim(),
       count: Number.isFinite(count) && count > 0 ? count : 1,
     };
@@ -111,9 +102,6 @@ export function parseReview({ subject, from = '', messageId = '' }) {
   return { kind: 'review-unrecognised', subject, from, messageId };
 }
 
-/**
- * @returns {PetPoojaReport | UnrecognisedPetPooja}
- */
 export function parsePetPooja(message, { subject, from = '', messageId = message?.id ?? '' }) {
   if (!subject.startsWith(PETPOOJA_SUBJECT_PREFIX)) {
     return { kind: 'petpooja-unrecognised', subject, from, messageId };
@@ -125,6 +113,39 @@ export function parsePetPooja(message, { subject, from = '', messageId = message
     attachments: extractAttachments(message),
     messageId,
   };
+}
+
+export function parseZomato(message, { subject, from = '', messageId = message?.id ?? '', snippet = '' }) {
+  const review = subject.match(ZOMATO_REVIEW_RE);
+  if (review) {
+    return {
+      kind: 'review-single',
+      source: 'zomato',
+      reviewer: review[2].trim(),
+      business: review[1].trim(),
+      count: 1,
+    };
+  }
+  const weekly = subject.match(ZOMATO_WEEKLY_RE);
+  if (weekly) {
+    return {
+      kind: 'zomato-weekly',
+      title: weekly[1].trim(),
+      attachments: extractAttachments(message),
+      messageId,
+      snippet: snippet.slice(0, 400),
+    };
+  }
+  const settlement = subject.match(ZOMATO_SETTLEMENT_RE);
+  if (settlement) {
+    return {
+      kind: 'zomato-settlement',
+      title: settlement[1].trim(),
+      attachments: extractAttachments(message),
+      messageId,
+    };
+  }
+  return { kind: 'zomato-other', subject, from, messageId };
 }
 
 export function extractAttachments(message) {
