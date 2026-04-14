@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blend N Bubbles Winter Leaflet - A5 Print</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        @page {
+            size: A5;
+            margin: 0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        :root {
+            --primary: #003333;
+            --secondary: #BB8750;
+            --secondary-light: #CEAA67;
+            --accent: #FF9933;
+            --background: #F9F6F0;
+            --text: #333333;
+            --light-text: #666666;
+            --gold-gradient: linear-gradient(45deg, #BB8750, #CEAA67);
+            --teal-gradient: linear-gradient(45deg, #003333, #004444);
+        }
+
+        body {
+            background-color: var(--background);
+            font-family: 'Poppins', sans-serif;
+            width: 148mm;
+            height: 210mm;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        /* Leaflet Container */
+        .leaflet {
+            width: 148mm;
+            height: 210mm;
+            background: #FFFFFF;
+            color: var(--text);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Subtle Texture */
+        .leaflet::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/snow.png');
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Brand Border */
+        .brand-border {
+            border: 2px solid var(--secondary);
+            margin: 10px;
+            height: calc(100% - 20px);
+            position: absolute;
+            width: calc(100% - 20px);
+            pointer-events: none;
+            z-index: 50;
+            border-radius: 4px;
+        }
+
+        .font-luxury { font-family: 'Playfair Display', serif; }
+        .text-brand-teal { color: var(--primary); }
+        .text-brand-gold { color: var(--secondary); }
+        .bg-brand-teal { background-color: var(--primary); }
+        .bg-brand-gold { background-color: var(--secondary); }
+
+        .menu-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(187, 135, 80, 0.2);
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 3px;
+        }
+
+        .menu-item-desc {
+            font-size: 0.65rem;
+            color: var(--light-text);
+            line-height: 1.3;
+        }
+
+        .menu-tag {
+            display: inline-block;
+            font-size: 0.55rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .menu-tag-purple {
+            background: linear-gradient(135deg, #9333ea, #a855f7);
+            color: white;
+        }
+
+        .menu-tag-orange {
+            background: linear-gradient(135deg, #ea580c, #f97316);
+            color: white;
+        }
+
+        /* QR Box Styling */
+        .qr-box {
+            border: 1px dashed var(--secondary);
+            background: var(--background);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        /* Video Grid Styles */
+        .video-grid {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            align-items: stretch;
+            padding: 0 12px;
+        }
+
+        .video-card {
+            flex: 1;
+            max-width: 110px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: var(--primary);
+            border: 2px solid var(--secondary);
+        }
+
+        .video-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            aspect-ratio: 9/16;
+            object-fit: cover;
+        }
+
+        .video-card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
+            padding: 25px 6px 8px 6px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .video-card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.65rem;
+            color: white;
+            font-weight: 700;
+            margin-bottom: 3px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .video-card-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #BB8750, #CEAA67);
+            color: white;
+            font-size: 0.45rem;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 20px 8px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-subtitle {
+            font-size: 7px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--light-text);
+        }
+
+        .header-title {
+            font-size: 26px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin: 4px 0;
+        }
+
+        .header-title span {
+            color: var(--secondary);
+        }
+
+        .header-divider {
+            height: 1px;
+            width: 60px;
+            background: var(--gold-gradient);
+            margin: 6px auto;
+        }
+
+        .header-winter {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+
+        .intro {
+            padding: 8px 24px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .intro p {
+            font-size: 9px;
+            font-style: italic;
+            line-height: 1.4;
+            color: var(--light-text);
+        }
+
+        .menu-section {
+            padding: 12px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .menu-section h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            text-align: center;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        .offer-section {
+            padding: 0 20px 12px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .offer-box {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,51,51,0.15);
+            position: relative;
+            overflow: hidden;
+            background: var(--primary);
+        }
+
+        .offer-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gold-gradient);
+        }
+
+        .offer-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 11px;
+            color: var(--secondary);
+        }
+
+        .offer-text {
+            color: white;
+            font-size: 9px;
+            margin-top: 4px;
+        }
+
+        .footer {
+            margin-top: auto;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(187, 135, 80, 0.2);
+            background: var(--background);
+            position: relative;
+            z-index: 10;
+        }
+
+        .qr-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .qr-box img {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 4px;
+        }
+
+        .qr-box p {
+            font-size: 7px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+        }
+
+        .contact-info {
+            text-align: center;
+        }
+
+        .contact-address {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+            margin-bottom: 2px;
+        }
+
+        .contact-location {
+            font-size: 8px;
+            color: var(--light-text);
+            margin-bottom: 10px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .social-links a {
+            color: var(--secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .social-divider {
+            color: #ddd;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- The Flyer/Leaflet -->
+    <div class="leaflet">
+        <div class="brand-border"></div>
+        
+        <!-- Header -->
+        <div class="header">
+            <div class="header-subtitle">Authentic Taiwanese Bubble Tea</div>
+            <h1 class="header-title">Blend N <span>Bubbles</span></h1>
+            <div class="header-divider"></div>
+            <h2 class="header-winter">
+                Winter Menu
+                <i class="fas fa-snowflake" style="font-size: 14px; margin-left: 4px; color: var(--secondary);"></i>
+            </h2>
+        </div>
+
+        <!-- Intro -->
+        <div class="intro">
+            <p>"Experience Barrackpore's first authentic Taiwanese Bubble Tea. Indulge in cozy winter warmth and creamy delight in every sip."</p>
+        </div>
+
+        <!-- Hero: Three Portrait Images Side by Side -->
+        <div class="video-grid" style="margin-top: 8px;">
+            
+            <!-- Image 1: Hot Cocoa Cloud -->
+            <div class="video-card">
+                <img src="winter_leaflet_hot_chocolate.jpg" alt="Hot Cocoa Cloud">
+                <div class="video-card-overlay">
+                    <p class="video-card-title">Hot Cocoa Cloud</p>
+                    <span class="video-card-badge">Must Try</span>
+                </div>
+            </div>
+
+            <!-- Image 2: Signature Cafe Mocha -->
+            <div class="video-card">
+                <img src="winter_leaflet_cafe_mocha.jpg" alt="Signature Café Mocha">
+                <div class="video-card-overlay">
+                    <p class="video-card-title">Signature Café Mocha</p>
+                    <span class="video-card-badge">Premium</span>
+                </div>
+            </div>
+
+            <!-- Image 3: Taiwan Signature Boba -->
+            <div class="video-card">
+                <img src="winter_leaflet_milk_tea.jpg" alt="Taiwan Signature Boba">
+                <div class="video-card-overlay">
+                    <p class="video-card-title">Taiwan Signature Boba</p>
+                    <span class="video-card-badge">Classic</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Menu List -->
+        <div class="menu-section">
+            <h3>More Winter Favorites</h3>
+
+            <!-- Biscoff Blaze Latte -->
+            <div class="menu-item">
+                <h4 class="menu-item-title">Biscoff Blaze Latte</h4>
+                <p class="menu-item-desc">Caramelized Biscoff, rich coffee, fresh milk, signature tapioca pearls.</p>
+            </div>
+
+            <!-- Matcha Velvetea Boba -->
+            <div class="menu-item">
+                <h4 class="menu-item-title">Matcha Velvetea Boba</h4>
+                <p class="menu-item-desc">Smooth matcha, fresh milk, hint of cinnamon, signature tapioca pearls.</p>
+            </div>
+
+            <!-- Signature Classics -->
+            <div class="menu-item">
+                <h4 class="menu-item-title">Signature Classics</h4>
+                <div style="display: flex; gap: 6px; margin: 4px 0;">
+                    <span class="menu-tag menu-tag-purple">Purple Taro Tea</span>
+                    <span class="menu-tag menu-tag-orange">Thai Sunset</span>
+                </div>
+                <p class="menu-item-desc">Nutty taro & exotic Thai tea with creamy condensed milk.</p>
+            </div>
+
+        </div>
+
+        <!-- Offers Section -->
+        <div class="offer-section">
+            <div class="offer-box">
+                <h4 class="offer-title">Winter Offer</h4>
+                <p class="offer-text">Get 10% OFF on your first order!</p>
+            </div>
+        </div>
+
+        <!-- Footer / Contact / QR -->
+        <div class="footer">
+            
+            <div class="qr-grid">
+                <!-- Location QR -->
+                <div class="qr-box">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://maps.app.goo.gl/2kgVWv4EoshMffVv5" alt="Map QR">
+                    <p>Find Us</p>
+                </div>
+                <!-- Menu QR -->
+                <div class="qr-box">
+                    <img src="https://blendnbubbles.com/winter-menu-qr.png" alt="Menu QR">
+                    <p>Full Menu</p>
+                </div>
+            </div>
+
+            <div class="contact-info">
+                <p class="contact-address">Senjuti Apt, Feeder Road</p>
+                <p class="contact-location">Barrackpore</p>
+                
+                <div class="social-links">
+                    <a href="https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore">
+                        <i class="fas fa-utensils"></i> <span>Zomato</span>
+                    </a>
+                    <span class="social-divider">|</span>
+                    <a href="https://www.instagram.com/blendnbubbles">
+                        <i class="fab fa-instagram"></i> <span>@blendnbubbles</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
+

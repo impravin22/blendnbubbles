@@ -9,7 +9,10 @@
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
     "bootstrap": "^5.3.3",
+    "dotenv": "^17.2.3",
+    "firebase": "^12.9.0",
     "gh-pages": "^6.3.0",
+    "nodemailer": "^7.0.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.4.1",
@@ -21,7 +24,8 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && npm run postbuild",
+    "postbuild": "cd build && mkdir -p menu story play && cp index.html menu/index.html && cp index.html story/index.html && cp index.html play/index.html",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -46,6 +50,7 @@
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
+    "puppeteer": "^24.32.0",
     "tailwindcss": "^4.0.15"
   }
 }
