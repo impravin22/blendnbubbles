@@ -2,8 +2,8 @@ name: Daily Digest
 
 on:
   schedule:
-    # 09:00 Asia/Taipei = 01:00 UTC
-    - cron: "0 1 * * *"
+    # 09:00 and 21:00 Asia/Taipei = 01:00 and 13:00 UTC
+    - cron: "0 1,13 * * *"
   workflow_dispatch: {}
   push:
     branches: [main]

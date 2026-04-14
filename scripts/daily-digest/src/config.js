@@ -24,7 +24,7 @@ export function loadConfig(env = process.env) {
   if (missing.length > 0) {
     throw new Error(`Missing required env vars: ${missing.join(', ')}`);
   }
-  const lookbackHours = Number(env.DIGEST_LOOKBACK_HOURS ?? 24);
+  const lookbackHours = Number(env.DIGEST_LOOKBACK_HOURS ?? 12);
   if (!Number.isFinite(lookbackHours) || lookbackHours <= 0) {
     throw new Error(
       `DIGEST_LOOKBACK_HOURS must be a positive finite number (got "${env.DIGEST_LOOKBACK_HOURS}")`,

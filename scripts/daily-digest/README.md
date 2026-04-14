@@ -1,9 +1,10 @@
 # Daily Digest Bot
 
-Sends a daily Telegram message at **09:00 Asia/Taipei** (01:00 UTC) summarising:
+Sends a Telegram digest **twice a day** — **09:00 and 21:00 Asia/Taipei** (01:00 and 13:00 UTC) — summarising the last 12 hours of:
 
-- New Google Maps reviews on `blendnbubbles@gmail.com` from the last 24 h
-- PetPooja overnight reports (forwarded as xlsx attachments)
+- Customer reviews on **Google** (new review notifications) and **Zomato** (`[Zomato] New Review for ...`)
+- **PetPooja** overnight reports (forwarded as xlsx attachments)
+- **Zomato business** updates: weekly business report body + settlement statement xlsx
 
 Runs on GitHub Actions (`.github/workflows/daily-digest.yml`). No server to maintain.
 
@@ -113,18 +114,27 @@ scripts/daily-digest/
 
 ## What the digest looks like
 
+Morning digest (09:00 TPE):
+
 ```
-☀️ Blend N Bubbles — Daily Rundown
+☀️ Blend N Bubbles — Morning Rundown
 14 Apr 2026, 09:00 TPE
 
-⭐ Google Reviews (last 24h)
-  • 3 new reviews
-  • From: Sushmita, Rajat, Anamika
-  • Reply on Google Business ↗
+⭐ Customer Reviews (last window)
+  • Google: 3 new reviews (from Sushmita, Rajat, Anamika)
+    Reply on Google Business ↗
+  • Zomato: 1 new review (from Jayasree Dutta)
+    Reply on Zomato Business ↗
 
 📊 PetPooja — Barrackpore Branch
   • Item Wise Report With Bill No. : Blend N Bubbles [Barrackpore Branch]
   • 📎 Item_bill_report_2026_04_14_01_38_27.xlsx
+
+🍽️ Zomato — Business
+  • Weekly report: Week 15 (6 to 12 Apr, 2026)
+    Orders: 120, Revenue: ₹42,000, ...
+  • Settlement: Blend N Bubbles 21955142 | 30 Mar to 05 Apr
+  • 📎 Zomato_Settlement_Report_...xlsx
 ```
 
-Followed by the xlsx file attached to the group.
+Evening digest (21:00 TPE) uses the same structure with `🌙 Evening Rundown`. Attachments land as separate Telegram documents right after the text digest.
