@@ -28,6 +28,17 @@ export async function parseItemWiseSalesReport(buffer) {
   const sheet = wb.worksheets[0];
   if (!sheet) return null;
 
+  // Validate the template — if PetPooja ever sends a different report type
+  // (e.g. "Category Wise Sales Report") the columns are different, so we must
+  // refuse to parse rather than emit bogus numbers.
+  const categoryHeader = cellText(sheet, HEADER_ROW, COL_CATEGORY);
+  const totalHeader = cellText(sheet, HEADER_ROW, COL_TOTAL);
+  if (categoryHeader !== 'Category' || !/^Total/.test(totalHeader ?? '')) {
+    throw new Error(
+      `PetPooja xlsx template mismatch: expected Category / Total headers, got "${categoryHeader}" / "${totalHeader}"`,
+    );
+  }
+
   const dateRange = cellText(sheet, 1, 2);
   const restaurantName = cellText(sheet, 3, 2);
   const grandTotalQty = cellNumber(sheet, TOTAL_ROW, COL_QTY);

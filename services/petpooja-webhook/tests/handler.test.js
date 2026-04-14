@@ -57,6 +57,112 @@ test('handleWebhook persists an order keyed by orderID and is idempotent', async
   }
 });
 
+test('handleWebhook fails closed when expectedToken is missing', async () => {
+  const { file, cleanup } = await tempStore();
+  try {
+    const res = await handleWebhook(
+      { token: 'anything', properties: { Order: { orderID: '1', orderStatus: 'Success', total: 1 } } },
+      { expectedToken: undefined, storePath: file },
+    );
+    assert.equal(res.statusCode, 401);
+    assert.equal(res.error, 'bad-token');
+  } finally {
+    await cleanup();
+  }
+});
+
+test('handleWebhook rejects __proto__ and unsafe characters in orderID', async () => {
+  const { file, cleanup } = await tempStore();
+  try {
+    for (const badId of ['__proto__', 'constructor', 'ok id with space', 'bad/path']) {
+      const res = await handleWebhook(
+        { token: 't', properties: { Order: { orderID: badId, orderStatus: 'Success', total: 1 } } },
+        { expectedToken: 't', storePath: file },
+      );
+      assert.equal(res.error, 'unsafe-order-id', `expected rejection for "${badId}"`);
+    }
+  } finally {
+    await cleanup();
+  }
+});
+
+test('handleWebhook normalises status variants so aggregateToday counts them', async () => {
+  const { file, cleanup } = await tempStore();
+  try {
+    for (const [i, variant] of ['success', 'SUCCESS', 'Completed', 'delivered'].entries()) {
+      const res = await handleWebhook(
+        { token: 't', properties: { Order: { orderID: `O${i}`, orderStatus: variant, total: 100 } } },
+        { expectedToken: 't', storePath: file },
+      );
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.order.status, 'Success', `variant "${variant}" should normalise to Success`);
+    }
+  } finally {
+    await cleanup();
+  }
+});
+
+test('handleWebhook accepts stringified rupee amounts ("₹350", "350.00")', async () => {
+  const { file, cleanup } = await tempStore();
+  try {
+    for (const [i, value] of ['₹350', '350.00', '1,200', 350].entries()) {
+      const res = await handleWebhook(
+        { token: 't', properties: { Order: { orderID: `S${i}`, orderStatus: 'Success', total: value } } },
+        { expectedToken: 't', storePath: file },
+      );
+      assert.equal(res.statusCode, 200, `expected accept for total=${JSON.stringify(value)}`);
+    }
+  } finally {
+    await cleanup();
+  }
+});
+
+test('handleWebhook is concurrency-safe — 20 parallel POSTs all persist', async () => {
+  const { file, cleanup } = await tempStore();
+  try {
+    const writes = Array.from({ length: 20 }, (_, i) =>
+      handleWebhook(
+        { token: 't', properties: { Order: { orderID: `C${i}`, orderStatus: 'Success', total: 100 + i } } },
+        { expectedToken: 't', storePath: file },
+      ),
+    );
+    await Promise.all(writes);
+    const stored = await loadOrders(file);
+    assert.equal(Object.keys(stored).length, 20);
+  } finally {
+    await cleanup();
+  }
+});
+
+test('aggregateToday throws on invalid timezone', () => {
+  assert.throws(
+    () => aggregateToday({}, { localeTz: 'Not/A/Zone' }),
+    /invalid localeTz/,
+  );
+});
+
+test('aggregateToday buckets the same UTC instant into different IST days depending on boundary', () => {
+  // Two orders straddling the IST midnight boundary, but same UTC date (12 Apr).
+  //   order a — UTC 18:29 on 12 Apr → IST 23:59 on 12 Apr
+  //   order b — UTC 18:31 on 12 Apr → IST 00:01 on 13 Apr
+  const orders = {
+    a: { orderId: 'a', status: 'Success', total: 100, receivedAt: '2026-04-12T18:29:00Z' },
+    b: { orderId: 'b', status: 'Success', total: 200, receivedAt: '2026-04-12T18:31:00Z' },
+  };
+  const queryFrom12th = aggregateToday(orders, {
+    now: new Date('2026-04-12T10:00:00Z'), // IST 15:30 on 12 Apr
+    localeTz: 'Asia/Kolkata',
+  });
+  const queryFrom13th = aggregateToday(orders, {
+    now: new Date('2026-04-13T10:00:00Z'), // IST 15:30 on 13 Apr
+    localeTz: 'Asia/Kolkata',
+  });
+  assert.equal(queryFrom12th.orderCount, 1);
+  assert.equal(queryFrom12th.totalRupees, 100);
+  assert.equal(queryFrom13th.orderCount, 1);
+  assert.equal(queryFrom13th.totalRupees, 200);
+});
+
 test('aggregateToday sums successful orders in the given timezone, ignoring rejected + yesterday', async () => {
   const nowIso = new Date().toISOString();
   const yesterdayIso = new Date(Date.now() - 36 * 3600 * 1000).toISOString();

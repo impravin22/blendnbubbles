@@ -187,6 +187,63 @@ test('runDigest skips zero-byte and oversize attachments and sends failure notic
   assert.equal(summary.attachmentFailures, 2);
 });
 
+test('runDigest fetches each PetPooja attachment exactly once (cache reused for forwarding)', async () => {
+  let attGetCalls = 0;
+  const fakeGmail = {
+    users: {
+      messages: {
+        list: async () => ({ data: { messages: [{ id: 'm1' }] } }),
+        get: async () => ({
+          data: {
+            id: 'm1',
+            internalDate: String(Date.now() - 3600_000),
+            snippet: '',
+            payload: {
+              headers: [
+                { name: 'From', value: '<no-reply@petpooja.com>' },
+                { name: 'Subject', value: 'Report Notification: Item' },
+              ],
+              parts: [
+                { filename: 'x.xlsx', mimeType: 'x', body: { attachmentId: 'ATT1', size: 123 } },
+              ],
+            },
+          },
+        }),
+        attachments: {
+          get: async () => {
+            attGetCalls++;
+            // Return a buffer that is intentionally not a real xlsx; the parse
+            // will fail and summaryError will be set, but the cache logic is
+            // still exercised because we cached the buffer before the throw.
+            return { data: { data: Buffer.from('not-a-real-xlsx').toString('base64url') } };
+          },
+        },
+      },
+    },
+  };
+  const fakeTelegram = { sendMessage: async () => {}, sendDocument: async () => {} };
+  await runDigest({
+    config: { gmail: {}, telegram: {}, lookbackHours: 12, localeTz: 'Asia/Taipei' },
+    deps: { gmail: fakeGmail, telegram: fakeTelegram },
+  });
+  assert.equal(attGetCalls, 1, 'attachment.get must be called once, not re-fetched');
+});
+
+test('loadConfig rejects invalid IANA timezone', () => {
+  assert.throws(
+    () =>
+      loadConfig({
+        GMAIL_CLIENT_ID: 'a',
+        GMAIL_CLIENT_SECRET: 'b',
+        GMAIL_REFRESH_TOKEN: 'c',
+        TELEGRAM_BOT_TOKEN: 'd',
+        TELEGRAM_CHAT_ID: '-1',
+        DIGEST_LOCALE_TZ: 'Not/A/Zone',
+      }),
+    /not a valid IANA timezone/,
+  );
+});
+
 test('loadConfig defaults lookbackHours to 12', () => {
   const config = loadConfig({
     GMAIL_CLIENT_ID: 'a',
@@ -285,6 +342,43 @@ test('Positive weekly deltas render with up arrow', () => {
     now: new Date('2026-04-12T13:00:00Z'),
   });
   assert.match(text, /\(\+45% 🔺/);
+});
+
+test('PetPooja section surfaces summaryError when xlsx parse fails', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [
+      {
+        kind: 'petpooja',
+        reportTitle: 'Bad report',
+        attachments: [{ filename: 'bad.xlsx', mimeType: 'x', attachmentId: 'a', size: 1 }],
+        messageId: 'm',
+        summaryError: 'template mismatch',
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /Could not parse xlsx: template mismatch/);
+});
+
+test('PetPooja live-feed error surfaces in digest instead of silently omitting', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    petpoojaLive: { ok: false, reason: 'HTTP 500' },
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /Live feed unavailable \(HTTP 500\)/);
+});
+
+test('PetPooja live-feed "not-configured" stays silent (no scary warning)', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    petpoojaLive: { ok: false, reason: 'not-configured' },
+    localeTz: 'Asia/Taipei',
+  });
+  assert.doesNotMatch(text, /Live feed unavailable/);
 });
 
 test('PetPooja section renders drink-wise summary when report.summary is present', () => {

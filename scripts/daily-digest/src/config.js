@@ -30,6 +30,12 @@ export function loadConfig(env = process.env) {
       `DIGEST_LOOKBACK_HOURS must be a positive finite number (got "${env.DIGEST_LOOKBACK_HOURS}")`,
     );
   }
+  const localeTz = env.DIGEST_LOCALE_TZ ?? 'Asia/Taipei';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: localeTz }).format(new Date());
+  } catch {
+    throw new Error(`DIGEST_LOCALE_TZ "${localeTz}" is not a valid IANA timezone`);
+  }
   return {
     gmail: {
       clientId: env.GMAIL_CLIENT_ID,
@@ -41,7 +47,7 @@ export function loadConfig(env = process.env) {
       chatId: env.TELEGRAM_CHAT_ID,
     },
     lookbackHours,
-    localeTz: env.DIGEST_LOCALE_TZ ?? 'Asia/Taipei',
+    localeTz,
     petpoojaWebhook:
       env.PETPOOJA_WEBHOOK_URL && env.PETPOOJA_WEBHOOK_TOKEN
         ? { url: env.PETPOOJA_WEBHOOK_URL, token: env.PETPOOJA_WEBHOOK_TOKEN }

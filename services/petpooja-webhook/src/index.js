@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { handleWebhook } from './handler.js';
-import { loadOrders, aggregateToday } from './storage.js';
+import { loadOrders, aggregateToday, assertAllowedPath } from './storage.js';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const EXPECTED_TOKEN = process.env.PETPOOJA_SHARED_TOKEN;
@@ -17,10 +18,25 @@ if (!DIGEST_API_TOKEN) {
   console.error('DIGEST_API_TOKEN is required — refuse to start without it.');
   process.exit(1);
 }
+if (STORE_PATH) {
+  try {
+    assertAllowedPath(STORE_PATH);
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+}
+try {
+  new Intl.DateTimeFormat('en-CA', { timeZone: LOCALE_TZ }).format(new Date());
+} catch {
+  console.error(`DIGEST_LOCALE_TZ "${LOCALE_TZ}" is not a valid IANA timezone.`);
+  process.exit(1);
+}
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === 'POST' && req.url === '/petpooja-webhook') {
+    const { pathname } = new URL(req.url, 'http://host');
+    if (req.method === 'POST' && pathname === '/petpooja-webhook') {
       const body = await readJson(req);
       const result = await handleWebhook(body, {
         expectedToken: EXPECTED_TOKEN,
@@ -31,9 +47,10 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ ok: result.ok, ...(result.error ? { error: result.error } : {}) }));
       return;
     }
-    if (req.method === 'GET' && req.url.startsWith('/petpooja-today')) {
+    if (req.method === 'GET' && pathname === '/petpooja-today') {
       if (!authorised(req)) {
         res.statusCode = 401;
+        res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ ok: false, error: 'bad-token' }));
         return;
       }
@@ -45,16 +62,18 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ ok: true, ...summary }));
       return;
     }
-    if (req.method === 'GET' && req.url === '/health') {
+    if (req.method === 'GET' && pathname === '/health') {
       res.statusCode = 200;
       res.end('ok');
       return;
     }
     res.statusCode = 404;
+    res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ ok: false, error: 'not-found' }));
   } catch (err) {
     console.error('webhook error:', err?.stack ?? err);
     res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ ok: false, error: 'internal' }));
   }
 });
@@ -91,5 +110,11 @@ function authorised(req) {
   const header = req.headers.authorization ?? '';
   const match = header.match(/^Bearer\s+(.+)$/i);
   const token = match ? match[1] : null;
-  return token && token === DIGEST_API_TOKEN;
+  if (!token || !DIGEST_API_TOKEN) return false;
+  const a = Buffer.from(token);
+  const b = Buffer.from(DIGEST_API_TOKEN);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
 }
+
+export { server };

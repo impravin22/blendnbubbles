@@ -61,3 +61,18 @@ test('summariseForDigest orders top categories by revenue', async () => {
 test('summariseForDigest returns null for null report', () => {
   assert.equal(summariseForDigest(null), null);
 });
+
+test('parseItemWiseSalesReport rejects a template with unexpected headers', async () => {
+  const ExcelJS = (await import('exceljs')).default;
+  const wb = new ExcelJS.Workbook();
+  const sheet = wb.addWorksheet('Sheet1');
+  // Populate rows so row 6 has the wrong headers
+  for (let i = 1; i < 6; i++) sheet.addRow([]);
+  sheet.addRow(['Foo', 'Bar', 'Baz', 'Qux', 'Quux', 'Corge']);
+  sheet.addRow(['Total', null, null, null, 350, 52373]);
+  const buffer = await wb.xlsx.writeBuffer();
+  await assert.rejects(
+    () => parseItemWiseSalesReport(buffer),
+    /template mismatch/,
+  );
+});

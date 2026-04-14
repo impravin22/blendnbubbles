@@ -28,22 +28,33 @@ const GMAIL_SEARCH_QUERY = [
 ].join(' ');
 
 export async function fetchPetpoojaToday({ url, token } = {}, { fetchImpl = fetch } = {}) {
-  if (!url || !token) return null;
+  if (!url || !token) {
+    console.warn('petpoojaWebhook not configured — live-sales line omitted');
+    return { ok: false, reason: 'not-configured' };
+  }
   try {
     const res = await fetchImpl(`${url.replace(/\/$/, '')}/petpooja-today`, {
       headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
-      console.warn(`petpooja-today fetch failed: HTTP ${res.status}`);
-      return null;
+      const reason = `HTTP ${res.status}`;
+      console.warn(`petpooja-today fetch failed: ${reason}`);
+      return { ok: false, reason };
     }
     const data = await res.json();
-    if (!data?.ok) return null;
-    return { date: data.date, orderCount: data.orderCount, totalRupees: data.totalRupees, rejectedCount: data.rejectedCount };
+    if (!data?.ok) return { ok: false, reason: 'body-not-ok' };
+    return {
+      ok: true,
+      date: data.date,
+      orderCount: data.orderCount,
+      totalRupees: data.totalRupees,
+      rejectedCount: data.rejectedCount,
+    };
   } catch (err) {
-    console.warn('petpooja-today fetch threw:', err?.message ?? err);
-    return null;
+    const reason = err?.message ?? 'fetch-threw';
+    console.warn('petpooja-today fetch threw:', reason);
+    return { ok: false, reason };
   }
 }
 
@@ -190,15 +201,17 @@ export function formatDigestText({
   lines.push('');
 
   lines.push('<b>📊 PetPooja — Barrackpore Branch</b>');
-  if (petpoojaLive) {
+  if (petpoojaLive?.ok) {
     const rupees = (petpoojaLive.totalRupees ?? 0).toLocaleString('en-IN');
     lines.push(
       `  • 💰 Today (live): ₹${rupees} from ${petpoojaLive.orderCount} orders` +
         (petpoojaLive.rejectedCount ? ` (${petpoojaLive.rejectedCount} rejected)` : ''),
     );
+  } else if (petpoojaLive && petpoojaLive.reason !== 'not-configured') {
+    lines.push(`  • ⚠️ Live feed unavailable (${escapeHtml(petpoojaLive.reason)})`);
   }
   if (petpoojaReports.length === 0) {
-    if (!petpoojaLive) lines.push('  • No overnight report yet — check again later');
+    if (!petpoojaLive?.ok) lines.push('  • No overnight report yet — check again later');
   } else {
     for (const report of petpoojaReports) {
       lines.push(`  • ${escapeHtml(report.reportTitle)}`);
@@ -221,6 +234,8 @@ export function formatDigestText({
             .join(', ');
           lines.push(`    📂 By category: ${tops}`);
         }
+      } else if (report.summaryError) {
+        lines.push(`    ⚠️ Could not parse xlsx: ${escapeHtml(report.summaryError)}`);
       }
       for (const att of report.attachments) {
         lines.push(`  • 📎 ${escapeHtml(att.filename)}`);
@@ -346,7 +361,9 @@ export async function runDigest({ config, deps = {} }) {
   const petpoojaLive = await fetchPetpoojaToday(config.petpoojaWebhook ?? {});
 
   // Parse PetPooja xlsx attachments up-front so the summary can land in the
-  // main digest text BEFORE the attachment itself is forwarded.
+  // main digest text BEFORE the attachment itself is forwarded. On failure
+  // the report carries a human-readable summaryError that the formatter
+  // surfaces in the Telegram message — never silently drop.
   const attachmentBuffers = new Map();
   for (const report of digestInput.petpoojaReports) {
     for (const att of report.attachments) {
@@ -356,7 +373,9 @@ export async function runDigest({ config, deps = {} }) {
         attachmentBuffers.set(att.attachmentId, { buffer, mimeType: att.mimeType, filename: att.filename });
         report.summary = summariseForDigest(await parseItemWiseSalesReport(buffer));
       } catch (err) {
-        console.warn('PetPooja xlsx parse failed:', err?.message ?? err);
+        const reason = err?.message ?? String(err);
+        console.warn('PetPooja xlsx parse failed:', reason);
+        report.summaryError = reason;
       }
     }
   }
@@ -452,15 +471,20 @@ export async function runDigest({ config, deps = {} }) {
 }
 
 function isSundayEvening(now, localeTz) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: localeTz,
-    weekday: 'short',
-    hour: '2-digit',
-    hour12: false,
-  }).formatToParts(now);
-  const weekday = parts.find((p) => p.type === 'weekday')?.value;
-  const hour = Number(parts.find((p) => p.type === 'hour')?.value);
-  return weekday === 'Sun' && Number.isFinite(hour) && hour >= 16;
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: localeTz,
+      weekday: 'short',
+      hour: '2-digit',
+      hour12: false,
+    }).formatToParts(now);
+    const weekday = parts.find((p) => p.type === 'weekday')?.value;
+    const hour = Number(parts.find((p) => p.type === 'hour')?.value);
+    return weekday === 'Sun' && Number.isFinite(hour) && hour >= 16;
+  } catch (err) {
+    console.warn(`isSundayEvening: invalid timeZone "${localeTz}"`);
+    return false;
+  }
 }
 
 function hasMetrics(metrics) {
