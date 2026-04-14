@@ -162,6 +162,19 @@
   box-shadow: 0 2px 10px rgba(187, 135, 80, 0.3);
 }
 
+.boba-loc-msg {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  color: #CEAA67;
+  background: rgba(206, 170, 103, 0.1);
+  border: 1px solid rgba(206, 170, 103, 0.3);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 12px 0 0 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
 .boba-tagline {
   font-family: 'Poppins', sans-serif;
   font-style: italic;
@@ -352,6 +365,177 @@
   margin-top: 24px;
 }
 
+/* ===== Submit Form ===== */
+.boba-submit-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.boba-form-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--secondary-light);
+  margin: 0 0 4px 0;
+}
+
+.boba-input {
+  width: 100%;
+  max-width: 280px;
+  padding: 12px 16px;
+  border: 2px solid rgba(187, 135, 80, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.boba-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.boba-input:focus {
+  border-color: var(--secondary-light);
+}
+
+.boba-skip-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 8px 16px;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.boba-skip-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.boba-submit-error {
+  color: #FF6B6B;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.boba-submit-success {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  color: #34D399;
+  margin-top: 16px;
+  font-weight: 500;
+}
+
+.boba-check-icon {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.boba-start-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Leaderboard Screen ===== */
+.boba-leaderboard-screen {
+  background: linear-gradient(135deg, #003333 0%, #004444 100%);
+}
+
+.boba-leaderboard-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 380px;
+  width: 100%;
+}
+
+.boba-lb-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+}
+
+.boba-lb-subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  color: var(--secondary-light);
+  margin: 0 0 20px 0;
+}
+
+.boba-lb-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.boba-lb-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease;
+}
+
+.boba-lb-highlight {
+  background: rgba(187, 135, 80, 0.2) !important;
+  border-color: rgba(187, 135, 80, 0.4) !important;
+}
+
+.boba-lb-rank {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  min-width: 36px;
+  text-align: left;
+}
+
+.boba-lb-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #ffffff;
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boba-lb-score {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--secondary-light);
+  margin-left: 12px;
+}
+
+.boba-lb-loading,
+.boba-lb-empty {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 40px 0;
+}
+
 /* ===== Safe Area (notched phones) ===== */
 @supports (padding: env(safe-area-inset-top)) {
   .boba-hud {
@@ -370,4 +554,7 @@
   .boba-instructions { gap: 6px; margin-bottom: 16px; }
   .boba-final-score { font-size: 3.5rem; }
   .boba-reward-card { padding: 14px 18px; margin: 12px 0 16px 0; }
+  .boba-lb-title { font-size: 1.4rem; }
+  .boba-lb-row { padding: 8px 12px; }
+  .boba-input { padding: 10px 14px; }
 }

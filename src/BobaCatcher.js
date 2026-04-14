@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { submitScore, getWeeklyLeaderboard } from './firebase';
 import './BobaCatcher.css';
 
 // ─── Item Types ──────────────────────────────────────────────
@@ -17,6 +18,21 @@ const POPPING_COLORS = ['#FF6B9D', '#C084FC', '#34D399', '#FB923C', '#60A5FA'];
 const COMBO_WORDS = ['Jhakas!', 'Mast!', 'Zabardast!', 'Badhiya!', 'Ek dum!', 'Fatafat!', 'Jhakkas!'];
 const GAME_DURATION = 60;
 
+// ─── Store Location (BlendNBubbles, Barrackpore) ─────────────
+const STORE_LAT = 22.7602;
+const STORE_LNG = 88.3711;
+const MAX_DISTANCE_M = 100; // metres
+
+function getDistanceMetres(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 // ─── Weighted Random Pick ────────────────────────────────────
 function pickItemType() {
   const totalWeight = ITEM_TYPES.reduce((sum, t) => sum + t.weight, 0);
@@ -30,6 +46,41 @@ function pickItemType() {
 
 // ─── Sub-Components ──────────────────────────────────────────
 function StartScreen({ onStart, highScore }) {
+  const [locStatus, setLocStatus] = useState('idle'); // idle | checking | denied | too_far | error
+  const [locMsg, setLocMsg] = useState('');
+
+  const handleStart = () => {
+    if (!navigator.geolocation) {
+      setLocStatus('error');
+      setLocMsg('Location not supported on this browser.');
+      return;
+    }
+    setLocStatus('checking');
+    setLocMsg('');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const dist = getDistanceMetres(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG);
+        if (dist <= MAX_DISTANCE_M) {
+          setLocStatus('idle');
+          onStart();
+        } else {
+          setLocStatus('too_far');
+          setLocMsg('You need to be at BlendNBubbles to play! Visit us at Feeder Road, Barrackpore.');
+        }
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocStatus('denied');
+          setLocMsg('Please allow location access to play. We only check that you\'re at the store.');
+        } else {
+          setLocStatus('error');
+          setLocMsg('Could not get your location. Please try again.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   return (
     <div className="boba-screen boba-start-screen">
       <div className="boba-start-content">
@@ -59,7 +110,11 @@ function StartScreen({ onStart, highScore }) {
         <p className="boba-how-to">Slide your finger to move the cup</p>
         {highScore > 0 && <p className="boba-high-score">Best Score: {highScore} pts</p>}
 
-        <button className="boba-start-btn" onClick={onStart}>Start Game</button>
+        <button className="boba-start-btn" onClick={handleStart} disabled={locStatus === 'checking'}>
+          {locStatus === 'checking' ? 'Checking location...' : 'Start Game'}
+        </button>
+
+        {locMsg && <p className="boba-loc-msg">{locMsg}</p>}
 
         <p className="boba-tagline">Queue mein wait karo, game khelke maza karo!</p>
         <Link to="/menu" className="boba-menu-link">View Our Menu</Link>
@@ -88,17 +143,22 @@ function GameHUD({ score, timeLeft, combo }) {
   );
 }
 
-function GameOverScreen({ score, highScore, onRestart }) {
+function getReward(score) {
+  if (score >= 80) return { tier: 'BOBA MASTER', msg: 'Tumi darun! Show this to the counter for a FREE topping upgrade!' };
+  if (score >= 50) return { tier: 'CHAI CHAMPION', msg: 'Bohot badhiya! Show this for 10% off your next drink!' };
+  if (score >= 25) return { tier: 'BUBBLE BUDDY', msg: 'Accha khela! Show this for a surprise treat!' };
+  return { tier: 'BOBA BEGINNER', msg: 'Aar ekbar try koro! Every player gets a smile from us!' };
+}
+
+function GameOverScreen({ score, highScore, onSubmit, onSkip, playerName, playerPhone, setPlayerName, setPlayerPhone, submitting, submitted, submitError }) {
   const isNewHigh = score >= highScore && score > 0;
+  const reward = getReward(score);
 
-  const getReward = () => {
-    if (score >= 80) return { tier: 'BOBA MASTER', msg: 'Tumi darun! Show this to the counter for a FREE topping upgrade!' };
-    if (score >= 50) return { tier: 'CHAI CHAMPION', msg: 'Bohot badhiya! Show this for 10% off your next drink!' };
-    if (score >= 25) return { tier: 'BUBBLE BUDDY', msg: 'Accha khela! Show this for a surprise treat!' };
-    return { tier: 'BOBA BEGINNER', msg: 'Aar ekbar try koro! Every player gets a smile from us!' };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!playerName.trim() || !playerPhone.trim()) return;
+    onSubmit();
   };
-
-  const reward = getReward();
 
   return (
     <div className="boba-screen boba-gameover-screen">
@@ -115,6 +175,72 @@ function GameOverScreen({ score, highScore, onRestart }) {
           <div className="boba-reward-tier">{reward.tier}</div>
           <p className="boba-reward-msg">{reward.msg}</p>
         </div>
+
+        {!submitted ? (
+          <form className="boba-submit-form" onSubmit={handleSubmit}>
+            <p className="boba-form-title">Join the Weekly Leaderboard</p>
+            <input
+              className="boba-input"
+              type="text"
+              placeholder="Your Name"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              maxLength={20}
+              autoComplete="name"
+            />
+            <input
+              className="boba-input"
+              type="tel"
+              placeholder="Phone Number"
+              value={playerPhone}
+              onChange={(e) => setPlayerPhone(e.target.value)}
+              maxLength={15}
+              autoComplete="tel"
+            />
+            {submitError && <p className="boba-submit-error">{submitError}</p>}
+            <button className="boba-start-btn" type="submit" disabled={submitting || !playerName.trim() || !playerPhone.trim()}>
+              {submitting ? 'Submitting...' : 'Submit Score'}
+            </button>
+            <button type="button" className="boba-skip-btn" onClick={onSkip}>
+              Skip &amp; View Leaderboard
+            </button>
+          </form>
+        ) : (
+          <div className="boba-submit-success">
+            <span className="boba-check-icon">&#10003;</span> Score submitted!
+          </div>
+        )}
+
+        <p className="boba-gameover-footer">BlendNBubbles &middot; Barrackpore, Kolkata</p>
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardScreen({ leaderboard, playerScore, loading, onRestart }) {
+  return (
+    <div className="boba-screen boba-leaderboard-screen">
+      <div className="boba-leaderboard-content">
+        <h2 className="boba-lb-title">This Week's Top 10</h2>
+        <p className="boba-lb-subtitle">Your score: {playerScore} pts</p>
+
+        {loading ? (
+          <div className="boba-lb-loading">Loading leaderboard...</div>
+        ) : leaderboard.length === 0 ? (
+          <div className="boba-lb-empty">No scores yet this week. Be the first!</div>
+        ) : (
+          <div className="boba-lb-list">
+            {leaderboard.map((entry, i) => (
+              <div key={entry.id} className={`boba-lb-row ${entry.score === playerScore ? 'boba-lb-highlight' : ''}`}>
+                <span className="boba-lb-rank">
+                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                </span>
+                <span className="boba-lb-name">{entry.name}</span>
+                <span className="boba-lb-score">{entry.score} pts</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="boba-gameover-actions">
           <button className="boba-restart-btn" onClick={onRestart}>Play Again</button>
@@ -143,6 +269,13 @@ function BobaCatcher() {
   const [highScore, setHighScore] = useState(() => {
     return parseInt(localStorage.getItem('bobaCatcherHighScore') || '0', 10);
   });
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [lbLoading, setLbLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem('bobaPlayerName') || '');
+  const [playerPhone, setPlayerPhone] = useState(() => localStorage.getItem('bobaPlayerPhone') || '');
 
   // Per-route SEO
   useEffect(() => {
@@ -682,12 +815,68 @@ function BobaCatcher() {
   // Keep ref in sync so gameLoop can call it without a stale closure
   endGameRef.current = endGame;
 
+  // ─── Leaderboard Helpers ─────────────────────────────────────
+  const loadLeaderboard = useCallback(async () => {
+    setLbLoading(true);
+    try {
+      const data = await getWeeklyLeaderboard();
+      setLeaderboard(data);
+    } catch (err) {
+      console.error('Failed to load leaderboard:', err);
+    } finally {
+      setLbLoading(false);
+    }
+  }, []);
+
+  const handleSubmitScore = useCallback(async () => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      localStorage.setItem('bobaPlayerName', playerName.trim());
+      localStorage.setItem('bobaPlayerPhone', playerPhone.trim());
+      await submitScore(playerName, playerPhone, score);
+      setSubmitted(true);
+      // Brief pause then transition to leaderboard
+      setTimeout(async () => {
+        let data = [];
+        try {
+          data = await getWeeklyLeaderboard();
+        } catch (err) {
+          console.error('Failed to load leaderboard:', err);
+        }
+        // Ensure the just-submitted score appears even if Firestore read fails
+        const alreadyIncluded = data.some(
+          e => e.name === playerName.trim() && e.score === score
+        );
+        if (!alreadyIncluded) {
+          data.push({ id: 'self', name: playerName.trim(), score });
+          data.sort((a, b) => b.score - a.score);
+          data = data.slice(0, 10);
+        }
+        setLeaderboard(data);
+        setScreen('leaderboard');
+      }, 800);
+    } catch (err) {
+      console.error('Submit failed:', err);
+      setSubmitError('Could not submit. Try again!');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [playerName, playerPhone, score]);
+
+  const handleSkipToLeaderboard = useCallback(async () => {
+    await loadLeaderboard();
+    setScreen('leaderboard');
+  }, [loadLeaderboard]);
+
   // ─── Start Game ────────────────────────────────────────────
   const startGame = useCallback(() => {
     setScreen('playing');
     setScore(0);
     setTimeLeft(GAME_DURATION);
     setCombo(0);
+    setSubmitted(false);
+    setSubmitError('');
     prevScoreRef.current = 0;
     prevTimeRef.current = GAME_DURATION;
 
@@ -771,7 +960,29 @@ function BobaCatcher() {
           <canvas ref={canvasRef} className="boba-canvas" />
         </>
       )}
-      {screen === 'gameover' && <GameOverScreen score={score} highScore={highScore} onRestart={startGame} />}
+      {screen === 'gameover' && (
+        <GameOverScreen
+          score={score}
+          highScore={highScore}
+          onSubmit={handleSubmitScore}
+          onSkip={handleSkipToLeaderboard}
+          playerName={playerName}
+          playerPhone={playerPhone}
+          setPlayerName={setPlayerName}
+          setPlayerPhone={setPlayerPhone}
+          submitting={submitting}
+          submitted={submitted}
+          submitError={submitError}
+        />
+      )}
+      {screen === 'leaderboard' && (
+        <LeaderboardScreen
+          leaderboard={leaderboard}
+          playerScore={score}
+          loading={lbLoading}
+          onRestart={startGame}
+        />
+      )}
     </div>
   );
 }
