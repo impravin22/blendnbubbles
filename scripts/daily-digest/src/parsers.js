@@ -1,51 +1,29 @@
-const GOOGLE_REVIEW_SENDERS = new Set([
+const GOOGLE_BUSINESS_SENDERS = new Set([
   'noreply@business.google.com',
   'googlecommunityteam-noreply@google.com',
   'business-profile-noreply@google.com',
 ]);
 const PETPOOJA_DOMAIN_SUFFIX = '@petpooja.com';
-const PETPOOJA_SUBJECT_PREFIX = 'Report Notification:';
 const ZOMATO_DOMAIN_SUFFIX = '@zomato.com';
+const HYPERPURE_DOMAIN_SUFFIXES = ['@hyperpure.com', '.hyperpure.com'];
+const TITLE_MAX_CHARS = 200;
 
 const GOOGLE_REVIEW_SINGLE_RE = /^(.+?)\s+left a review for\s+(.+)$/i;
 const GOOGLE_REVIEW_BATCH_RE = /^(.+?),\s*you got (\d+) new reviews?$/i;
+const GBP_PHOTO_RE = /there['’]?s a new photo on your Business Profile/i;
+const GBP_PERFORMANCE_RE = /your performance report for\s+(.+)$/i;
+
 const ZOMATO_REVIEW_RE = /^\[Zomato\]\s+New Review for\s+(.+?)\s+by\s+(.+)$/i;
 const ZOMATO_WEEKLY_RE = /^Zomato weekly business report\s+-\s+(.+)$/i;
 const ZOMATO_SETTLEMENT_RE = /^Zomato\s+\|\s+Statement of account\s+\|\s+(.+)$/i;
+const ZOMATO_TAX_INVOICE_RE = /^Tax Invoice\s*:\s*Zomato\s+(.+)$/i;
+// Critical: anything indicating the restaurant is currently not accepting orders.
+const ZOMATO_SWITCHED_OFF_RE = /\bordering\s+(?:has\s+been\s+)?(?:switched\s+off|turned\s+off|disabled|paused)\b|\bswitched\s+OFF\b/i;
+const ZOMATO_ORDER_REJECTED_RE = /\bOnline order rejected\b/i;
+const ZOMATO_PAYOUT_RE = /Update on your payout/i;
 
-/**
- * @typedef {object} ReviewSingle
- * @property {'review-single'} kind
- * @property {'google' | 'zomato'} source
- * @property {string} reviewer
- * @property {string} business
- * @property {1} count
- *
- * @typedef {object} ReviewBatch
- * @property {'review-batch'} kind
- * @property {'google'} source
- * @property {string} business
- * @property {number} count
- *
- * @typedef {object} PetPoojaReport
- * @property {'petpooja'} kind
- * @property {string} reportTitle
- * @property {Array<{filename: string, mimeType: string, attachmentId: string, size: number}>} attachments
- * @property {string} messageId
- *
- * @typedef {object} ZomatoWeeklyReport
- * @property {'zomato-weekly'} kind
- * @property {string} title
- * @property {Array<{filename: string, mimeType: string, attachmentId: string, size: number}>} attachments
- * @property {string} messageId
- * @property {string} snippet
- *
- * @typedef {object} ZomatoSettlement
- * @property {'zomato-settlement'} kind
- * @property {string} title
- * @property {Array<{filename: string, mimeType: string, attachmentId: string, size: number}>} attachments
- * @property {string} messageId
- */
+const HYPERPURE_ORDER_PLACED_RE = /^Thank you for your order/i;
+const HYPERPURE_ORDER_DELIVERED_RE = /has been delivered on/i;
 
 export function extractHeader(message, name) {
   const headers = message?.payload?.headers ?? [];
@@ -59,6 +37,9 @@ export function extractEmailAddress(headerValue) {
   return (angle ? angle[1] : headerValue).trim().toLowerCase();
 }
 
+/**
+ * @returns {object} parsed message with a `kind` discriminator
+ */
 export function classifyMessage(message) {
   const fromRaw = extractHeader(message, 'From');
   const from = extractEmailAddress(fromRaw);
@@ -66,11 +47,14 @@ export function classifyMessage(message) {
   const messageId = message?.id ?? '';
   const snippet = (message?.snippet ?? '').trim();
 
-  if (GOOGLE_REVIEW_SENDERS.has(from)) {
-    return parseGoogleReview({ subject, from, messageId });
+  if (GOOGLE_BUSINESS_SENDERS.has(from)) {
+    return parseGoogleBusiness({ subject, from, messageId, snippet });
   }
   if (from.endsWith(PETPOOJA_DOMAIN_SUFFIX)) {
     return parsePetPooja(message, { subject, from, messageId });
+  }
+  if (HYPERPURE_DOMAIN_SUFFIXES.some((suffix) => from.endsWith(suffix))) {
+    return parseHyperpure({ subject, from, messageId, snippet });
   }
   if (from.endsWith(ZOMATO_DOMAIN_SUFFIX)) {
     return parseZomato(message, { subject, from, messageId, snippet });
@@ -78,7 +62,7 @@ export function classifyMessage(message) {
   return { kind: 'unknown', subject, from, messageId };
 }
 
-export function parseGoogleReview({ subject, from = '', messageId = '' }) {
+function parseGoogleBusiness({ subject, from, messageId, snippet }) {
   const single = subject.match(GOOGLE_REVIEW_SINGLE_RE);
   if (single) {
     return {
@@ -99,14 +83,26 @@ export function parseGoogleReview({ subject, from = '', messageId = '' }) {
       count: Number.isFinite(count) && count > 0 ? count : 1,
     };
   }
-  return { kind: 'review-unrecognised', subject, from, messageId };
+  if (GBP_PHOTO_RE.test(subject)) {
+    return { kind: 'gbp-photo', subject, messageId, snippet };
+  }
+  const perf = subject.match(GBP_PERFORMANCE_RE);
+  if (perf) {
+    return {
+      kind: 'gbp-performance',
+      month: perf[1].trim(),
+      messageId,
+      snippet: snippet.slice(0, 400),
+    };
+  }
+  return { kind: 'gbp-other', subject, from, messageId };
 }
 
 export function parsePetPooja(message, { subject, from = '', messageId = message?.id ?? '' }) {
-  if (!subject.startsWith(PETPOOJA_SUBJECT_PREFIX)) {
+  if (!subject.startsWith('Report Notification:')) {
     return { kind: 'petpooja-unrecognised', subject, from, messageId };
   }
-  const reportTitle = subject.slice(PETPOOJA_SUBJECT_PREFIX.length).trim();
+  const reportTitle = clampTitle(subject.slice('Report Notification:'.length).trim());
   return {
     kind: 'petpooja',
     reportTitle,
@@ -130,7 +126,7 @@ export function parseZomato(message, { subject, from = '', messageId = message?.
   if (weekly) {
     return {
       kind: 'zomato-weekly',
-      title: weekly[1].trim(),
+      title: clampTitle(weekly[1].trim()),
       attachments: extractAttachments(message),
       messageId,
       snippet: snippet.slice(0, 400),
@@ -140,12 +136,56 @@ export function parseZomato(message, { subject, from = '', messageId = message?.
   if (settlement) {
     return {
       kind: 'zomato-settlement',
-      title: settlement[1].trim(),
+      title: clampTitle(settlement[1].trim()),
       attachments: extractAttachments(message),
       messageId,
     };
   }
+  const taxInvoice = subject.match(ZOMATO_TAX_INVOICE_RE);
+  if (taxInvoice) {
+    return {
+      kind: 'zomato-tax-invoice',
+      title: clampTitle(taxInvoice[1].trim()),
+      attachments: extractAttachments(message),
+      messageId,
+    };
+  }
+  if (ZOMATO_SWITCHED_OFF_RE.test(subject)) {
+    return { kind: 'zomato-alert', severity: 'critical', title: clampTitle(subject), messageId, snippet };
+  }
+  if (ZOMATO_ORDER_REJECTED_RE.test(subject)) {
+    return { kind: 'zomato-alert', severity: 'warning', title: clampTitle(subject), messageId, snippet };
+  }
+  if (ZOMATO_PAYOUT_RE.test(subject)) {
+    return { kind: 'zomato-alert', severity: 'info', title: clampTitle(subject), messageId, snippet };
+  }
   return { kind: 'zomato-other', subject, from, messageId };
+}
+
+function parseHyperpure({ subject, from, messageId, snippet }) {
+  if (HYPERPURE_ORDER_DELIVERED_RE.test(subject)) {
+    const idMatch = subject.match(/Order\s+([A-Z0-9-]+)/i);
+    return {
+      kind: 'hyperpure-order',
+      status: 'delivered',
+      orderId: idMatch?.[1] ?? '',
+      subject,
+      messageId,
+      snippet,
+    };
+  }
+  if (HYPERPURE_ORDER_PLACED_RE.test(subject)) {
+    const idMatch = snippet.match(/Order Number:\s*([A-Z0-9-]+)/i);
+    return {
+      kind: 'hyperpure-order',
+      status: 'placed',
+      orderId: idMatch?.[1] ?? '',
+      subject,
+      messageId,
+      snippet,
+    };
+  }
+  return { kind: 'hyperpure-other', subject, from, messageId };
 }
 
 export function extractAttachments(message) {
@@ -169,6 +209,18 @@ function flattenParts(part) {
   return out;
 }
 
+function clampTitle(title) {
+  if (title.length <= TITLE_MAX_CHARS) return title;
+  return title.slice(0, TITLE_MAX_CHARS - 1).trimEnd() + '…';
+}
+
 export function isReviewKind(parsed) {
   return parsed.kind === 'review-single' || parsed.kind === 'review-batch';
+}
+
+// Only `unknown` (completely unrelated senders) is truly silent. Emails from
+// trusted senders (Zomato/GBP/Hyperpure) that our parsers can't classify are
+// surfaced as warnings — so a new email format surfaces instead of disappearing.
+export function isSilentKind(parsed) {
+  return parsed.kind === 'unknown';
 }

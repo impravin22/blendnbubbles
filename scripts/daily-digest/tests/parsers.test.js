@@ -1,13 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  parseGoogleReview,
-  parseZomato,
   classifyMessage,
   extractAttachments,
   extractEmailAddress,
   extractHeader,
   isReviewKind,
+  isSilentKind,
 } from '../src/parsers.js';
 
 function makeMessage({ from, subject, parts = [], id = 'msg1', snippet = '' }) {
@@ -24,145 +23,288 @@ function makeMessage({ from, subject, parts = [], id = 'msg1', snippet = '' }) {
   };
 }
 
-test('parseGoogleReview single emits review-single with source google', () => {
-  const parsed = parseGoogleReview({ subject: 'Sushmita left a review for Blend n Bubbles' });
-  assert.deepEqual(parsed, {
-    kind: 'review-single',
-    source: 'google',
-    reviewer: 'Sushmita',
-    business: 'Blend n Bubbles',
-    count: 1,
-  });
-});
-
-test('parseGoogleReview batch emits review-batch with source google', () => {
-  const parsed = parseGoogleReview({ subject: 'Blend n Bubbles, you got 4 new reviews' });
-  assert.deepEqual(parsed, {
-    kind: 'review-batch',
-    source: 'google',
-    business: 'Blend n Bubbles',
-    count: 4,
-  });
-});
-
-test('parseZomato detects new customer reviews as review-single with source zomato', () => {
-  const msg = makeMessage({
-    from: '"Zomato" <noreply@zomato.com>',
-    subject: '[Zomato] New Review for Blend N Bubbles, Barrackpore by Jayasree Dutta',
-  });
-  const parsed = classifyMessage(msg);
+test('Google review single -> review-single with source google', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '"Google Business Profile" <noreply@business.google.com>',
+      subject: 'Sushmita left a review for Blend n Bubbles',
+    }),
+  );
   assert.equal(parsed.kind, 'review-single');
-  assert.equal(parsed.source, 'zomato');
-  assert.equal(parsed.reviewer, 'Jayasree Dutta');
-  assert.equal(parsed.business, 'Blend N Bubbles, Barrackpore');
+  assert.equal(parsed.source, 'google');
+  assert.equal(parsed.reviewer, 'Sushmita');
 });
 
-test('parseZomato detects weekly business reports with title and snippet', () => {
-  const msg = makeMessage({
-    from: '"Zomato business reports" <reports@zomato.com>',
-    subject: 'Zomato weekly business report - Week 15 (6 to 12 Apr, 2026)',
-    snippet: 'Week: 15 (6 to 12 Apr, 2026) Restaurant Name: Blend N Bubbles, ID - 21955142',
-  });
-  const parsed = classifyMessage(msg);
-  assert.equal(parsed.kind, 'zomato-weekly');
-  assert.equal(parsed.title, 'Week 15 (6 to 12 Apr, 2026)');
-  assert.match(parsed.snippet, /Week: 15/);
+test('Google review batch -> review-batch', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@business.google.com>',
+      subject: 'Blend n Bubbles, you got 4 new reviews',
+    }),
+  );
+  assert.equal(parsed.kind, 'review-batch');
+  assert.equal(parsed.count, 4);
 });
 
-test('parseZomato detects settlement statements with xlsx attachment', () => {
-  const msg = makeMessage({
-    from: '"Zomato Billing" <billing@zomato.com>',
-    subject: 'Zomato | Statement of account | Blend N Bubbles 21955142 | 30 Mar 2026 to 05 Apr 2026',
-    parts: [
-      {
-        filename: 'Zomato_Settlement_Report_21955142_30_Mar_2026_05_Apr_2026.xlsx',
-        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        body: { attachmentId: 'ZATT1', size: 20000 },
-      },
-    ],
-  });
-  const parsed = classifyMessage(msg);
-  assert.equal(parsed.kind, 'zomato-settlement');
-  assert.equal(parsed.attachments.length, 1);
-  assert.match(parsed.title, /Blend N Bubbles 21955142/);
+test('GBP monthly performance -> gbp-performance with month + snippet', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@business.google.com>',
+      subject: 'Blend n Bubbles, your performance report for March 2026',
+      snippet: '271 people viewed Blend n Bubbles last month.',
+    }),
+  );
+  assert.equal(parsed.kind, 'gbp-performance');
+  assert.equal(parsed.month, 'March 2026');
+  assert.match(parsed.snippet, /271 people/);
 });
 
-test('classifyMessage rejects spoofed substring senders (strict domain match)', () => {
-  const msg = makeMessage({
-    from: '"Attacker" <noreply@business.google.com.attacker.com>',
-    subject: 'Jane left a review for Blend n Bubbles',
-  });
-  const parsed = classifyMessage(msg);
-  assert.equal(parsed.kind, 'unknown');
+test('GBP new photo -> gbp-photo', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@business.google.com>',
+      subject: 'Blend n Bubbles, there’s a new photo on your Business Profile',
+    }),
+  );
+  assert.equal(parsed.kind, 'gbp-photo');
 });
 
-test('classifyMessage detects PetPooja sender and report title', () => {
-  const msg = makeMessage({
-    from: 'Petpooja <no-reply@petpooja.com>',
-    subject: 'Report Notification: Item Wise Report With Bill No. : Blend N Bubbles [Barrackpore Branch]',
-    parts: [
-      {
-        filename: 'Item_bill_report.xlsx',
-        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        body: { attachmentId: 'ATT123', size: 10000 },
-      },
-    ],
-  });
-  const parsed = classifyMessage(msg);
+test('PetPooja report with attachments', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<no-reply@petpooja.com>',
+      subject: 'Report Notification: Item Wise Report',
+      parts: [
+        { filename: 'x.xlsx', mimeType: 'x', body: { attachmentId: 'A', size: 10 } },
+      ],
+    }),
+  );
   assert.equal(parsed.kind, 'petpooja');
   assert.equal(parsed.attachments.length, 1);
 });
 
-test('classifyMessage returns unknown for unrelated senders', () => {
-  const msg = makeMessage({ from: 'newsletter@randomsite.com', subject: 'Weekly digest' });
-  assert.equal(classifyMessage(msg).kind, 'unknown');
+test('Zomato review -> review-single with source zomato', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@zomato.com>',
+      subject: '[Zomato] New Review for Blend N Bubbles, Barrackpore by Jayasree Dutta',
+    }),
+  );
+  assert.equal(parsed.kind, 'review-single');
+  assert.equal(parsed.source, 'zomato');
+  assert.equal(parsed.reviewer, 'Jayasree Dutta');
 });
 
-test('Zomato alerts and admin emails classify as zomato-other (not forwarded, not flagged)', () => {
-  const msg = makeMessage({
-    from: '"Zomato" <noreply@zomato.com>',
-    subject: 'Online ordering switched OFF for Blend N Bubbles, Barrackpore',
-  });
-  assert.equal(classifyMessage(msg).kind, 'zomato-other');
+test('Zomato weekly business report with snippet', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<reports@zomato.com>',
+      subject: 'Zomato weekly business report - Week 15 (6 to 12 Apr, 2026)',
+      snippet: 'Total sales ₹1156 -67% Delivered orders 5',
+    }),
+  );
+  assert.equal(parsed.kind, 'zomato-weekly');
+  assert.match(parsed.snippet, /Total sales/);
 });
 
-test('extractAttachments traverses nested multipart MIME tree', () => {
-  const message = {
+test('Zomato settlement statement with xlsx attachment', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<billing@zomato.com>',
+      subject: 'Zomato | Statement of account | BnB 21955142 | 30 Mar to 05 Apr',
+      parts: [{ filename: 'soa.xlsx', mimeType: 'x', body: { attachmentId: 'Z', size: 1 } }],
+    }),
+  );
+  assert.equal(parsed.kind, 'zomato-settlement');
+  assert.equal(parsed.attachments.length, 1);
+});
+
+test('Zomato tax invoice with pdf attachment', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<billing@zomato.com>',
+      subject: 'Tax Invoice : Zomato Online Ordering for 2026-03-01 to 2026-03-31',
+      parts: [{ filename: 'Z26.pdf', mimeType: 'application/pdf', body: { attachmentId: 'T', size: 1 } }],
+    }),
+  );
+  assert.equal(parsed.kind, 'zomato-tax-invoice');
+  assert.match(parsed.title, /Online Ordering/);
+  assert.equal(parsed.attachments.length, 1);
+});
+
+test('Zomato "switched OFF" alert -> zomato-alert critical', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@zomato.com>',
+      subject: 'Online ordering switched OFF for Blend N Bubbles, Barrackpore',
+    }),
+  );
+  assert.equal(parsed.kind, 'zomato-alert');
+  assert.equal(parsed.severity, 'critical');
+});
+
+test('Zomato "order rejected" -> zomato-alert warning', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@zomato.com>',
+      subject: 'Online order rejected at Blend N Bubbles, Barrackpore',
+    }),
+  );
+  assert.equal(parsed.kind, 'zomato-alert');
+  assert.equal(parsed.severity, 'warning');
+});
+
+test('Zomato "[IMP] Update on your payout" -> zomato-alert info', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@zomato.com>',
+      subject: '[IMP] Update on your payout for this week',
+    }),
+  );
+  assert.equal(parsed.kind, 'zomato-alert');
+  assert.equal(parsed.severity, 'info');
+});
+
+test('Hyperpure "Thank you for your order" -> hyperpure-order placed', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '"Hyperpure by Zomato" <noreply@hyperpure.com>',
+      subject: 'Thank you for your order!',
+      snippet: 'Order Number: ZHPWB27-OR-0025296424',
+    }),
+  );
+  assert.equal(parsed.kind, 'hyperpure-order');
+  assert.equal(parsed.status, 'placed');
+  assert.equal(parsed.orderId, 'ZHPWB27-OR-0025296424');
+});
+
+test('Hyperpure delivered subject -> hyperpure-order delivered with id', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '"Hyperpure by Zomato" <noreply@hyperpure.com>',
+      subject: 'Hyperpure-Blend n Bubbles-Your Order ZHPWB27-OR-0025296424 has been delivered on 09-04-2026',
+    }),
+  );
+  assert.equal(parsed.kind, 'hyperpure-order');
+  assert.equal(parsed.status, 'delivered');
+  assert.equal(parsed.orderId, 'ZHPWB27-OR-0025296424');
+});
+
+test('classifyMessage rejects spoofed Hyperpure sender substrings', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '"Evil" <hyperpure@attacker.com>',
+      subject: 'Thank you for your order!',
+    }),
+  );
+  assert.equal(parsed.kind, 'unknown');
+});
+
+test('Hyperpure subdomain sender accepted', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@mail.hyperpure.com>',
+      subject: 'Thank you for your order!',
+      snippet: 'Order Number: ZHPWB27-OR-0001',
+    }),
+  );
+  assert.equal(parsed.kind, 'hyperpure-order');
+});
+
+test('Zomato alert regex covers turned-off / disabled / paused variants', () => {
+  const variants = [
+    'Online ordering switched OFF for Blend N Bubbles',
+    'Your online ordering has been turned off for Blend N Bubbles, Barrackpore',
+    'Online ordering disabled for Blend N Bubbles',
+    'Online ordering paused for Blend N Bubbles',
+  ];
+  for (const subject of variants) {
+    const parsed = classifyMessage(makeMessage({ from: '<noreply@zomato.com>', subject }));
+    assert.equal(parsed.kind, 'zomato-alert', `failed for: ${subject}`);
+    assert.equal(parsed.severity, 'critical', `wrong severity for: ${subject}`);
+  }
+});
+
+test('Unknown Zomato email format surfaces as zomato-other (NOT silent)', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@zomato.com>',
+      subject: 'Menu item out of stock notification',
+    }),
+  );
+  assert.equal(parsed.kind, 'zomato-other');
+  assert.equal(isSilentKind(parsed), false);
+});
+
+test('Title-clamp: a ridiculously long subject is truncated to 200 chars with ellipsis', () => {
+  const long = 'Report Notification: ' + 'X'.repeat(500);
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<no-reply@petpooja.com>',
+      subject: long,
+    }),
+  );
+  assert.equal(parsed.kind, 'petpooja');
+  assert.ok(parsed.reportTitle.length <= 200, `title length ${parsed.reportTitle.length} exceeds 200`);
+  assert.match(parsed.reportTitle, /…$/);
+});
+
+test('classifyMessage rejects spoofed Google sender substrings', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@business.google.com.attacker.com>',
+      subject: 'Jane left a review for Blend n Bubbles',
+    }),
+  );
+  assert.equal(parsed.kind, 'unknown');
+});
+
+test('Unrelated senders -> unknown', () => {
+  assert.equal(
+    classifyMessage(makeMessage({ from: 'newsletter@random.com', subject: 'x' })).kind,
+    'unknown',
+  );
+});
+
+test('Zomato login alert -> zomato-other (surfaced, NOT silent)', () => {
+  // Pre-fix: zomato-other was silenced. Post-fix: it surfaces as unrecognised so
+  // a new Zomato email format can be noticed and taught to the parser.
+  const parsed = classifyMessage(
+    makeMessage({ from: '<noreply@zomato.com>', subject: 'Login Alert for your Zomato account!' }),
+  );
+  assert.equal(parsed.kind, 'zomato-other');
+  assert.equal(isSilentKind(parsed), false);
+});
+
+test('isReviewKind and isSilentKind discriminate correctly', () => {
+  assert.equal(isReviewKind({ kind: 'review-single' }), true);
+  assert.equal(isReviewKind({ kind: 'review-batch' }), true);
+  assert.equal(isReviewKind({ kind: 'zomato-alert' }), false);
+  // Only 'unknown' (unrelated senders entirely) is silent. '*-other' kinds
+  // surface so unfamiliar email formats from trusted senders are visible.
+  assert.equal(isSilentKind({ kind: 'unknown' }), true);
+  assert.equal(isSilentKind({ kind: 'gbp-other' }), false);
+  assert.equal(isSilentKind({ kind: 'hyperpure-other' }), false);
+  assert.equal(isSilentKind({ kind: 'zomato-other' }), false);
+  assert.equal(isSilentKind({ kind: 'zomato-alert' }), false);
+});
+
+test('extractAttachments recurses through nested multipart', () => {
+  const msg = {
     payload: {
-      mimeType: 'multipart/mixed',
       parts: [
         { mimeType: 'text/plain', filename: '', body: {} },
         { mimeType: 'application/pdf', filename: 'r.pdf', body: { attachmentId: 'A', size: 1 } },
       ],
     },
   };
-  assert.equal(extractAttachments(message).length, 1);
+  assert.equal(extractAttachments(msg).length, 1);
 });
 
-test('PetPooja OTP subjects classify as petpooja-unrecognised', () => {
-  const msg = makeMessage({
-    from: 'petpooja billing <billing@petpooja.com>',
-    subject: 'One Time Password (OTP) for your Petpooja account',
-  });
-  assert.equal(classifyMessage(msg).kind, 'petpooja-unrecognised');
-});
-
-test('extractEmailAddress handles angle brackets and plain addresses', () => {
+test('extractEmailAddress and extractHeader helpers', () => {
   assert.equal(
-    extractEmailAddress('"Google Business Profile" <noreply@business.google.com>'),
-    'noreply@business.google.com',
+    extractEmailAddress('"X" <a@b.com>'),
+    'a@b.com',
   );
-  assert.equal(extractEmailAddress('noreply@business.google.com'), 'noreply@business.google.com');
-});
-
-test('extractHeader returns empty string for missing headers', () => {
   assert.equal(extractHeader({}, 'From'), '');
-});
-
-test('isReviewKind discriminates review shapes from report shapes', () => {
-  assert.equal(isReviewKind({ kind: 'review-single' }), true);
-  assert.equal(isReviewKind({ kind: 'review-batch' }), true);
-  assert.equal(isReviewKind({ kind: 'petpooja' }), false);
-  assert.equal(isReviewKind({ kind: 'zomato-weekly' }), false);
-  assert.equal(isReviewKind({ kind: 'zomato-settlement' }), false);
 });

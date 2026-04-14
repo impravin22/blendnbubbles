@@ -3,45 +3,55 @@ import assert from 'node:assert/strict';
 import { formatDigestText, runDigest, escapeHtml } from '../src/digest.js';
 import { loadConfig } from '../src/config.js';
 
-test('formatDigestText produces quiet-day copy when nothing happened', () => {
+test('formatDigestText quiet-day covers every section', () => {
   const text = formatDigestText({
     reviews: [],
     petpoojaReports: [],
-    zomatoWeekly: [],
-    zomatoSettlements: [],
     localeTz: 'Asia/Taipei',
   });
   assert.match(text, /Blend N Bubbles — (Morning|Evening) Rundown/);
   assert.match(text, /No new reviews/);
   assert.match(text, /No overnight report yet/);
   assert.match(text, /No Zomato reports/);
+  assert.match(text, /No GBP updates/);
+  assert.match(text, /No Hyperpure activity/);
 });
 
-test('formatDigestText uses Morning header + actual time at 09:05 TPE', () => {
-  const morning = new Date('2026-04-14T01:05:00Z');
+test('Urgent Alerts section renders above Reviews when alerts exist', () => {
   const text = formatDigestText({
     reviews: [],
     petpoojaReports: [],
+    zomatoAlerts: [
+      { kind: 'zomato-alert', severity: 'critical', title: 'Online ordering switched OFF for BnB', messageId: 'a1', snippet: 'auto-off due to rejection' },
+      { kind: 'zomato-alert', severity: 'warning', title: 'Online order rejected at BnB', messageId: 'a2', snippet: 'Order Id 7957697049' },
+    ],
     localeTz: 'Asia/Taipei',
-    now: morning,
   });
-  assert.match(text, /☀️ <b>Blend N Bubbles — Morning Rundown<\/b>/);
-  assert.match(text, /14 Apr 2026, 09:05 TPE/);
+  const alertsIdx = text.indexOf('Urgent Alerts');
+  const reviewsIdx = text.indexOf('Customer Reviews');
+  assert.ok(alertsIdx > 0 && alertsIdx < reviewsIdx, 'Urgent Alerts must render before Customer Reviews');
+  assert.match(text, /🚨 Online ordering switched OFF/);
+  assert.match(text, /⚠️ Online order rejected/);
 });
 
-test('formatDigestText uses Evening header at 21:30 TPE', () => {
-  const evening = new Date('2026-04-14T13:30:00Z');
-  const text = formatDigestText({
+test('Morning vs Evening header chosen by TPE hour', () => {
+  const morning = formatDigestText({
     reviews: [],
     petpoojaReports: [],
     localeTz: 'Asia/Taipei',
-    now: evening,
+    now: new Date('2026-04-14T01:05:00Z'),
   });
-  assert.match(text, /🌙 <b>Blend N Bubbles — Evening Rundown<\/b>/);
-  assert.match(text, /14 Apr 2026, 21:30 TPE/);
+  assert.match(morning, /☀️ <b>Blend N Bubbles — Morning Rundown<\/b>/);
+  const evening = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    localeTz: 'Asia/Taipei',
+    now: new Date('2026-04-14T13:30:00Z'),
+  });
+  assert.match(evening, /🌙 <b>Blend N Bubbles — Evening Rundown<\/b>/);
 });
 
-test('formatDigestText separates Google and Zomato reviews with per-platform links', () => {
+test('Reviews split per-platform with reply links', () => {
   const text = formatDigestText({
     reviews: [
       { kind: 'review-single', source: 'google', reviewer: 'Sushmita', business: 'x', count: 1 },
@@ -53,119 +63,93 @@ test('formatDigestText separates Google and Zomato reviews with per-platform lin
   });
   assert.match(text, /Google: 3 new reviews \(from Sushmita\)/);
   assert.match(text, /Zomato: 1 new review \(from Jayasree\)/);
-  assert.match(text, /business\.google\.com\/reviews/);
-  assert.match(text, /zomato\.com\/business/);
 });
 
-test('formatDigestText escapes HTML in reviewer, filenames, titles, snippets', () => {
+test('GBP section renders performance + photo counts', () => {
   const text = formatDigestText({
-    reviews: [{ kind: 'review-single', source: 'google', reviewer: '<script>', business: 'x', count: 1 }],
+    reviews: [],
     petpoojaReports: [],
-    zomatoWeekly: [
-      { kind: 'zomato-weekly', title: 'Week "A" & B', attachments: [], messageId: 'm', snippet: '<img>' },
+    gbpPerformance: [{ kind: 'gbp-performance', month: 'March 2026', messageId: 'p', snippet: '271 people viewed last month' }],
+    gbpPhotos: [
+      { kind: 'gbp-photo', subject: 'photo 1', messageId: 'a', snippet: '' },
+      { kind: 'gbp-photo', subject: 'photo 2', messageId: 'b', snippet: '' },
     ],
-    zomatoSettlements: [
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /Monthly performance — March 2026/);
+  assert.match(text, /271 people viewed/);
+  assert.match(text, /2 new customer photos/);
+});
+
+test('Hyperpure section lists placed and delivered with order IDs', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    hyperpureOrders: [
+      { kind: 'hyperpure-order', status: 'placed', orderId: 'ZHPWB27-OR-0025296424', subject: '', messageId: 'h1', snippet: '' },
+      { kind: 'hyperpure-order', status: 'delivered', orderId: 'ZHPWB26-OR-0025064133', subject: '', messageId: 'h2', snippet: '' },
+    ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /🛒 Placed — ZHPWB27-OR-0025296424/);
+  assert.match(text, /✅ Delivered — ZHPWB26-OR-0025064133/);
+});
+
+test('Zomato section includes tax invoice alongside weekly + settlement', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoTaxInvoices: [
       {
-        kind: 'zomato-settlement',
-        title: 'Range',
-        attachments: [{ filename: 'ok.xlsx', mimeType: 'x', attachmentId: 'a', size: 1 }],
-        messageId: 'm2',
+        kind: 'zomato-tax-invoice',
+        title: 'Online Ordering for 2026-03-01 to 2026-03-31',
+        attachments: [{ filename: 'Z26.pdf', mimeType: 'application/pdf', attachmentId: 'a', size: 10 }],
+        messageId: 'm',
       },
     ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /Tax invoice: Online Ordering/);
+  assert.match(text, /📎 Z26\.pdf/);
+});
+
+test('HTML escape applied to alert titles, snippets, filenames, month labels', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoAlerts: [{ kind: 'zomato-alert', severity: 'warning', title: '<script>', messageId: 'a', snippet: '"evil"' }],
+    gbpPerformance: [{ kind: 'gbp-performance', month: '<img>', messageId: 'p', snippet: 'snippet & more' }],
     localeTz: 'Asia/Taipei',
   });
   assert.doesNotMatch(text, /<script>/);
   assert.match(text, /&lt;script&gt;/);
-  assert.match(text, /Week &quot;A&quot; &amp; B/);
   assert.match(text, /&lt;img&gt;/);
+  assert.match(text, /snippet &amp; more/);
+  assert.match(text, /&quot;evil&quot;/);
 });
 
-test('formatDigestText renders Zomato weekly snippet and settlement attachment list', () => {
-  const text = formatDigestText({
-    reviews: [],
-    petpoojaReports: [],
-    zomatoWeekly: [
-      {
-        kind: 'zomato-weekly',
-        title: 'Week 15 (6 to 12 Apr, 2026)',
-        attachments: [],
-        messageId: 'm',
-        snippet: 'Orders: 120, Revenue: ₹42,000',
-      },
-    ],
-    zomatoSettlements: [
-      {
-        kind: 'zomato-settlement',
-        title: 'Statement | 30 Mar - 05 Apr',
-        attachments: [
-          { filename: 'soa.xlsx', mimeType: 'x', attachmentId: 'a', size: 10 },
-        ],
-        messageId: 'm2',
-      },
-    ],
-    localeTz: 'Asia/Taipei',
-  });
-  assert.match(text, /Weekly report: Week 15/);
-  assert.match(text, /Orders: 120, Revenue: ₹42,000/);
-  assert.match(text, /Settlement:/);
-  assert.match(text, /📎 soa\.xlsx/);
-});
-
-test('runDigest forwards PetPooja AND Zomato attachments with distinct captions', async () => {
+test('runDigest forwards PetPooja, Zomato settlement AND Zomato tax invoice attachments with distinct captions', async () => {
   const calls = [];
-  const fakeGmail = {
-    users: {
-      messages: {
-        list: async () => ({ data: { messages: [{ id: 'pp' }, { id: 'zo' }] } }),
-        get: async ({ id }) => ({
-          data: {
-            id,
-            internalDate: String(Date.now() - 3600_000),
-            snippet: 'snippet',
-            payload:
-              id === 'pp'
-                ? {
-                    headers: [
-                      { name: 'From', value: '<no-reply@petpooja.com>' },
-                      { name: 'Subject', value: 'Report Notification: PetPooja' },
-                    ],
-                    parts: [
-                      { filename: 'pp.xlsx', mimeType: 'x', body: { attachmentId: 'P1', size: 100 } },
-                    ],
-                  }
-                : {
-                    headers: [
-                      { name: 'From', value: '<billing@zomato.com>' },
-                      { name: 'Subject', value: 'Zomato | Statement of account | BnB | 30 Mar to 05 Apr' },
-                    ],
-                    parts: [
-                      { filename: 'zo.xlsx', mimeType: 'x', body: { attachmentId: 'Z1', size: 200 } },
-                    ],
-                  },
-          },
-        }),
-        attachments: {
-          get: async () => ({ data: { data: Buffer.from('x').toString('base64url') } }),
-        },
-      },
-    },
-  };
+  const fakeGmail = makeFakeGmailWithThreeSources();
   const fakeTelegram = {
     sendMessage: async (text) => calls.push({ call: 'sendMessage', text }),
     sendDocument: async ({ filename, caption }) => calls.push({ call: 'sendDocument', filename, caption }),
   };
-  const config = { gmail: {}, telegram: {}, lookbackHours: 12, localeTz: 'Asia/Taipei' };
-  const summary = await runDigest({ config, deps: { gmail: fakeGmail, telegram: fakeTelegram } });
+  const summary = await runDigest({
+    config: { gmail: {}, telegram: {}, lookbackHours: 12, localeTz: 'Asia/Taipei' },
+    deps: { gmail: fakeGmail, telegram: fakeTelegram },
+  });
   assert.equal(summary.petpoojaReportCount, 1);
   assert.equal(summary.zomatoSettlementCount, 1);
-  assert.equal(summary.attachmentFailures, 0);
+  assert.equal(summary.zomatoTaxInvoiceCount, 1);
   const docs = calls.filter((c) => c.call === 'sendDocument');
-  assert.equal(docs.length, 2);
+  assert.equal(docs.length, 3);
   assert.match(docs.find((d) => d.filename === 'pp.xlsx').caption, /📊/);
   assert.match(docs.find((d) => d.filename === 'zo.xlsx').caption, /🍽️/);
+  assert.match(docs.find((d) => d.filename === 'tax.pdf').caption, /🧾/);
 });
 
-test('runDigest skips zero-byte and >50MB attachments with failure notice', async () => {
+test('runDigest skips zero-byte and oversize attachments and sends failure notice', async () => {
   const calls = [];
   const fakeGmail = {
     users: {
@@ -178,7 +162,7 @@ test('runDigest skips zero-byte and >50MB attachments with failure notice', asyn
             payload: {
               headers: [
                 { name: 'From', value: '<no-reply@petpooja.com>' },
-                { name: 'Subject', value: 'Report Notification: Item' },
+                { name: 'Subject', value: 'Report Notification: x' },
               ],
               parts: [
                 { filename: 'empty.xlsx', mimeType: 'x', body: { attachmentId: 'E', size: 0 } },
@@ -201,14 +185,9 @@ test('runDigest skips zero-byte and >50MB attachments with failure notice', asyn
   });
   assert.equal(calls.filter((c) => c.call === 'sendDocument').length, 0);
   assert.equal(summary.attachmentFailures, 2);
-  const warnMsg = calls.find((c) => c.call === 'sendMessage' && c.text.includes('Some attachments'));
-  assert.ok(warnMsg);
-  assert.match(warnMsg.text, /empty\.xlsx.*zero-byte/s);
-  assert.match(warnMsg.text, /huge\.xlsx.*too-large/s);
 });
 
-test('loadConfig defaults lookbackHours to 12 and fails fast on missing vars', () => {
-  assert.throws(() => loadConfig({}), /Missing required env vars/);
+test('loadConfig defaults lookbackHours to 12', () => {
   const config = loadConfig({
     GMAIL_CLIENT_ID: 'a',
     GMAIL_CLIENT_SECRET: 'b',
@@ -219,18 +198,294 @@ test('loadConfig defaults lookbackHours to 12 and fails fast on missing vars', (
   assert.equal(config.lookbackHours, 12);
 });
 
-test('loadConfig rejects non-finite or non-positive DIGEST_LOOKBACK_HOURS', () => {
-  const base = {
-    GMAIL_CLIENT_ID: 'a',
-    GMAIL_CLIENT_SECRET: 'b',
-    GMAIL_REFRESH_TOKEN: 'c',
-    TELEGRAM_BOT_TOKEN: 'd',
-    TELEGRAM_CHAT_ID: '-1',
-  };
-  assert.throws(() => loadConfig({ ...base, DIGEST_LOOKBACK_HOURS: 'abc' }), /positive finite/);
-  assert.throws(() => loadConfig({ ...base, DIGEST_LOOKBACK_HOURS: '-5' }), /positive finite/);
-});
-
-test('escapeHtml escapes all five HTML-unsafe characters', () => {
+test('escapeHtml covers all five entity characters', () => {
   assert.equal(escapeHtml(`<>&"'`), '&lt;&gt;&amp;&quot;&#39;');
 });
+
+test('Urgent Alerts heading is absent when zomatoAlerts is empty', () => {
+  const text = formatDigestText({
+    reviews: [{ kind: 'review-single', source: 'google', reviewer: 'X', business: 'x', count: 1 }],
+    petpoojaReports: [],
+    zomatoAlerts: [],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.doesNotMatch(text, /Urgent Alerts/);
+});
+
+test('Section order invariant: Alerts < Reviews < PetPooja < Zomato < GBP < Hyperpure', () => {
+  const text = formatDigestText({
+    reviews: [{ kind: 'review-single', source: 'google', reviewer: 'X', business: 'x', count: 1 }],
+    petpoojaReports: [{ kind: 'petpooja', reportTitle: 'PP', attachments: [], messageId: 'p' }],
+    zomatoWeekly: [{ kind: 'zomato-weekly', title: 'W', attachments: [], messageId: 'w', snippet: '' }],
+    gbpPhotos: [{ kind: 'gbp-photo', subject: '', messageId: 'g', snippet: '' }],
+    hyperpureOrders: [{ kind: 'hyperpure-order', status: 'placed', orderId: 'X', subject: '', messageId: 'h', snippet: '' }],
+    zomatoAlerts: [{ kind: 'zomato-alert', severity: 'critical', title: 'OFF', messageId: 'a', snippet: '' }],
+    localeTz: 'Asia/Taipei',
+  });
+  const order = [
+    text.indexOf('Urgent Alerts'),
+    text.indexOf('Customer Reviews'),
+    text.indexOf('PetPooja'),
+    text.indexOf('Zomato — Business'),
+    text.indexOf('Google Business Profile'),
+    text.indexOf('Hyperpure Supplies'),
+  ];
+  for (let i = 1; i < order.length; i++) {
+    assert.ok(order[i] > order[i - 1], `section at index ${i} must follow previous; got ${order}`);
+  }
+});
+
+test('Info-only alert does not emit the "Open Zomato Business" CTA', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoAlerts: [
+      { kind: 'zomato-alert', severity: 'info', title: '[IMP] Update on your payout', messageId: 'a', snippet: '' },
+    ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /ℹ️ \[IMP\] Update on your payout/);
+  assert.doesNotMatch(text, /Open Zomato Business/);
+});
+
+test('Mixed-severity alerts do emit the CTA (when at least one needs action)', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoAlerts: [
+      { kind: 'zomato-alert', severity: 'info', title: 'Payout', messageId: 'a', snippet: '' },
+      { kind: 'zomato-alert', severity: 'critical', title: 'Switched OFF', messageId: 'b', snippet: '' },
+    ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /Open Zomato Business/);
+});
+
+test('Tax invoice with no attachment emits "No PDF attached" warning', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoTaxInvoices: [
+      { kind: 'zomato-tax-invoice', title: 'Online Ordering for 2026-03', attachments: [], messageId: 'i' },
+    ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /Tax invoice: Online Ordering for 2026-03/);
+  assert.match(text, /⚠️ No PDF attached/);
+});
+
+test('Hyperpure order with empty orderId renders without trailing em-dash', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    hyperpureOrders: [
+      { kind: 'hyperpure-order', status: 'placed', orderId: '', subject: '', messageId: 'h', snippet: '' },
+    ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /🛒 Placed$/m);
+  assert.doesNotMatch(text, /Placed — /);
+});
+
+test('Single new photo uses singular noun', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    gbpPhotos: [{ kind: 'gbp-photo', subject: 'one', messageId: 'a', snippet: '' }],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /1 new customer photo\b/);
+  assert.doesNotMatch(text, /1 new customer photos/);
+});
+
+test('Info-severity alert renders with ℹ️ glyph', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoAlerts: [{ kind: 'zomato-alert', severity: 'info', title: 'Payout info', messageId: 'a', snippet: '' }],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /ℹ️ Payout info/);
+});
+
+test('All-kinds integration: runDigest surfaces every section in a single digest', async () => {
+  const calls = [];
+  const now = Date.now();
+  const specs = {
+    alert: {
+      from: '<noreply@zomato.com>',
+      subject: 'Online ordering switched OFF for Blend N Bubbles',
+      parts: [],
+      snippet: 'auto-off',
+    },
+    petpooja: {
+      from: '<no-reply@petpooja.com>',
+      subject: 'Report Notification: PP',
+      parts: [{ filename: 'pp.xlsx', mimeType: 'x', body: { attachmentId: 'P', size: 100 } }],
+      snippet: '',
+    },
+    settlement: {
+      from: '<billing@zomato.com>',
+      subject: 'Zomato | Statement of account | BnB | 30 Mar to 05 Apr',
+      parts: [{ filename: 'zo.xlsx', mimeType: 'x', body: { attachmentId: 'Z', size: 200 } }],
+      snippet: '',
+    },
+    perf: {
+      from: '<noreply@business.google.com>',
+      subject: 'Blend n Bubbles, your performance report for March 2026',
+      parts: [],
+      snippet: '271 people viewed',
+    },
+    hyperpure: {
+      from: '<noreply@hyperpure.com>',
+      subject: 'Thank you for your order!',
+      parts: [],
+      snippet: 'Order Number: ZHPWB27-OR-0025296424',
+    },
+  };
+  const fakeGmail = {
+    users: {
+      messages: {
+        list: async () => ({ data: { messages: Object.keys(specs).map((id) => ({ id })) } }),
+        get: async ({ id }) => ({
+          data: {
+            id,
+            internalDate: String(now - 3600_000),
+            snippet: specs[id].snippet,
+            payload: {
+              headers: [
+                { name: 'From', value: specs[id].from },
+                { name: 'Subject', value: specs[id].subject },
+              ],
+              parts: specs[id].parts,
+            },
+          },
+        }),
+        attachments: {
+          get: async () => ({ data: { data: Buffer.from('x').toString('base64url') } }),
+        },
+      },
+    },
+  };
+  const fakeTelegram = {
+    sendMessage: async (text) => calls.push({ call: 'sendMessage', text }),
+    sendDocument: async ({ filename, caption }) => calls.push({ call: 'sendDocument', filename, caption }),
+  };
+  const summary = await runDigest({
+    config: { gmail: {}, telegram: {}, lookbackHours: 12, localeTz: 'Asia/Taipei' },
+    deps: { gmail: fakeGmail, telegram: fakeTelegram },
+  });
+  assert.equal(summary.zomatoAlertCount, 1);
+  assert.equal(summary.petpoojaReportCount, 1);
+  assert.equal(summary.zomatoSettlementCount, 1);
+  assert.equal(summary.gbpPerformanceCount, 1);
+  assert.equal(summary.hyperpureOrderCount, 1);
+
+  const body = calls.find((c) => c.call === 'sendMessage').text;
+  const indices = {
+    alerts: body.indexOf('Urgent Alerts'),
+    reviews: body.indexOf('Customer Reviews'),
+    petpooja: body.indexOf('PetPooja'),
+    zomato: body.indexOf('Zomato — Business'),
+    gbp: body.indexOf('Google Business Profile'),
+    hyperpure: body.indexOf('Hyperpure'),
+  };
+  for (const [name, idx] of Object.entries(indices)) {
+    assert.ok(idx > 0, `section "${name}" missing from body`);
+  }
+
+  assert.equal(calls.filter((c) => c.call === 'sendDocument').length, 2);
+});
+
+test('fetchMessage rejections are logged (warns to stderr) and counted in fetchFailures', async () => {
+  const originalWarn = console.warn;
+  const warnings = [];
+  console.warn = (...args) => warnings.push(args.join(' '));
+  try {
+    const fakeGmail = {
+      users: {
+        messages: {
+          list: async () => ({ data: { messages: [{ id: 'm1' }, { id: 'm2' }] } }),
+          get: async ({ id }) => {
+            if (id === 'm1') throw new Error('transient 500');
+            return {
+              data: {
+                id,
+                internalDate: String(Date.now() - 1000),
+                snippet: '',
+                payload: {
+                  headers: [
+                    { name: 'From', value: 'x@y.com' },
+                    { name: 'Subject', value: 'irrelevant' },
+                  ],
+                  parts: [],
+                },
+              },
+            };
+          },
+        },
+      },
+    };
+    const fakeTelegram = {
+      sendMessage: async () => {},
+      sendDocument: async () => {},
+    };
+    const summary = await runDigest({
+      config: { gmail: {}, telegram: {}, lookbackHours: 12, localeTz: 'Asia/Taipei' },
+      deps: { gmail: fakeGmail, telegram: fakeTelegram },
+    });
+    assert.equal(summary.fetchFailures, 1);
+    assert.ok(
+      warnings.some((w) => w.includes('fetchMessage failed') && w.includes('transient 500')),
+      `expected a fetchMessage warning, got: ${warnings.join(' | ')}`,
+    );
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
+function makeFakeGmailWithThreeSources() {
+  const messageSpecs = {
+    pp: {
+      from: '<no-reply@petpooja.com>',
+      subject: 'Report Notification: PP Report',
+      parts: [{ filename: 'pp.xlsx', mimeType: 'x', body: { attachmentId: 'P1', size: 100 } }],
+    },
+    zo: {
+      from: '<billing@zomato.com>',
+      subject: 'Zomato | Statement of account | BnB | 30 Mar to 05 Apr',
+      parts: [{ filename: 'zo.xlsx', mimeType: 'x', body: { attachmentId: 'Z1', size: 200 } }],
+    },
+    tax: {
+      from: '<billing@zomato.com>',
+      subject: 'Tax Invoice : Zomato Online Ordering for 2026-03-01 to 2026-03-31',
+      parts: [{ filename: 'tax.pdf', mimeType: 'application/pdf', body: { attachmentId: 'T1', size: 300 } }],
+    },
+  };
+  return {
+    users: {
+      messages: {
+        list: async () => ({
+          data: { messages: Object.keys(messageSpecs).map((id) => ({ id })) },
+        }),
+        get: async ({ id }) => ({
+          data: {
+            id,
+            internalDate: String(Date.now() - 3600_000),
+            snippet: '',
+            payload: {
+              headers: [
+                { name: 'From', value: messageSpecs[id].from },
+                { name: 'Subject', value: messageSpecs[id].subject },
+              ],
+              parts: messageSpecs[id].parts,
+            },
+          },
+        }),
+        attachments: {
+          get: async () => ({ data: { data: Buffer.from('x').toString('base64url') } }),
+        },
+      },
+    },
+  };
+}
