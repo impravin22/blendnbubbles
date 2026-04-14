@@ -6,6 +6,7 @@ import {
   isInvalidGrantError,
 } from './gmail.js';
 import { classifyMessage, isReviewKind, isSilentKind } from './parsers.js';
+import { parseItemWiseSalesReport, summariseForDigest } from './petpooja-report.js';
 import { TelegramClient } from './telegram.js';
 
 const TELEGRAM_DOCUMENT_BYTE_LIMIT = 50 * 1024 * 1024;
@@ -25,6 +26,26 @@ const GMAIL_SEARCH_QUERY = [
   'OR (from:zomato.com)',
   'OR (from:hyperpure)',
 ].join(' ');
+
+export async function fetchPetpoojaToday({ url, token } = {}, { fetchImpl = fetch } = {}) {
+  if (!url || !token) return null;
+  try {
+    const res = await fetchImpl(`${url.replace(/\/$/, '')}/petpooja-today`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      console.warn(`petpooja-today fetch failed: HTTP ${res.status}`);
+      return null;
+    }
+    const data = await res.json();
+    if (!data?.ok) return null;
+    return { date: data.date, orderCount: data.orderCount, totalRupees: data.totalRupees, rejectedCount: data.rejectedCount };
+  } catch (err) {
+    console.warn('petpooja-today fetch threw:', err?.message ?? err);
+    return null;
+  }
+}
 
 export async function buildDigest({ gmail, lookbackHours }) {
   const query = `(${GMAIL_SEARCH_QUERY}) newer_than:${Math.max(1, Math.ceil(lookbackHours / 24))}d`;
@@ -92,6 +113,7 @@ export function formatDigestText({
   gbpPhotos = [],
   gbpPerformance = [],
   hyperpureOrders = [],
+  petpoojaLive = null,
   fetchFailures = 0,
   unrecognised = [],
   localeTz,
@@ -116,6 +138,23 @@ export function formatDigestText({
     `${escapeHtml(today)}, ${escapeHtml(timeLabel)} TPE`,
     '',
   ];
+
+  const showWeeklyTrend = isSundayEvening(now, localeTz);
+  const weeklyWithMetrics = zomatoWeekly.find((w) => hasMetrics(w.metrics));
+  if (showWeeklyTrend && weeklyWithMetrics) {
+    lines.push('<b>📈 Weekly Trend — this week vs last</b>');
+    const m = weeklyWithMetrics.metrics;
+    if (m.salesRupees != null) {
+      lines.push(
+        `  • Sales: ₹${m.salesRupees.toLocaleString('en-IN')} ${formatDelta(m.salesDeltaPct)}`,
+      );
+    }
+    if (m.orders != null) {
+      lines.push(`  • Delivered orders: ${m.orders} ${formatDelta(m.ordersDeltaPct)}`);
+    }
+    lines.push(`  • Week: ${escapeHtml(weeklyWithMetrics.title)}`);
+    lines.push('');
+  }
 
   if (zomatoAlerts.length > 0) {
     lines.push('<b>⚠️ Urgent Alerts — act now</b>');
@@ -151,11 +190,38 @@ export function formatDigestText({
   lines.push('');
 
   lines.push('<b>📊 PetPooja — Barrackpore Branch</b>');
+  if (petpoojaLive) {
+    const rupees = (petpoojaLive.totalRupees ?? 0).toLocaleString('en-IN');
+    lines.push(
+      `  • 💰 Today (live): ₹${rupees} from ${petpoojaLive.orderCount} orders` +
+        (petpoojaLive.rejectedCount ? ` (${petpoojaLive.rejectedCount} rejected)` : ''),
+    );
+  }
   if (petpoojaReports.length === 0) {
-    lines.push('  • No overnight report yet — check again later');
+    if (!petpoojaLive) lines.push('  • No overnight report yet — check again later');
   } else {
     for (const report of petpoojaReports) {
       lines.push(`  • ${escapeHtml(report.reportTitle)}`);
+      if (report.summary) {
+        const s = report.summary;
+        if (s.totalRevenue != null && s.totalOrders != null) {
+          lines.push(
+            `    💰 ₹${s.totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })} • ${s.totalOrders} items sold`,
+          );
+        }
+        if (s.topItems.length > 0) {
+          lines.push('    🏆 Top drinks:');
+          for (const item of s.topItems) {
+            lines.push(`      ${escapeHtml(item.name)} × ${item.qty}`);
+          }
+        }
+        if (s.topCategories.length > 0) {
+          const tops = s.topCategories
+            .map((c) => `${escapeHtml(c.name)} ₹${Math.round(c.total).toLocaleString('en-IN')}`)
+            .join(', ');
+          lines.push(`    📂 By category: ${tops}`);
+        }
+      }
       for (const att of report.attachments) {
         lines.push(`  • 📎 ${escapeHtml(att.filename)}`);
       }
@@ -277,7 +343,29 @@ export async function runDigest({ config, deps = {} }) {
     throw err;
   }
 
-  const text = formatDigestText({ ...digestInput, localeTz: config.localeTz });
+  const petpoojaLive = await fetchPetpoojaToday(config.petpoojaWebhook ?? {});
+
+  // Parse PetPooja xlsx attachments up-front so the summary can land in the
+  // main digest text BEFORE the attachment itself is forwarded.
+  const attachmentBuffers = new Map();
+  for (const report of digestInput.petpoojaReports) {
+    for (const att of report.attachments) {
+      if (!isParseableReport(att)) continue;
+      try {
+        const buffer = await fetchAttachmentBytes(gmail, report.messageId, att.attachmentId);
+        attachmentBuffers.set(att.attachmentId, { buffer, mimeType: att.mimeType, filename: att.filename });
+        report.summary = summariseForDigest(await parseItemWiseSalesReport(buffer));
+      } catch (err) {
+        console.warn('PetPooja xlsx parse failed:', err?.message ?? err);
+      }
+    }
+  }
+
+  const text = formatDigestText({
+    ...digestInput,
+    petpoojaLive,
+    localeTz: config.localeTz,
+  });
   await telegram.sendMessage(text);
 
   const attachmentFailures = [];
@@ -313,7 +401,9 @@ export async function runDigest({ config, deps = {} }) {
         continue;
       }
       try {
-        const buffer = await fetchAttachmentBytes(gmail, source.messageId, att.attachmentId);
+        // Reuse the buffer we already fetched for summary parsing (PetPooja case).
+        const cached = attachmentBuffers.get(att.attachmentId);
+        const buffer = cached?.buffer ?? await fetchAttachmentBytes(gmail, source.messageId, att.attachmentId);
         await telegram.sendDocument({
           filename: att.filename,
           buffer,
@@ -355,7 +445,39 @@ export async function runDigest({ config, deps = {} }) {
     hyperpureOrderCount: digestInput.hyperpureOrders.length,
     fetchFailures: digestInput.fetchFailures,
     attachmentFailures: attachmentFailures.length,
+    petpoojaLive: petpoojaLive
+      ? { orderCount: petpoojaLive.orderCount, totalRupees: petpoojaLive.totalRupees }
+      : null,
   };
+}
+
+function isSundayEvening(now, localeTz) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: localeTz,
+    weekday: 'short',
+    hour: '2-digit',
+    hour12: false,
+  }).formatToParts(now);
+  const weekday = parts.find((p) => p.type === 'weekday')?.value;
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value);
+  return weekday === 'Sun' && Number.isFinite(hour) && hour >= 16;
+}
+
+function hasMetrics(metrics) {
+  if (!metrics) return false;
+  return metrics.salesRupees != null || metrics.orders != null;
+}
+
+function formatDelta(pct) {
+  if (pct == null) return '';
+  const sign = pct > 0 ? '+' : '';
+  const arrow = pct > 0 ? '🔺' : pct < 0 ? '🔻' : '➖';
+  return `(${sign}${pct}% ${arrow} vs last week)`;
+}
+
+function isParseableReport(att) {
+  const filename = (att.filename ?? '').toLowerCase();
+  return filename.endsWith('.xlsx');
 }
 
 function pickDigestSlot(now, localeTz) {

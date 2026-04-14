@@ -1,0 +1,19 @@
+{
+  "name": "@blendnbubbles/petpooja-webhook",
+  "version": "0.1.0",
+  "description": "HTTP receiver for PetPooja order webhooks — aggregates today's sales/orders for the Telegram digest",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "bin": {
+    "bnb-webhook": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {}
+}

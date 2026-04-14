@@ -202,6 +202,126 @@ test('escapeHtml covers all five entity characters', () => {
   assert.equal(escapeHtml(`<>&"'`), '&lt;&gt;&amp;&quot;&#39;');
 });
 
+test('Weekly Trend section renders on Sunday evening in TPE with parsed metrics', () => {
+  const sundayEvening = new Date('2026-04-12T13:30:00Z'); // 21:30 TPE Sunday
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoWeekly: [
+      {
+        kind: 'zomato-weekly',
+        title: 'Week 15 (6 to 12 Apr, 2026)',
+        attachments: [],
+        messageId: 'w',
+        snippet: 'Total sales ₹1156 -67% Delivered orders 5 -58%',
+        metrics: { salesRupees: 1156, salesDeltaPct: -67, orders: 5, ordersDeltaPct: -58 },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+    now: sundayEvening,
+  });
+  assert.match(text, /📈 Weekly Trend/);
+  assert.match(text, /Sales: ₹1,156 \(-67% 🔻 vs last week\)/);
+  assert.match(text, /Delivered orders: 5 \(-58% 🔻 vs last week\)/);
+});
+
+test('Weekly Trend section is omitted on non-Sunday', () => {
+  const monday = new Date('2026-04-13T13:30:00Z'); // 21:30 TPE Monday
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoWeekly: [
+      {
+        kind: 'zomato-weekly',
+        title: 'Week 15',
+        attachments: [],
+        messageId: 'w',
+        snippet: 'x',
+        metrics: { salesRupees: 1000, salesDeltaPct: 10, orders: 5, ordersDeltaPct: 0 },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+    now: monday,
+  });
+  assert.doesNotMatch(text, /Weekly Trend/);
+});
+
+test('Weekly Trend section is omitted on Sunday morning (before 16:00 TPE)', () => {
+  const sundayMorning = new Date('2026-04-12T01:05:00Z'); // 09:05 TPE Sunday
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoWeekly: [
+      {
+        kind: 'zomato-weekly',
+        title: 'Week 15',
+        attachments: [],
+        messageId: 'w',
+        snippet: 'x',
+        metrics: { salesRupees: 1000, salesDeltaPct: 10, orders: 5, ordersDeltaPct: 5 },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+    now: sundayMorning,
+  });
+  assert.doesNotMatch(text, /Weekly Trend/);
+});
+
+test('Positive weekly deltas render with up arrow', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoWeekly: [
+      {
+        kind: 'zomato-weekly',
+        title: 'Week 14',
+        attachments: [],
+        messageId: 'w',
+        snippet: 'x',
+        metrics: { salesRupees: 3547, salesDeltaPct: 45, orders: 12, ordersDeltaPct: 20 },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+    now: new Date('2026-04-12T13:00:00Z'),
+  });
+  assert.match(text, /\(\+45% 🔺/);
+});
+
+test('PetPooja section renders drink-wise summary when report.summary is present', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [
+      {
+        kind: 'petpooja',
+        reportTitle: 'Item Wise Report',
+        attachments: [{ filename: 'a.xlsx', mimeType: 'x', attachmentId: 'a', size: 1 }],
+        messageId: 'm',
+        summary: {
+          dateRange: '2026-02-01 to 2026-02-17',
+          totalOrders: 350,
+          totalRevenue: 52373.14,
+          topItems: [
+            { name: 'Caramel Boba Coffee', category: 'Coffee', qty: 41, total: 6567 },
+            { name: 'Taiwan Classic Boba', category: 'Milk Tea', qty: 25, total: 4266 },
+            { name: 'Cafe Mocha', category: 'Coffee', qty: 20, total: 3449 },
+          ],
+          topCategories: [
+            { name: 'Smoothies', qty: 68, total: 11311 },
+            { name: 'Coffee', qty: 61, total: 10016 },
+          ],
+        },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /₹52,373 • 350 items sold/);
+  assert.match(text, /🏆 Top drinks:/);
+  assert.match(text, /Caramel Boba Coffee × 41/);
+  assert.match(text, /Taiwan Classic Boba × 25/);
+  assert.match(text, /Cafe Mocha × 20/);
+  assert.match(text, /📂 By category: Smoothies ₹11,311/);
+});
+
 test('Urgent Alerts heading is absent when zomatoAlerts is empty', () => {
   const text = formatDigestText({
     reviews: [{ kind: 'review-single', source: 'google', reviewer: 'X', business: 'x', count: 1 }],

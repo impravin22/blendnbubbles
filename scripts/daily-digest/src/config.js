@@ -42,5 +42,9 @@ export function loadConfig(env = process.env) {
     },
     lookbackHours,
     localeTz: env.DIGEST_LOCALE_TZ ?? 'Asia/Taipei',
+    petpoojaWebhook:
+      env.PETPOOJA_WEBHOOK_URL && env.PETPOOJA_WEBHOOK_TOKEN
+        ? { url: env.PETPOOJA_WEBHOOK_URL, token: env.PETPOOJA_WEBHOOK_TOKEN }
+        : null,
   };
 }

@@ -130,6 +130,7 @@ export function parseZomato(message, { subject, from = '', messageId = message?.
       attachments: extractAttachments(message),
       messageId,
       snippet: snippet.slice(0, 400),
+      metrics: parseZomatoWeeklyMetrics(snippet),
     };
   }
   const settlement = subject.match(ZOMATO_SETTLEMENT_RE);
@@ -212,6 +213,25 @@ function flattenParts(part) {
 function clampTitle(title) {
   if (title.length <= TITLE_MAX_CHARS) return title;
   return title.slice(0, TITLE_MAX_CHARS - 1).trimEnd() + '…';
+}
+
+// Extracts structured metrics from a Zomato weekly-report snippet like:
+//   "Total sales ₹1156 -67% Delivered orders 5 -58% Repeat customers 2 +100%"
+// Returns { salesRupees, salesDeltaPct, orders, ordersDeltaPct } — any field
+// that cannot be parsed is null.
+export function parseZomatoWeeklyMetrics(snippet) {
+  if (!snippet || typeof snippet !== 'string') {
+    return { salesRupees: null, salesDeltaPct: null, orders: null, ordersDeltaPct: null };
+  }
+  const salesMatch = snippet.match(/Total sales\s+₹([\d,]+)\s*(-?\+?\d+)%/i);
+  const ordersMatch = snippet.match(/Delivered orders\s+(\d+)\s*(-?\+?\d+)%/i);
+  const parseInt10 = (s) => (s == null ? null : Number.parseInt(s.replace(/[,+]/g, ''), 10));
+  return {
+    salesRupees: parseInt10(salesMatch?.[1]),
+    salesDeltaPct: parseInt10(salesMatch?.[2]),
+    orders: parseInt10(ordersMatch?.[1]),
+    ordersDeltaPct: parseInt10(ordersMatch?.[2]),
+  };
 }
 
 export function isReviewKind(parsed) {
