@@ -218,8 +218,9 @@ export function formatDigestText({
       if (report.summary) {
         const s = report.summary;
         if (s.totalRevenue != null && s.totalOrders != null) {
+          const billPart = s.billCount ? ` across ${s.billCount} bills` : '';
           lines.push(
-            `    💰 ₹${s.totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })} • ${s.totalOrders} items sold`,
+            `    💰 ₹${s.totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })} • ${s.totalOrders} items sold${billPart}`,
           );
         }
         if (s.topItems.length > 0) {

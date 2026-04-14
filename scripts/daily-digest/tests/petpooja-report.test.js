@@ -8,6 +8,7 @@ import { parseItemWiseSalesReport, summariseForDigest } from '../src/petpooja-re
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 const SAMPLE_XLSX = path.join(REPO_ROOT, 'reports/Item_Wise_Sales_Report_2026_02_18_09_22_59.xlsx');
+const SAMPLE_BILLWISE_XLSX = path.join(REPO_ROOT, 'reports/Item_bill_report_2026_04_14_01_38_27.xlsx');
 
 test('parseItemWiseSalesReport extracts date range, restaurant, grand totals from real xlsx', async () => {
   const buf = await fs.readFile(SAMPLE_XLSX);
@@ -60,6 +61,35 @@ test('summariseForDigest orders top categories by revenue', async () => {
 
 test('summariseForDigest returns null for null report', () => {
   assert.equal(summariseForDigest(null), null);
+});
+
+test('parseItemWiseSalesReport handles real "Item Wise Report With Bill No." nightly format', async () => {
+  const buf = await fs.readFile(SAMPLE_BILLWISE_XLSX);
+  const report = await parseItemWiseSalesReport(buf);
+  assert.equal(report.template, 'billwise');
+  assert.match(report.restaurantName, /Blend N Bubbles/);
+  assert.equal(report.dateRange, '2026-04-13 to 2026-04-13');
+  assert.ok(report.grandTotalQty > 0, 'should count some items');
+  assert.ok(report.grandTotalRevenue > 0, 'should have revenue');
+  assert.ok(report.billCount > 0, 'should count unique bills');
+  assert.ok(report.items.length > 0);
+  // Spot-check: Cafe Mocha appears in this real sample
+  assert.ok(report.items.some((i) => i.name === 'Cafe Mocha'));
+});
+
+test('parseItemWiseSalesReport (billwise) aggregates across bill-lines correctly', async () => {
+  const buf = await fs.readFile(SAMPLE_BILLWISE_XLSX);
+  const report = await parseItemWiseSalesReport(buf);
+  const caramel = report.items.find((i) => i.name === 'Caramel Boba Coffee');
+  assert.ok(caramel, 'Caramel Boba Coffee appears in the real sample');
+  // Three bill-lines at ₹157.14 each
+  assert.equal(caramel.qty, 3);
+});
+
+test('summariseForDigest from billwise report includes billCount', async () => {
+  const buf = await fs.readFile(SAMPLE_BILLWISE_XLSX);
+  const summary = summariseForDigest(await parseItemWiseSalesReport(buf));
+  assert.ok(summary.billCount >= 5, 'should have counted at least 5 bills');
 });
 
 test('parseItemWiseSalesReport rejects a template with unexpected headers', async () => {
