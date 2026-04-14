@@ -5,18 +5,24 @@ import {
   fetchAttachmentBytes,
   isInvalidGrantError,
 } from './gmail.js';
-import { classifyMessage, isReviewKind } from './parsers.js';
+import { classifyMessage, isReviewKind, isSilentKind } from './parsers.js';
 import { TelegramClient } from './telegram.js';
 
 const TELEGRAM_DOCUMENT_BYTE_LIMIT = 50 * 1024 * 1024;
-const GMAIL_SEARCH_QUERY =
-  '((from:(noreply@business.google.com OR googlecommunityteam-noreply@google.com OR business-profile-noreply@google.com) ' +
-  'AND (subject:"left a review" OR subject:"you got")) ' +
-  'OR (from:petpooja AND subject:"Report Notification:") ' +
-  'OR (from:zomato.com AND (subject:"weekly business report" OR subject:"Statement of account" OR subject:"New Review")))';
+
+// Broad Gmail search that catches every sender/subject pattern the parsers know about.
+// The parsers do the final classification; this query just reduces the result set.
+const GMAIL_SEARCH_QUERY = [
+  '(',
+  'from:(noreply@business.google.com OR googlecommunityteam-noreply@google.com OR business-profile-noreply@google.com)',
+  ')',
+  'OR (from:petpooja AND subject:"Report Notification:")',
+  'OR (from:zomato.com)',
+  'OR (from:hyperpure)',
+].join(' ');
 
 export async function buildDigest({ gmail, lookbackHours }) {
-  const query = `${GMAIL_SEARCH_QUERY} newer_than:${Math.max(1, Math.ceil(lookbackHours / 24))}d`;
+  const query = `(${GMAIL_SEARCH_QUERY}) newer_than:${Math.max(1, Math.ceil(lookbackHours / 24))}d`;
   const stubs = await searchMessages(gmail, query);
   const fetches = await Promise.allSettled(stubs.map((s) => fetchMessage(gmail, s.id)));
   const messages = fetches
@@ -28,6 +34,11 @@ export async function buildDigest({ gmail, lookbackHours }) {
   const petpoojaReports = [];
   const zomatoWeekly = [];
   const zomatoSettlements = [];
+  const zomatoTaxInvoices = [];
+  const zomatoAlerts = [];
+  const gbpPhotos = [];
+  const gbpPerformance = [];
+  const hyperpureOrders = [];
   const unrecognised = [];
   const cutoffMs = Date.now() - lookbackHours * 3600 * 1000;
 
@@ -39,10 +50,27 @@ export async function buildDigest({ gmail, lookbackHours }) {
     else if (parsed.kind === 'petpooja') petpoojaReports.push(parsed);
     else if (parsed.kind === 'zomato-weekly') zomatoWeekly.push(parsed);
     else if (parsed.kind === 'zomato-settlement') zomatoSettlements.push(parsed);
-    else if (parsed.kind !== 'unknown' && parsed.kind !== 'zomato-other') unrecognised.push(parsed);
+    else if (parsed.kind === 'zomato-tax-invoice') zomatoTaxInvoices.push(parsed);
+    else if (parsed.kind === 'zomato-alert') zomatoAlerts.push(parsed);
+    else if (parsed.kind === 'gbp-photo') gbpPhotos.push(parsed);
+    else if (parsed.kind === 'gbp-performance') gbpPerformance.push(parsed);
+    else if (parsed.kind === 'hyperpure-order') hyperpureOrders.push(parsed);
+    else if (!isSilentKind(parsed)) unrecognised.push(parsed);
   }
 
-  return { reviews, petpoojaReports, zomatoWeekly, zomatoSettlements, fetchFailures, unrecognised };
+  return {
+    reviews,
+    petpoojaReports,
+    zomatoWeekly,
+    zomatoSettlements,
+    zomatoTaxInvoices,
+    zomatoAlerts,
+    gbpPhotos,
+    gbpPerformance,
+    hyperpureOrders,
+    fetchFailures,
+    unrecognised,
+  };
 }
 
 export function formatDigestText({
@@ -50,6 +78,11 @@ export function formatDigestText({
   petpoojaReports,
   zomatoWeekly = [],
   zomatoSettlements = [],
+  zomatoTaxInvoices = [],
+  zomatoAlerts = [],
+  gbpPhotos = [],
+  gbpPerformance = [],
+  hyperpureOrders = [],
   fetchFailures = 0,
   unrecognised = [],
   localeTz,
@@ -74,6 +107,19 @@ export function formatDigestText({
     `${escapeHtml(today)}, ${escapeHtml(timeLabel)} TPE`,
     '',
   ];
+
+  if (zomatoAlerts.length > 0) {
+    lines.push('<b>⚠️ Urgent Alerts — act now</b>');
+    for (const alert of zomatoAlerts) {
+      const icon = alert.severity === 'critical' ? '🚨' : alert.severity === 'warning' ? '⚠️' : 'ℹ️';
+      lines.push(`  • ${icon} ${escapeHtml(alert.title)}`);
+      if (alert.snippet) {
+        lines.push(`    <i>${escapeHtml(truncate(alert.snippet, 200))}</i>`);
+      }
+    }
+    lines.push('    <a href="https://www.zomato.com/business/">Open Zomato Business ↗</a>');
+    lines.push('');
+  }
 
   lines.push('<b>⭐ Customer Reviews (last window)</b>');
   if (googleCount + zomatoCount === 0) {
@@ -104,13 +150,17 @@ export function formatDigestText({
   lines.push('');
 
   lines.push('<b>🍽️ Zomato — Business</b>');
-  if (zomatoWeekly.length === 0 && zomatoSettlements.length === 0) {
+  if (
+    zomatoWeekly.length === 0 &&
+    zomatoSettlements.length === 0 &&
+    zomatoTaxInvoices.length === 0
+  ) {
     lines.push('  • No Zomato reports in this window');
   } else {
     for (const report of zomatoWeekly) {
       lines.push(`  • Weekly report: ${escapeHtml(report.title)}`);
       if (report.snippet) {
-        lines.push(`    <i>${escapeHtml(truncate(report.snippet, 200))}</i>`);
+        lines.push(`    <i>${escapeHtml(truncate(report.snippet, 400))}</i>`);
       }
     }
     for (const settlement of zomatoSettlements) {
@@ -118,6 +168,44 @@ export function formatDigestText({
       for (const att of settlement.attachments) {
         lines.push(`  • 📎 ${escapeHtml(att.filename)}`);
       }
+    }
+    for (const invoice of zomatoTaxInvoices) {
+      lines.push(`  • Tax invoice: ${escapeHtml(invoice.title)}`);
+      for (const att of invoice.attachments) {
+        lines.push(`  • 📎 ${escapeHtml(att.filename)}`);
+      }
+    }
+  }
+  lines.push('');
+
+  lines.push('<b>📈 Google Business Profile</b>');
+  if (gbpPhotos.length === 0 && gbpPerformance.length === 0) {
+    lines.push('  • No GBP updates in this window');
+  } else {
+    for (const perf of gbpPerformance) {
+      lines.push(`  • 📊 Monthly performance — ${escapeHtml(perf.month)}`);
+      if (perf.snippet) {
+        lines.push(`    <i>${escapeHtml(truncate(perf.snippet, 300))}</i>`);
+      }
+    }
+    if (gbpPhotos.length > 0) {
+      lines.push(`  • 📸 ${gbpPhotos.length} new customer photo${gbpPhotos.length === 1 ? '' : 's'}`);
+      lines.push(
+        '    <a href="https://business.google.com/photos">View on Google Business ↗</a>',
+      );
+    }
+  }
+  lines.push('');
+
+  lines.push('<b>📦 Hyperpure Supplies</b>');
+  if (hyperpureOrders.length === 0) {
+    lines.push('  • No Hyperpure activity in this window');
+  } else {
+    for (const order of hyperpureOrders) {
+      const icon = order.status === 'delivered' ? '✅' : '🛒';
+      const label = order.status === 'delivered' ? 'Delivered' : 'Placed';
+      const idSegment = order.orderId ? ` — ${escapeHtml(order.orderId)}` : '';
+      lines.push(`  • ${icon} ${label}${idSegment}`);
     }
   }
 
@@ -187,6 +275,12 @@ export async function runDigest({ config, deps = {} }) {
       title: s.title,
       attachments: s.attachments,
     })),
+    ...digestInput.zomatoTaxInvoices.map((i) => ({
+      messageId: i.messageId,
+      captionPrefix: '🧾',
+      title: i.title,
+      attachments: i.attachments,
+    })),
   ];
 
   for (const source of attachmentSources) {
@@ -233,6 +327,11 @@ export async function runDigest({ config, deps = {} }) {
     petpoojaReportCount: digestInput.petpoojaReports.length,
     zomatoWeeklyCount: digestInput.zomatoWeekly.length,
     zomatoSettlementCount: digestInput.zomatoSettlements.length,
+    zomatoTaxInvoiceCount: digestInput.zomatoTaxInvoices.length,
+    zomatoAlertCount: digestInput.zomatoAlerts.length,
+    gbpPhotoCount: digestInput.gbpPhotos.length,
+    gbpPerformanceCount: digestInput.gbpPerformance.length,
+    hyperpureOrderCount: digestInput.hyperpureOrders.length,
     fetchFailures: digestInput.fetchFailures,
     attachmentFailures: attachmentFailures.length,
   };

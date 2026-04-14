@@ -2,9 +2,12 @@
 
 Sends a Telegram digest **twice a day** — **09:00 and 21:00 Asia/Taipei** (01:00 and 13:00 UTC) — summarising the last 12 hours of:
 
-- Customer reviews on **Google** (new review notifications) and **Zomato** (`[Zomato] New Review for ...`)
-- **PetPooja** overnight reports (forwarded as xlsx attachments)
-- **Zomato business** updates: weekly business report body + settlement statement xlsx
+- **⚠️ Urgent Zomato alerts** (top of digest): online ordering switched OFF, orders rejected, payout delays
+- Customer reviews on **Google** + **Zomato** (merged into one section, per-platform counts)
+- **PetPooja** overnight reports (xlsx forwarded)
+- **Zomato business** updates: weekly report, settlement statement, monthly tax invoice PDF
+- **Google Business Profile**: monthly performance summary + new customer photos
+- **Hyperpure** supply-chain orders (placed + delivered, with order IDs)
 
 Runs on GitHub Actions (`.github/workflows/daily-digest.yml`). No server to maintain.
 
@@ -114,17 +117,20 @@ scripts/daily-digest/
 
 ## What the digest looks like
 
-Morning digest (09:00 TPE):
-
 ```
 ☀️ Blend N Bubbles — Morning Rundown
 14 Apr 2026, 09:00 TPE
 
+⚠️ Urgent Alerts — act now
+  • 🚨 Online ordering switched OFF for Blend N Bubbles, Barrackpore
+    (auto-off due to rejection…)
+  • ⚠️ Online order rejected at Blend N Bubbles, Barrackpore
+  • ℹ️ [IMP] Update on your payout for this week
+  Open Zomato Business ↗
+
 ⭐ Customer Reviews (last window)
   • Google: 3 new reviews (from Sushmita, Rajat, Anamika)
-    Reply on Google Business ↗
   • Zomato: 1 new review (from Jayasree Dutta)
-    Reply on Zomato Business ↗
 
 📊 PetPooja — Barrackpore Branch
   • Item Wise Report With Bill No. : Blend N Bubbles [Barrackpore Branch]
@@ -132,9 +138,20 @@ Morning digest (09:00 TPE):
 
 🍽️ Zomato — Business
   • Weekly report: Week 15 (6 to 12 Apr, 2026)
-    Orders: 120, Revenue: ₹42,000, ...
+    Total sales ₹1156 -67%, Delivered orders 5 -58% …
   • Settlement: Blend N Bubbles 21955142 | 30 Mar to 05 Apr
   • 📎 Zomato_Settlement_Report_...xlsx
+  • Tax invoice: Online Ordering for 2026-03-01 to 2026-03-31
+  • 📎 Z26-WBOO-166484.pdf
+
+📈 Google Business Profile
+  • 📊 Monthly performance — March 2026
+    271 people viewed Blend n Bubbles last month …
+  • 📸 2 new customer photos
+
+📦 Hyperpure Supplies
+  • 🛒 Placed — ZHPWB27-OR-0025296424
+  • ✅ Delivered — ZHPWB26-OR-0025064133
 ```
 
-Evening digest (21:00 TPE) uses the same structure with `🌙 Evening Rundown`. Attachments land as separate Telegram documents right after the text digest.
+Evening digest (21:00 TPE) uses the same structure with `🌙 Evening Rundown`. Empty sections render a one-line "no activity" placeholder so the owner can tell the bot ran. Attachments land as separate Telegram documents right after the text digest.
