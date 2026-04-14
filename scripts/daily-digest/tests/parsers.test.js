@@ -190,6 +190,65 @@ test('Hyperpure delivered subject -> hyperpure-order delivered with id', () => {
   assert.equal(parsed.orderId, 'ZHPWB27-OR-0025296424');
 });
 
+test('classifyMessage rejects spoofed Hyperpure sender substrings', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '"Evil" <hyperpure@attacker.com>',
+      subject: 'Thank you for your order!',
+    }),
+  );
+  assert.equal(parsed.kind, 'unknown');
+});
+
+test('Hyperpure subdomain sender accepted', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@mail.hyperpure.com>',
+      subject: 'Thank you for your order!',
+      snippet: 'Order Number: ZHPWB27-OR-0001',
+    }),
+  );
+  assert.equal(parsed.kind, 'hyperpure-order');
+});
+
+test('Zomato alert regex covers turned-off / disabled / paused variants', () => {
+  const variants = [
+    'Online ordering switched OFF for Blend N Bubbles',
+    'Your online ordering has been turned off for Blend N Bubbles, Barrackpore',
+    'Online ordering disabled for Blend N Bubbles',
+    'Online ordering paused for Blend N Bubbles',
+  ];
+  for (const subject of variants) {
+    const parsed = classifyMessage(makeMessage({ from: '<noreply@zomato.com>', subject }));
+    assert.equal(parsed.kind, 'zomato-alert', `failed for: ${subject}`);
+    assert.equal(parsed.severity, 'critical', `wrong severity for: ${subject}`);
+  }
+});
+
+test('Unknown Zomato email format surfaces as zomato-other (NOT silent)', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply@zomato.com>',
+      subject: 'Menu item out of stock notification',
+    }),
+  );
+  assert.equal(parsed.kind, 'zomato-other');
+  assert.equal(isSilentKind(parsed), false);
+});
+
+test('Title-clamp: a ridiculously long subject is truncated to 200 chars with ellipsis', () => {
+  const long = 'Report Notification: ' + 'X'.repeat(500);
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<no-reply@petpooja.com>',
+      subject: long,
+    }),
+  );
+  assert.equal(parsed.kind, 'petpooja');
+  assert.ok(parsed.reportTitle.length <= 200, `title length ${parsed.reportTitle.length} exceeds 200`);
+  assert.match(parsed.reportTitle, /…$/);
+});
+
 test('classifyMessage rejects spoofed Google sender substrings', () => {
   const parsed = classifyMessage(
     makeMessage({
@@ -207,21 +266,26 @@ test('Unrelated senders -> unknown', () => {
   );
 });
 
-test('Zomato login alert -> zomato-other (silent kind)', () => {
+test('Zomato login alert -> zomato-other (surfaced, NOT silent)', () => {
+  // Pre-fix: zomato-other was silenced. Post-fix: it surfaces as unrecognised so
+  // a new Zomato email format can be noticed and taught to the parser.
   const parsed = classifyMessage(
     makeMessage({ from: '<noreply@zomato.com>', subject: 'Login Alert for your Zomato account!' }),
   );
   assert.equal(parsed.kind, 'zomato-other');
-  assert.equal(isSilentKind(parsed), true);
+  assert.equal(isSilentKind(parsed), false);
 });
 
 test('isReviewKind and isSilentKind discriminate correctly', () => {
   assert.equal(isReviewKind({ kind: 'review-single' }), true);
   assert.equal(isReviewKind({ kind: 'review-batch' }), true);
   assert.equal(isReviewKind({ kind: 'zomato-alert' }), false);
+  // Only 'unknown' (unrelated senders entirely) is silent. '*-other' kinds
+  // surface so unfamiliar email formats from trusted senders are visible.
   assert.equal(isSilentKind({ kind: 'unknown' }), true);
-  assert.equal(isSilentKind({ kind: 'gbp-other' }), true);
-  assert.equal(isSilentKind({ kind: 'hyperpure-other' }), true);
+  assert.equal(isSilentKind({ kind: 'gbp-other' }), false);
+  assert.equal(isSilentKind({ kind: 'hyperpure-other' }), false);
+  assert.equal(isSilentKind({ kind: 'zomato-other' }), false);
   assert.equal(isSilentKind({ kind: 'zomato-alert' }), false);
 });
 

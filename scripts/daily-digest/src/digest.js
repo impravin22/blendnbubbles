@@ -9,6 +9,11 @@ import { classifyMessage, isReviewKind, isSilentKind } from './parsers.js';
 import { TelegramClient } from './telegram.js';
 
 const TELEGRAM_DOCUMENT_BYTE_LIMIT = 50 * 1024 * 1024;
+const ALERT_ICONS = Object.freeze({
+  critical: '🚨',
+  warning: '⚠️',
+  info: 'ℹ️',
+});
 
 // Broad Gmail search that catches every sender/subject pattern the parsers know about.
 // The parsers do the final classification; this query just reduces the result set.
@@ -28,7 +33,11 @@ export async function buildDigest({ gmail, lookbackHours }) {
   const messages = fetches
     .filter((r) => r.status === 'fulfilled')
     .map((r) => r.value);
-  const fetchFailures = fetches.filter((r) => r.status === 'rejected').length;
+  const rejected = fetches.filter((r) => r.status === 'rejected');
+  for (const r of rejected) {
+    console.warn('fetchMessage failed:', r.reason?.message ?? r.reason);
+  }
+  const fetchFailures = rejected.length;
 
   const reviews = [];
   const petpoojaReports = [];
@@ -111,13 +120,18 @@ export function formatDigestText({
   if (zomatoAlerts.length > 0) {
     lines.push('<b>⚠️ Urgent Alerts — act now</b>');
     for (const alert of zomatoAlerts) {
-      const icon = alert.severity === 'critical' ? '🚨' : alert.severity === 'warning' ? '⚠️' : 'ℹ️';
+      const icon = ALERT_ICONS[alert.severity] ?? 'ℹ️';
       lines.push(`  • ${icon} ${escapeHtml(alert.title)}`);
       if (alert.snippet) {
         lines.push(`    <i>${escapeHtml(truncate(alert.snippet, 200))}</i>`);
       }
     }
-    lines.push('    <a href="https://www.zomato.com/business/">Open Zomato Business ↗</a>');
+    // Only emit the action link when something truly requires manual intervention on Zomato Business.
+    // Pure info alerts (e.g. payout timing) do not.
+    const needsAction = zomatoAlerts.some((a) => a.severity !== 'info');
+    if (needsAction) {
+      lines.push('    <a href="https://www.zomato.com/business/">Open Zomato Business ↗</a>');
+    }
     lines.push('');
   }
 
@@ -171,6 +185,9 @@ export function formatDigestText({
     }
     for (const invoice of zomatoTaxInvoices) {
       lines.push(`  • Tax invoice: ${escapeHtml(invoice.title)}`);
+      if (invoice.attachments.length === 0) {
+        lines.push('    ⚠️ No PDF attached — open the email in Gmail to retrieve it');
+      }
       for (const att of invoice.attachments) {
         lines.push(`  • 📎 ${escapeHtml(att.filename)}`);
       }
@@ -253,7 +270,9 @@ export async function runDigest({ config, deps = {} }) {
             'The Gmail refresh token is no longer valid. Run <code>npm run auth</code> locally ' +
             'and update the <code>GMAIL_REFRESH_TOKEN</code> GitHub secret.',
         )
-        .catch(() => {});
+        .catch((alertErr) => {
+          console.error('Failed to send invalid_grant alert to Telegram:', alertErr?.message ?? alertErr);
+        });
     }
     throw err;
   }
@@ -313,7 +332,9 @@ export async function runDigest({ config, deps = {} }) {
       lines.push(`  • ${escapeHtml(f.filename)} — ${escapeHtml(f.reason)}`);
     }
     lines.push('Open the original email in Gmail to retrieve them.');
-    await telegram.sendMessage(lines.join('\n')).catch(() => {});
+    await telegram.sendMessage(lines.join('\n')).catch((warnErr) => {
+      console.error('Failed to send attachment-failure notice:', warnErr?.message ?? warnErr);
+    });
   }
 
   return {

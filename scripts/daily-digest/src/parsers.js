@@ -5,7 +5,8 @@ const GOOGLE_BUSINESS_SENDERS = new Set([
 ]);
 const PETPOOJA_DOMAIN_SUFFIX = '@petpooja.com';
 const ZOMATO_DOMAIN_SUFFIX = '@zomato.com';
-const HYPERPURE_DOMAIN_MARKER = 'hyperpure';
+const HYPERPURE_DOMAIN_SUFFIXES = ['@hyperpure.com', '.hyperpure.com'];
+const TITLE_MAX_CHARS = 200;
 
 const GOOGLE_REVIEW_SINGLE_RE = /^(.+?)\s+left a review for\s+(.+)$/i;
 const GOOGLE_REVIEW_BATCH_RE = /^(.+?),\s*you got (\d+) new reviews?$/i;
@@ -16,8 +17,9 @@ const ZOMATO_REVIEW_RE = /^\[Zomato\]\s+New Review for\s+(.+?)\s+by\s+(.+)$/i;
 const ZOMATO_WEEKLY_RE = /^Zomato weekly business report\s+-\s+(.+)$/i;
 const ZOMATO_SETTLEMENT_RE = /^Zomato\s+\|\s+Statement of account\s+\|\s+(.+)$/i;
 const ZOMATO_TAX_INVOICE_RE = /^Tax Invoice\s*:\s*Zomato\s+(.+)$/i;
-const ZOMATO_SWITCHED_OFF_RE = /Online ordering switched OFF/i;
-const ZOMATO_ORDER_REJECTED_RE = /Online order rejected at/i;
+// Critical: anything indicating the restaurant is currently not accepting orders.
+const ZOMATO_SWITCHED_OFF_RE = /\bordering\s+(?:has\s+been\s+)?(?:switched\s+off|turned\s+off|disabled|paused)\b|\bswitched\s+OFF\b/i;
+const ZOMATO_ORDER_REJECTED_RE = /\bOnline order rejected\b/i;
 const ZOMATO_PAYOUT_RE = /Update on your payout/i;
 
 const HYPERPURE_ORDER_PLACED_RE = /^Thank you for your order/i;
@@ -51,7 +53,7 @@ export function classifyMessage(message) {
   if (from.endsWith(PETPOOJA_DOMAIN_SUFFIX)) {
     return parsePetPooja(message, { subject, from, messageId });
   }
-  if (from.includes(HYPERPURE_DOMAIN_MARKER)) {
+  if (HYPERPURE_DOMAIN_SUFFIXES.some((suffix) => from.endsWith(suffix))) {
     return parseHyperpure({ subject, from, messageId, snippet });
   }
   if (from.endsWith(ZOMATO_DOMAIN_SUFFIX)) {
@@ -100,7 +102,7 @@ export function parsePetPooja(message, { subject, from = '', messageId = message
   if (!subject.startsWith('Report Notification:')) {
     return { kind: 'petpooja-unrecognised', subject, from, messageId };
   }
-  const reportTitle = subject.slice('Report Notification:'.length).trim();
+  const reportTitle = clampTitle(subject.slice('Report Notification:'.length).trim());
   return {
     kind: 'petpooja',
     reportTitle,
@@ -124,7 +126,7 @@ export function parseZomato(message, { subject, from = '', messageId = message?.
   if (weekly) {
     return {
       kind: 'zomato-weekly',
-      title: weekly[1].trim(),
+      title: clampTitle(weekly[1].trim()),
       attachments: extractAttachments(message),
       messageId,
       snippet: snippet.slice(0, 400),
@@ -134,7 +136,7 @@ export function parseZomato(message, { subject, from = '', messageId = message?.
   if (settlement) {
     return {
       kind: 'zomato-settlement',
-      title: settlement[1].trim(),
+      title: clampTitle(settlement[1].trim()),
       attachments: extractAttachments(message),
       messageId,
     };
@@ -143,19 +145,19 @@ export function parseZomato(message, { subject, from = '', messageId = message?.
   if (taxInvoice) {
     return {
       kind: 'zomato-tax-invoice',
-      title: taxInvoice[1].trim(),
+      title: clampTitle(taxInvoice[1].trim()),
       attachments: extractAttachments(message),
       messageId,
     };
   }
   if (ZOMATO_SWITCHED_OFF_RE.test(subject)) {
-    return { kind: 'zomato-alert', severity: 'critical', title: subject, messageId, snippet };
+    return { kind: 'zomato-alert', severity: 'critical', title: clampTitle(subject), messageId, snippet };
   }
   if (ZOMATO_ORDER_REJECTED_RE.test(subject)) {
-    return { kind: 'zomato-alert', severity: 'warning', title: subject, messageId, snippet };
+    return { kind: 'zomato-alert', severity: 'warning', title: clampTitle(subject), messageId, snippet };
   }
   if (ZOMATO_PAYOUT_RE.test(subject)) {
-    return { kind: 'zomato-alert', severity: 'info', title: subject, messageId, snippet };
+    return { kind: 'zomato-alert', severity: 'info', title: clampTitle(subject), messageId, snippet };
   }
   return { kind: 'zomato-other', subject, from, messageId };
 }
@@ -207,16 +209,18 @@ function flattenParts(part) {
   return out;
 }
 
+function clampTitle(title) {
+  if (title.length <= TITLE_MAX_CHARS) return title;
+  return title.slice(0, TITLE_MAX_CHARS - 1).trimEnd() + '…';
+}
+
 export function isReviewKind(parsed) {
   return parsed.kind === 'review-single' || parsed.kind === 'review-batch';
 }
 
+// Only `unknown` (completely unrelated senders) is truly silent. Emails from
+// trusted senders (Zomato/GBP/Hyperpure) that our parsers can't classify are
+// surfaced as warnings — so a new email format surfaces instead of disappearing.
 export function isSilentKind(parsed) {
-  // Kinds we intentionally ignore in the digest (not surfaced, not flagged as unrecognised)
-  return (
-    parsed.kind === 'unknown' ||
-    parsed.kind === 'zomato-other' ||
-    parsed.kind === 'gbp-other' ||
-    parsed.kind === 'hyperpure-other'
-  );
+  return parsed.kind === 'unknown';
 }

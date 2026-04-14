@@ -1,6 +1,6 @@
 # Daily Digest Bot
 
-Sends a Telegram digest **twice a day** — **09:00 and 21:00 Asia/Taipei** (01:00 and 13:00 UTC) — summarising the last 12 hours of:
+Sends a Telegram digest **twice a day** — **09:00 and 21:00 Asia/Taipei** (01:00 and 13:00 UTC) — summarising the last **12 hours** of:
 
 - **⚠️ Urgent Zomato alerts** (top of digest): online ordering switched OFF, orders rejected, payout delays
 - Customer reviews on **Google** + **Zomato** (merged into one section, per-platform counts)
