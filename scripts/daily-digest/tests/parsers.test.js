@@ -211,6 +211,29 @@ test('Hyperpure subdomain sender accepted', () => {
   assert.equal(parsed.kind, 'hyperpure-order');
 });
 
+test('parseZomatoWeeklyMetrics handles Indian-format commas, decimals, and unicode minus', async () => {
+  const { parseZomatoWeeklyMetrics } = await import('../src/parsers.js');
+  const lakhs = parseZomatoWeeklyMetrics(
+    'Total sales ₹1,15,000 (+45%) Delivered orders 1,200 +20%',
+  );
+  assert.equal(lakhs.salesRupees, 115000);
+  assert.equal(lakhs.salesDeltaPct, 45);
+  assert.equal(lakhs.orders, 1200);
+  assert.equal(lakhs.ordersDeltaPct, 20);
+
+  const decimal = parseZomatoWeeklyMetrics('Total sales ₹1,156.50 -67% Delivered orders 5 -58%');
+  assert.equal(decimal.salesRupees, 1156.5);
+  assert.equal(decimal.salesDeltaPct, -67);
+
+  const unicodeMinus = parseZomatoWeeklyMetrics('Total sales ₹1,156 \u221267% Delivered orders 5 \u221258%');
+  assert.equal(unicodeMinus.salesDeltaPct, -67);
+  assert.equal(unicodeMinus.ordersDeltaPct, -58);
+
+  const empty = parseZomatoWeeklyMetrics('');
+  assert.equal(empty.salesRupees, null);
+  assert.equal(empty.orders, null);
+});
+
 test('Zomato alert regex covers turned-off / disabled / paused variants', () => {
   const variants = [
     'Online ordering switched OFF for Blend N Bubbles',

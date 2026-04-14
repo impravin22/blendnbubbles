@@ -4,7 +4,7 @@ Sends a Telegram digest **twice a day** — **09:00 and 21:00 Asia/Taipei** (01:
 
 - **⚠️ Urgent Zomato alerts** (top of digest): online ordering switched OFF, orders rejected, payout delays
 - Customer reviews on **Google** + **Zomato** (merged into one section, per-platform counts)
-- **PetPooja** overnight reports (xlsx forwarded)
+- **PetPooja** overnight reports — **xlsx is now parsed** and rendered as total sales + top 5 drinks + top 3 categories, then the file is forwarded as an attachment for offline reference
 - **Zomato business** updates: weekly report, settlement statement, monthly tax invoice PDF
 - **Google Business Profile**: monthly performance summary + new customer photos
 - **Hyperpure** supply-chain orders (placed + delivered, with order IDs)
@@ -134,6 +134,14 @@ scripts/daily-digest/
 
 📊 PetPooja — Barrackpore Branch
   • Item Wise Report With Bill No. : Blend N Bubbles [Barrackpore Branch]
+    💰 ₹52,373 • 350 items sold
+    🏆 Top drinks:
+      Caramel Boba Coffee × 41
+      Taiwan Classic Boba × 25
+      Hot Cocoa Cloud × 24
+      Choco Ice Swirl × 22
+      Cafe Mocha × 20
+    📂 By category: Smoothies ₹11,312, Coffee ₹10,016, BnB Signatures ₹7,381
   • 📎 Item_bill_report_2026_04_14_01_38_27.xlsx
 
 🍽️ Zomato — Business

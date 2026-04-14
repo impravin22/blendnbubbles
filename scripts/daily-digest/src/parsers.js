@@ -130,6 +130,7 @@ export function parseZomato(message, { subject, from = '', messageId = message?.
       attachments: extractAttachments(message),
       messageId,
       snippet: snippet.slice(0, 400),
+      metrics: parseZomatoWeeklyMetrics(snippet),
     };
   }
   const settlement = subject.match(ZOMATO_SETTLEMENT_RE);
@@ -212,6 +213,44 @@ function flattenParts(part) {
 function clampTitle(title) {
   if (title.length <= TITLE_MAX_CHARS) return title;
   return title.slice(0, TITLE_MAX_CHARS - 1).trimEnd() + '…';
+}
+
+// Extracts structured metrics from a Zomato weekly-report snippet. Handles
+// variants we've observed or are plausible: plain ASCII minus, unicode minus
+// (U+2212), +/- signs, Indian-format commas (₹1,15,000), decimals (₹1,156.50),
+// and optional parenthesised deltas ("(-67%)").
+//   Example snippets:
+//     "Total sales ₹1156 -67% Delivered orders 5 -58%"
+//     "Total sales ₹1,15,000 (+45%) Delivered orders 120 (+20%)"
+// Returns { salesRupees, salesDeltaPct, orders, ordersDeltaPct }; unparseable
+// fields are null.
+export function parseZomatoWeeklyMetrics(snippet) {
+  const empty = { salesRupees: null, salesDeltaPct: null, orders: null, ordersDeltaPct: null };
+  if (!snippet || typeof snippet !== 'string') return empty;
+  // Normalise unicode minus (U+2212) to ASCII so both regexes succeed.
+  const normalised = snippet.replace(/\u2212/g, '-');
+  const salesMatch = normalised.match(
+    /Total sales\s+(?:[₹Rs.]|Rs\.?)\s*([\d,]+(?:\.\d+)?)[^0-9\-+%]*?([+-]?\d+)\s*%/i,
+  );
+  const ordersMatch = normalised.match(/Delivered orders\s+([\d,]+)[^0-9\-+%]*?([+-]?\d+)\s*%/i);
+  return {
+    salesRupees: parseLooseNumber(salesMatch?.[1]),
+    salesDeltaPct: parseLooseInt(salesMatch?.[2]),
+    orders: parseLooseInt(ordersMatch?.[1]),
+    ordersDeltaPct: parseLooseInt(ordersMatch?.[2]),
+  };
+}
+
+function parseLooseNumber(s) {
+  if (s == null) return null;
+  const n = Number(String(s).replace(/,/g, ''));
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseLooseInt(s) {
+  if (s == null) return null;
+  const n = Number.parseInt(String(s).replace(/[,+]/g, ''), 10);
+  return Number.isFinite(n) ? n : null;
 }
 
 export function isReviewKind(parsed) {

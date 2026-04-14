@@ -187,6 +187,63 @@ test('runDigest skips zero-byte and oversize attachments and sends failure notic
   assert.equal(summary.attachmentFailures, 2);
 });
 
+test('runDigest fetches each PetPooja attachment exactly once (cache reused for forwarding)', async () => {
+  let attGetCalls = 0;
+  const fakeGmail = {
+    users: {
+      messages: {
+        list: async () => ({ data: { messages: [{ id: 'm1' }] } }),
+        get: async () => ({
+          data: {
+            id: 'm1',
+            internalDate: String(Date.now() - 3600_000),
+            snippet: '',
+            payload: {
+              headers: [
+                { name: 'From', value: '<no-reply@petpooja.com>' },
+                { name: 'Subject', value: 'Report Notification: Item' },
+              ],
+              parts: [
+                { filename: 'x.xlsx', mimeType: 'x', body: { attachmentId: 'ATT1', size: 123 } },
+              ],
+            },
+          },
+        }),
+        attachments: {
+          get: async () => {
+            attGetCalls++;
+            // Return a buffer that is intentionally not a real xlsx; the parse
+            // will fail and summaryError will be set, but the cache logic is
+            // still exercised because we cached the buffer before the throw.
+            return { data: { data: Buffer.from('not-a-real-xlsx').toString('base64url') } };
+          },
+        },
+      },
+    },
+  };
+  const fakeTelegram = { sendMessage: async () => {}, sendDocument: async () => {} };
+  await runDigest({
+    config: { gmail: {}, telegram: {}, lookbackHours: 12, localeTz: 'Asia/Taipei' },
+    deps: { gmail: fakeGmail, telegram: fakeTelegram },
+  });
+  assert.equal(attGetCalls, 1, 'attachment.get must be called once, not re-fetched');
+});
+
+test('loadConfig rejects invalid IANA timezone', () => {
+  assert.throws(
+    () =>
+      loadConfig({
+        GMAIL_CLIENT_ID: 'a',
+        GMAIL_CLIENT_SECRET: 'b',
+        GMAIL_REFRESH_TOKEN: 'c',
+        TELEGRAM_BOT_TOKEN: 'd',
+        TELEGRAM_CHAT_ID: '-1',
+        DIGEST_LOCALE_TZ: 'Not/A/Zone',
+      }),
+    /not a valid IANA timezone/,
+  );
+});
+
 test('loadConfig defaults lookbackHours to 12', () => {
   const config = loadConfig({
     GMAIL_CLIENT_ID: 'a',
@@ -200,6 +257,163 @@ test('loadConfig defaults lookbackHours to 12', () => {
 
 test('escapeHtml covers all five entity characters', () => {
   assert.equal(escapeHtml(`<>&"'`), '&lt;&gt;&amp;&quot;&#39;');
+});
+
+test('Weekly Trend section renders on Sunday evening in TPE with parsed metrics', () => {
+  const sundayEvening = new Date('2026-04-12T13:30:00Z'); // 21:30 TPE Sunday
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoWeekly: [
+      {
+        kind: 'zomato-weekly',
+        title: 'Week 15 (6 to 12 Apr, 2026)',
+        attachments: [],
+        messageId: 'w',
+        snippet: 'Total sales ₹1156 -67% Delivered orders 5 -58%',
+        metrics: { salesRupees: 1156, salesDeltaPct: -67, orders: 5, ordersDeltaPct: -58 },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+    now: sundayEvening,
+  });
+  assert.match(text, /📈 Weekly Trend/);
+  assert.match(text, /Sales: ₹1,156 \(-67% 🔻 vs last week\)/);
+  assert.match(text, /Delivered orders: 5 \(-58% 🔻 vs last week\)/);
+});
+
+test('Weekly Trend section is omitted on non-Sunday', () => {
+  const monday = new Date('2026-04-13T13:30:00Z'); // 21:30 TPE Monday
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoWeekly: [
+      {
+        kind: 'zomato-weekly',
+        title: 'Week 15',
+        attachments: [],
+        messageId: 'w',
+        snippet: 'x',
+        metrics: { salesRupees: 1000, salesDeltaPct: 10, orders: 5, ordersDeltaPct: 0 },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+    now: monday,
+  });
+  assert.doesNotMatch(text, /Weekly Trend/);
+});
+
+test('Weekly Trend section is omitted on Sunday morning (before 16:00 TPE)', () => {
+  const sundayMorning = new Date('2026-04-12T01:05:00Z'); // 09:05 TPE Sunday
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoWeekly: [
+      {
+        kind: 'zomato-weekly',
+        title: 'Week 15',
+        attachments: [],
+        messageId: 'w',
+        snippet: 'x',
+        metrics: { salesRupees: 1000, salesDeltaPct: 10, orders: 5, ordersDeltaPct: 5 },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+    now: sundayMorning,
+  });
+  assert.doesNotMatch(text, /Weekly Trend/);
+});
+
+test('Positive weekly deltas render with up arrow', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    zomatoWeekly: [
+      {
+        kind: 'zomato-weekly',
+        title: 'Week 14',
+        attachments: [],
+        messageId: 'w',
+        snippet: 'x',
+        metrics: { salesRupees: 3547, salesDeltaPct: 45, orders: 12, ordersDeltaPct: 20 },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+    now: new Date('2026-04-12T13:00:00Z'),
+  });
+  assert.match(text, /\(\+45% 🔺/);
+});
+
+test('PetPooja section surfaces summaryError when xlsx parse fails', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [
+      {
+        kind: 'petpooja',
+        reportTitle: 'Bad report',
+        attachments: [{ filename: 'bad.xlsx', mimeType: 'x', attachmentId: 'a', size: 1 }],
+        messageId: 'm',
+        summaryError: 'template mismatch',
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /Could not parse xlsx: template mismatch/);
+});
+
+test('PetPooja live-feed error surfaces in digest instead of silently omitting', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    petpoojaLive: { ok: false, reason: 'HTTP 500' },
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /Live feed unavailable \(HTTP 500\)/);
+});
+
+test('PetPooja live-feed "not-configured" stays silent (no scary warning)', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    petpoojaLive: { ok: false, reason: 'not-configured' },
+    localeTz: 'Asia/Taipei',
+  });
+  assert.doesNotMatch(text, /Live feed unavailable/);
+});
+
+test('PetPooja section renders drink-wise summary when report.summary is present', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [
+      {
+        kind: 'petpooja',
+        reportTitle: 'Item Wise Report',
+        attachments: [{ filename: 'a.xlsx', mimeType: 'x', attachmentId: 'a', size: 1 }],
+        messageId: 'm',
+        summary: {
+          dateRange: '2026-02-01 to 2026-02-17',
+          totalOrders: 350,
+          totalRevenue: 52373.14,
+          topItems: [
+            { name: 'Caramel Boba Coffee', category: 'Coffee', qty: 41, total: 6567 },
+            { name: 'Taiwan Classic Boba', category: 'Milk Tea', qty: 25, total: 4266 },
+            { name: 'Cafe Mocha', category: 'Coffee', qty: 20, total: 3449 },
+          ],
+          topCategories: [
+            { name: 'Smoothies', qty: 68, total: 11311 },
+            { name: 'Coffee', qty: 61, total: 10016 },
+          ],
+        },
+      },
+    ],
+    localeTz: 'Asia/Taipei',
+  });
+  assert.match(text, /₹52,373 • 350 items sold/);
+  assert.match(text, /🏆 Top drinks:/);
+  assert.match(text, /Caramel Boba Coffee × 41/);
+  assert.match(text, /Taiwan Classic Boba × 25/);
+  assert.match(text, /Cafe Mocha × 20/);
+  assert.match(text, /📂 By category: Smoothies ₹11,311/);
 });
 
 test('Urgent Alerts heading is absent when zomatoAlerts is empty', () => {
