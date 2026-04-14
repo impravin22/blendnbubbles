@@ -22,3 +22,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Google OAuth credentials (downloaded from Google Cloud Console)
+client_secret_*.json

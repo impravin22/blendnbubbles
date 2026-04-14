@@ -9,6 +9,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('digest-failed', err.message);
+  console.error('digest-failed', err.stack ?? err.message ?? err);
   process.exitCode = 1;
 });

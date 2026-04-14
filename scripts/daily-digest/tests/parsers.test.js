@@ -2,14 +2,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parseReview,
-  parsePetPooja,
   classifyMessage,
   extractAttachments,
+  extractEmailAddress,
+  extractHeader,
+  isReviewKind,
 } from '../src/parsers.js';
 
-function makeMessage({ from, subject, parts = [] }) {
+function makeMessage({ from, subject, parts = [], id = 'msg1' }) {
   return {
-    id: 'msg1',
+    id,
     payload: {
       headers: [
         { name: 'From', value: from },
@@ -20,39 +22,54 @@ function makeMessage({ from, subject, parts = [] }) {
   };
 }
 
-test('parseReview extracts single reviewer and business', () => {
-  const parsed = parseReview('Sushmita left a review for Blend n Bubbles');
+test('parseReview extracts single reviewer as review-single', () => {
+  const parsed = parseReview({ subject: 'Sushmita left a review for Blend n Bubbles' });
   assert.deepEqual(parsed, {
-    kind: 'review',
+    kind: 'review-single',
     reviewer: 'Sushmita',
     business: 'Blend n Bubbles',
     count: 1,
   });
 });
 
-test('parseReview handles batched review digest subjects', () => {
-  const parsed = parseReview('Blend n Bubbles, you got 4 new reviews');
+test('parseReview handles batched digest subjects as review-batch', () => {
+  const parsed = parseReview({ subject: 'Blend n Bubbles, you got 4 new reviews' });
   assert.deepEqual(parsed, {
-    kind: 'review',
-    reviewer: null,
+    kind: 'review-batch',
     business: 'Blend n Bubbles',
     count: 4,
   });
 });
 
-test('parseReview returns unrecognised for unexpected subjects', () => {
-  const parsed = parseReview('Google Business Profile update');
+test('parseReview returns review-unrecognised with context for unexpected subjects', () => {
+  const parsed = parseReview({
+    subject: 'Google Business Profile update',
+    from: 'noreply@business.google.com',
+    messageId: 'abc123',
+  });
   assert.equal(parsed.kind, 'review-unrecognised');
+  assert.equal(parsed.subject, 'Google Business Profile update');
+  assert.equal(parsed.from, 'noreply@business.google.com');
+  assert.equal(parsed.messageId, 'abc123');
 });
 
-test('classifyMessage detects Google review sender', () => {
+test('classifyMessage detects Google review sender from angle-bracket From header', () => {
   const msg = makeMessage({
     from: '"Google Business Profile" <noreply@business.google.com>',
     subject: 'Rajat left a review for Blend n Bubbles',
   });
   const parsed = classifyMessage(msg);
-  assert.equal(parsed.kind, 'review');
+  assert.equal(parsed.kind, 'review-single');
   assert.equal(parsed.reviewer, 'Rajat');
+});
+
+test('classifyMessage rejects spoofed substring senders (strict domain match)', () => {
+  const msg = makeMessage({
+    from: '"Attacker" <noreply@business.google.com.attacker.com>',
+    subject: 'Jane left a review for Blend n Bubbles',
+  });
+  const parsed = classifyMessage(msg);
+  assert.equal(parsed.kind, 'unknown');
 });
 
 test('classifyMessage detects PetPooja sender and report title', () => {
@@ -111,11 +128,32 @@ test('extractAttachments traverses nested multipart MIME tree', () => {
   assert.equal(atts[0].filename, 'report.pdf');
 });
 
-test('parsePetPooja rejects unrelated subject formats', () => {
+test('PetPooja OTP subjects classify as petpooja-unrecognised', () => {
   const msg = makeMessage({
     from: 'petpooja billing <billing@petpooja.com>',
     subject: 'One Time Password (OTP) for your Petpooja account',
   });
   const parsed = classifyMessage(msg);
   assert.equal(parsed.kind, 'petpooja-unrecognised');
+});
+
+test('extractEmailAddress handles angle brackets and plain addresses', () => {
+  assert.equal(
+    extractEmailAddress('"Google Business Profile" <noreply@business.google.com>'),
+    'noreply@business.google.com',
+  );
+  assert.equal(extractEmailAddress('noreply@business.google.com'), 'noreply@business.google.com');
+  assert.equal(extractEmailAddress(' UPPER@EXAMPLE.COM '), 'upper@example.com');
+});
+
+test('extractHeader returns empty string for missing or malformed headers', () => {
+  assert.equal(extractHeader({}, 'From'), '');
+  assert.equal(extractHeader({ payload: { headers: [null, { name: 'From', value: 'x' }] } }, 'From'), 'x');
+});
+
+test('isReviewKind discriminates both single and batch shapes', () => {
+  assert.equal(isReviewKind({ kind: 'review-single' }), true);
+  assert.equal(isReviewKind({ kind: 'review-batch' }), true);
+  assert.equal(isReviewKind({ kind: 'petpooja' }), false);
+  assert.equal(isReviewKind({ kind: 'unknown' }), false);
 });
