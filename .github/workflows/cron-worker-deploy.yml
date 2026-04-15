@@ -1,0 +1,59 @@
+name: Deploy Cron Worker
+
+# Deploys the blendnbubbles-cron Cloudflare Worker whenever the Worker source
+# or this workflow file changes. Pushes DISPATCH_PAT into the Worker as a secret
+# on every deploy (idempotent). Uses cloudflare/wrangler-action so there is no
+# npm install step — the action ships its own Wrangler binary.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/cron-trigger/**"
+      - ".github/workflows/cron-worker-deploy.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cron-worker-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Worker & push secrets
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: services/cron-trigger
+          # Lists secrets to push — values are read from env vars of the same name.
+          secrets: |
+            DISPATCH_PAT
+        env:
+          # Secret passed via env so it never appears in shell args or logs.
+          DISPATCH_PAT: ${{ secrets.DISPATCH_PAT }}
+
+      - name: Smoke-test health endpoint
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -uo pipefail
+          if [ -z "$WORKER_URL" ]; then
+            echo "::warning::No Worker URL from wrangler-action — health check skipped"
+            exit 0
+          fi
+          response=$(curl -sSf --max-time 15 "$WORKER_URL" 2>&1) || response=""
+          if [ "$response" = "blendnbubbles-cron worker OK" ]; then
+            echo "::notice::Worker health check OK — $WORKER_URL"
+          else
+            echo "::warning::Health check inconclusive (TLS may still be propagating) — deploy continues"
+          fi

@@ -1,9 +1,8 @@
 name: Daily Digest
 
 on:
-  schedule:
-    # 09:00 and 21:00 Asia/Taipei = 01:00 and 13:00 UTC
-    - cron: "0 1,13 * * *"
+  # Schedule removed — Cloudflare Worker cron fires workflow_dispatch at
+  # 01:00 UTC (09:00 TPE) and 13:00 UTC (21:00 TPE) with exact timing.
   workflow_dispatch: {}
   push:
     branches: [main]
@@ -16,7 +15,9 @@ permissions:
 
 jobs:
   test:
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    # Only run tests on direct pushes — cron workflow_dispatch just sends the
+    # digest and doesn't need to re-run the test suite every 12 hours.
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     defaults:
@@ -33,7 +34,7 @@ jobs:
       - run: npm test
 
   send-digest:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:

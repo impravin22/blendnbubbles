@@ -6,17 +6,23 @@
  * Asia/Taipei) every day.
  *
  * Why a Worker instead of GitHub Actions schedule?
- * GitHub cron is best-effort and routinely delayed 1-2 hours on the free
+ * GitHub's cron is best-effort and routinely delayed 1-2 hours on the free
  * tier. Cloudflare Workers cron fires within seconds of the scheduled time.
  *
- * Required secret (set via deploy workflow or `wrangler secret put GITHUB_PAT`):
- *   GITHUB_PAT — fine-grained PAT with Actions: Read and Write on this repo.
+ * Required secret (set via `wrangler secret put DISPATCH_PAT`):
+ *   DISPATCH_PAT — fine-grained PAT with Actions: Read and Write on this repo.
  */
 
 const WORKFLOW_DISPATCH_URL =
   "https://api.github.com/repos/impravin22/blendnbubbles/actions/workflows/daily-digest.yml/dispatches";
 
 export default {
+  /**
+   * Cron handler — triggered at 01:00 UTC and 13:00 UTC daily.
+   * @param {ScheduledEvent} event
+   * @param {Env} env
+   * @param {ExecutionContext} ctx
+   */
   async scheduled(event, env, ctx) {
     const firedAt = new Date(event.scheduledTime);
     const hour = firedAt.getUTCHours();
@@ -25,7 +31,7 @@ export default {
     const resp = await fetch(WORKFLOW_DISPATCH_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.GITHUB_PAT}`,
+        Authorization: `Bearer ${env.DISPATCH_PAT}`,
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "blendnbubbles-cron/1.0",
@@ -36,13 +42,23 @@ export default {
 
     if (!resp.ok) {
       const body = await resp.text();
-      console.error(`[cron] ${label} dispatch failed: HTTP ${resp.status} — ${body}`);
+      console.error(
+        `[cron] ${label} dispatch failed: HTTP ${resp.status} — ${body}`
+      );
+      // Throwing causes Cloudflare to mark the cron invocation as failed,
+      // which surfaces in the Workers dashboard under Cron Triggers.
       throw new Error(`GitHub dispatch failed: ${resp.status}`);
     }
 
-    console.info(`[cron] ${label} digest dispatched OK at ${firedAt.toISOString()}`);
+    console.info(
+      `[cron] ${label} digest dispatched OK at ${firedAt.toISOString()}`
+    );
   },
 
+  /**
+   * HTTP handler — only used for the health-check smoke test in CI.
+   * @param {Request} request
+   */
   async fetch(request, env, ctx) {
     return new Response("blendnbubbles-cron worker OK", { status: 200 });
   },
