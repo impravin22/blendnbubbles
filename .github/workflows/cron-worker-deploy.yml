@@ -1,7 +1,7 @@
 name: Deploy Cron Worker
 
 # Deploys the blendnbubbles-cron Cloudflare Worker whenever the Worker source
-# or this workflow file changes. Pushes GITHUB_PAT into the Worker as a secret
+# or this workflow file changes. Pushes DISPATCH_PAT into the Worker as a secret
 # on every deploy (idempotent). Uses cloudflare/wrangler-action so there is no
 # npm install step — the action ships its own Wrangler binary.
 
@@ -37,10 +37,10 @@ jobs:
           workingDirectory: services/cron-trigger
           # Lists secrets to push — values are read from env vars of the same name.
           secrets: |
-            GITHUB_PAT
+            DISPATCH_PAT
         env:
           # Secret passed via env so it never appears in shell args or logs.
-          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+          DISPATCH_PAT: ${{ secrets.DISPATCH_PAT }}
 
       - name: Smoke-test health endpoint
         env:

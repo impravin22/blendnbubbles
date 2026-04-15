@@ -9,8 +9,8 @@
  * GitHub's cron is best-effort and routinely delayed 1-2 hours on the free
  * tier. Cloudflare Workers cron fires within seconds of the scheduled time.
  *
- * Required secret (set via `wrangler secret put GITHUB_PAT`):
- *   GITHUB_PAT — fine-grained PAT with Actions: Read and Write on this repo.
+ * Required secret (set via `wrangler secret put DISPATCH_PAT`):
+ *   DISPATCH_PAT — fine-grained PAT with Actions: Read and Write on this repo.
  */
 
 const WORKFLOW_DISPATCH_URL =
@@ -31,7 +31,7 @@ export default {
     const resp = await fetch(WORKFLOW_DISPATCH_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.GITHUB_PAT}`,
+        Authorization: `Bearer ${env.DISPATCH_PAT}`,
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "blendnbubbles-cron/1.0",
