@@ -60,8 +60,12 @@ jobs:
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          # Untrusted input is passed via env (not interpolated into run:). The
-          # digest runtime (scripts/daily-digest/src/config.js) validates the
-          # value is a positive finite number before use.
+          # Untrusted input passed via env (not interpolated into run:).
+          # config.js validates it as a positive finite number.
           DIGEST_LOOKBACK_HOURS: ${{ github.event.inputs.lookback_hours }}
+          # Seen-review dedupe store (Cloudflare Worker KV). Absence of either
+          # value disables dedupe — the digest runs normally and every review
+          # surfaces on every run.
+          DIGEST_STATE_URL: ${{ secrets.DIGEST_STATE_URL }}
+          DIGEST_STATE_TOKEN: ${{ secrets.DIGEST_STATE_TOKEN }}
         run: npm start

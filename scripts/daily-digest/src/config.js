@@ -52,5 +52,9 @@ export function loadConfig(env = process.env) {
       env.PETPOOJA_WEBHOOK_URL && env.PETPOOJA_WEBHOOK_TOKEN
         ? { url: env.PETPOOJA_WEBHOOK_URL, token: env.PETPOOJA_WEBHOOK_TOKEN }
         : null,
+    seenStore:
+      env.DIGEST_STATE_URL && env.DIGEST_STATE_TOKEN
+        ? { url: env.DIGEST_STATE_URL, token: env.DIGEST_STATE_TOKEN }
+        : null,
   };
 }

@@ -1,9 +1,9 @@
 name: Deploy Cron Worker
 
 # Deploys the blendnbubbles-cron Cloudflare Worker whenever the Worker source
-# or this workflow file changes. Pushes DISPATCH_PAT into the Worker as a secret
-# on every deploy (idempotent). Uses cloudflare/wrangler-action so there is no
-# npm install step — the action ships its own Wrangler binary.
+# or this workflow file changes. Handles KV namespace provisioning + pushes
+# shared secrets (DISPATCH_PAT, DIGEST_STATE_TOKEN) to the Worker on every
+# deploy (idempotent).
 
 on:
   push:
@@ -28,6 +28,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Ensure KV namespace exists + patch wrangler.toml
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd services/cron-trigger
+          KV_TITLE="digest-state"
+          API="https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/storage/kv/namespaces"
+
+          NS_LIST=$(curl -fsS "$API?per_page=100" \
+            -H "Authorization: Bearer $CF_API_TOKEN")
+          KV_ID=$(echo "$NS_LIST" | jq -r --arg t "$KV_TITLE" \
+            '.result[] | select(.title==$t) | .id' | head -1)
+
+          if [ -z "$KV_ID" ] || [ "$KV_ID" = "null" ]; then
+            echo "Creating KV namespace $KV_TITLE"
+            CREATE_RESP=$(curl -fsS -X POST "$API" \
+              -H "Authorization: Bearer $CF_API_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"title\":\"$KV_TITLE\"}")
+            KV_ID=$(echo "$CREATE_RESP" | jq -r '.result.id')
+          fi
+
+          if [ -z "$KV_ID" ] || [ "$KV_ID" = "null" ]; then
+            echo "::error::Failed to resolve KV namespace ID"
+            exit 1
+          fi
+          echo "::notice::KV namespace id: $KV_ID"
+          sed -i "s|REPLACE_WITH_KV_NAMESPACE_ID|$KV_ID|" wrangler.toml
+
       - name: Deploy Worker & push secrets
         id: deploy
         uses: cloudflare/wrangler-action@v3
@@ -35,12 +66,12 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: services/cron-trigger
-          # Lists secrets to push — values are read from env vars of the same name.
           secrets: |
             DISPATCH_PAT
+            DIGEST_STATE_TOKEN
         env:
-          # Secret passed via env so it never appears in shell args or logs.
           DISPATCH_PAT: ${{ secrets.DISPATCH_PAT }}
+          DIGEST_STATE_TOKEN: ${{ secrets.DIGEST_STATE_TOKEN }}
 
       - name: Smoke-test health endpoint
         env:
