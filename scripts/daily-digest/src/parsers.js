@@ -2,11 +2,21 @@ const GOOGLE_BUSINESS_SENDERS = new Set([
   'noreply@business.google.com',
   'googlecommunityteam-noreply@google.com',
   'business-profile-noreply@google.com',
+  'businessprofile-noreply@google.com',
+]);
+const GOOGLE_ACCOUNTS_SENDERS = new Set([
+  'no-reply@accounts.google.com',
+  'noreply@accounts.google.com',
 ]);
 const PETPOOJA_DOMAIN_SUFFIX = '@petpooja.com';
 const ZOMATO_DOMAIN_SUFFIX = '@zomato.com';
+const ZOMATO_ADS_SUPPORT_SENDER = 'prioritypartnersupport@zomato.com';
 const HYPERPURE_DOMAIN_SUFFIXES = ['@hyperpure.com', '.hyperpure.com'];
 const TITLE_MAX_CHARS = 200;
+
+const PETPOOJA_OTP_RE = /one\s*time\s*password|\bOTP\b/i;
+const PETPOOJA_ACTION_RE = /action\s*required|policy\s*update|data\s*retention|important\s*update/i;
+const ZOMATO_ADS_GROWTH_RE = /Zomato\s+Ads\b.*Growth\s+Support|Growth\s+Support\b.*Zomato\s+Ads/i;
 
 const GOOGLE_REVIEW_SINGLE_RE = /^(.+?)\s+left a review for\s+(.+)$/i;
 const GOOGLE_REVIEW_BATCH_RE = /^(.+?),\s*you got (\d+) new reviews?$/i;
@@ -49,6 +59,15 @@ export function classifyMessage(message) {
 
   if (GOOGLE_BUSINESS_SENDERS.has(from)) {
     return parseGoogleBusiness({ subject, from, messageId, snippet });
+  }
+  if (GOOGLE_ACCOUNTS_SENDERS.has(from)) {
+    return {
+      kind: 'google-security-alert',
+      title: clampTitle(subject),
+      from,
+      messageId,
+      snippet: snippet.slice(0, 300),
+    };
   }
   if (from.endsWith(PETPOOJA_DOMAIN_SUFFIX)) {
     return parsePetPooja(message, { subject, from, messageId });
@@ -99,16 +118,28 @@ function parseGoogleBusiness({ subject, from, messageId, snippet }) {
 }
 
 export function parsePetPooja(message, { subject, from = '', messageId = message?.id ?? '' }) {
-  if (!subject.startsWith('Report Notification:')) {
-    return { kind: 'petpooja-unrecognised', subject, from, messageId };
+  if (subject.startsWith('Report Notification:')) {
+    const reportTitle = clampTitle(subject.slice('Report Notification:'.length).trim());
+    return {
+      kind: 'petpooja',
+      reportTitle,
+      attachments: extractAttachments(message),
+      messageId,
+    };
   }
-  const reportTitle = clampTitle(subject.slice('Report Notification:'.length).trim());
-  return {
-    kind: 'petpooja',
-    reportTitle,
-    attachments: extractAttachments(message),
-    messageId,
-  };
+  if (PETPOOJA_OTP_RE.test(subject)) {
+    return { kind: 'petpooja-otp', subject, from, messageId };
+  }
+  if (PETPOOJA_ACTION_RE.test(subject) || from.startsWith('noreply-dataretention@')) {
+    return {
+      kind: 'petpooja-action',
+      title: clampTitle(subject),
+      from,
+      messageId,
+      snippet: (message?.snippet ?? '').slice(0, 300),
+    };
+  }
+  return { kind: 'petpooja-unrecognised', subject, from, messageId };
 }
 
 export function parseZomato(message, { subject, from = '', messageId = message?.id ?? '', snippet = '' }) {
@@ -159,6 +190,15 @@ export function parseZomato(message, { subject, from = '', messageId = message?.
   }
   if (ZOMATO_PAYOUT_RE.test(subject)) {
     return { kind: 'zomato-alert', severity: 'info', title: clampTitle(subject), messageId, snippet };
+  }
+  if (from === ZOMATO_ADS_SUPPORT_SENDER || ZOMATO_ADS_GROWTH_RE.test(subject)) {
+    return {
+      kind: 'zomato-ads-growth',
+      title: clampTitle(subject),
+      from,
+      messageId,
+      snippet: snippet.slice(0, 300),
+    };
   }
   return { kind: 'zomato-other', subject, from, messageId };
 }
@@ -257,9 +297,9 @@ export function isReviewKind(parsed) {
   return parsed.kind === 'review-single' || parsed.kind === 'review-batch';
 }
 
-// Only `unknown` (completely unrelated senders) is truly silent. Emails from
-// trusted senders (Zomato/GBP/Hyperpure) that our parsers can't classify are
-// surfaced as warnings — so a new email format surfaces instead of disappearing.
+// Truly silent kinds: completely unrelated senders, plus ephemeral noise we
+// never want to relay to Telegram (e.g. PetPooja OTPs — short-lived and
+// relaying them would undermine their 2FA purpose).
 export function isSilentKind(parsed) {
-  return parsed.kind === 'unknown';
+  return parsed.kind === 'unknown' || parsed.kind === 'petpooja-otp';
 }
