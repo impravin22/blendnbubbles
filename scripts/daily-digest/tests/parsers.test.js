@@ -35,6 +35,28 @@ test('Google review single -> review-single with source google', () => {
   assert.equal(parsed.reviewer, 'Sushmita');
 });
 
+test('Google review from businessprofile-noreply@google.com -> review-single', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '"Google Business Profile" <businessprofile-noreply@google.com>',
+      subject: 'Ashmita left a review for Blend n Bubbles',
+    }),
+  );
+  assert.equal(parsed.kind, 'review-single');
+  assert.equal(parsed.source, 'google');
+  assert.equal(parsed.reviewer, 'Ashmita');
+});
+
+test('GBP photo from businessprofile-noreply@google.com -> gbp-photo', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<businessprofile-noreply@google.com>',
+      subject: 'Blend n Bubbles, there’s a new photo on your Business Profile',
+    }),
+  );
+  assert.equal(parsed.kind, 'gbp-photo');
+});
+
 test('Google review batch -> review-batch', () => {
   const parsed = classifyMessage(
     makeMessage({
@@ -67,6 +89,54 @@ test('GBP new photo -> gbp-photo', () => {
     }),
   );
   assert.equal(parsed.kind, 'gbp-photo');
+});
+
+test('Google account security alert -> google-security-alert', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '"Google" <no-reply@accounts.google.com>',
+      subject: 'Security alert',
+      snippet: 'New sign-in on Chrome (Mac)',
+    }),
+  );
+  assert.equal(parsed.kind, 'google-security-alert');
+  assert.equal(parsed.title, 'Security alert');
+  assert.match(parsed.snippet, /sign-in/);
+});
+
+test('PetPooja data retention policy -> petpooja-action', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<noreply-dataretention@petpooja.com>',
+      subject: 'Important Update: Petpooja Data Retention Policy - Action Required',
+      snippet: 'Please review and acknowledge our updated data retention policy.',
+    }),
+  );
+  assert.equal(parsed.kind, 'petpooja-action');
+  assert.match(parsed.title, /Action Required/);
+});
+
+test('PetPooja OTP -> silent', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<support@petpooja.com>',
+      subject: 'One Time Password (OTP) for your Petpooja account',
+    }),
+  );
+  assert.equal(parsed.kind, 'petpooja-otp');
+  assert.equal(isSilentKind(parsed), true);
+});
+
+test('Zomato ads growth support -> zomato-ads-growth', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '<prioritypartnersupport@zomato.com>',
+      subject: 'Zomato Ads – Growth Support | Blend N Bubbles (ID: 21955142)',
+      snippet: 'Your ads account manager wants to connect.',
+    }),
+  );
+  assert.equal(parsed.kind, 'zomato-ads-growth');
+  assert.match(parsed.title, /Growth Support/);
 });
 
 test('PetPooja report with attachments', () => {
