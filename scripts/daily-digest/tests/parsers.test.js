@@ -104,6 +104,19 @@ test('Google account security alert -> google-security-alert', () => {
   assert.match(parsed.snippet, /sign-in/);
 });
 
+test('Google OAuth grant notification -> silent (not surfaced as security alert)', () => {
+  const parsed = classifyMessage(
+    makeMessage({
+      from: '"Google" <no-reply@accounts.google.com>',
+      subject: 'Security alert',
+      snippet:
+        'You allowed Claude for Gmail access to some of your Google Account data blendnbubbles@gmail.com',
+    }),
+  );
+  assert.equal(parsed.kind, 'google-oauth-grant');
+  assert.equal(isSilentKind(parsed), true);
+});
+
 test('PetPooja data retention policy -> petpooja-action', () => {
   const parsed = classifyMessage(
     makeMessage({
