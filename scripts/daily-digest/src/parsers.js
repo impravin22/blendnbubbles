@@ -99,6 +99,7 @@ function parseGoogleBusiness({ subject, from, messageId, snippet }) {
       reviewer: single[1].trim(),
       business: single[2].trim(),
       count: 1,
+      messageId,
     };
   }
   const batch = subject.match(GOOGLE_REVIEW_BATCH_RE);
@@ -109,6 +110,7 @@ function parseGoogleBusiness({ subject, from, messageId, snippet }) {
       source: 'google',
       business: batch[1].trim(),
       count: Number.isFinite(count) && count > 0 ? count : 1,
+      messageId,
     };
   }
   if (GBP_PHOTO_RE.test(subject)) {
@@ -160,6 +162,7 @@ export function parseZomato(message, { subject, from = '', messageId = message?.
       reviewer: review[2].trim(),
       business: review[1].trim(),
       count: 1,
+      messageId,
     };
   }
   const weekly = subject.match(ZOMATO_WEEKLY_RE);

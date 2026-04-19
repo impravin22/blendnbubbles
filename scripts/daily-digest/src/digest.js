@@ -7,6 +7,7 @@ import {
 } from './gmail.js';
 import { classifyMessage, isReviewKind, isSilentKind } from './parsers.js';
 import { parseItemWiseSalesReport, summariseForDigest } from './petpooja-report.js';
+import { createSeenStore } from './seen-store.js';
 import { TelegramClient } from './telegram.js';
 
 const TELEGRAM_DOCUMENT_BYTE_LIMIT = 50 * 1024 * 1024;
@@ -377,6 +378,7 @@ function truncate(str, max) {
 export async function runDigest({ config, deps = {} }) {
   const gmail = deps.gmail ?? createGmailClient(config.gmail);
   const telegram = deps.telegram ?? new TelegramClient(config.telegram);
+  const seenStore = deps.seenStore ?? createSeenStore(config.seenStore ?? {});
 
   let digestInput;
   try {
@@ -395,6 +397,19 @@ export async function runDigest({ config, deps = {} }) {
     }
     throw err;
   }
+
+  // Dedupe reviews against the seen-store. Reviews with a messageId already
+  // marked seen are dropped so we don't re-notify about something the user has
+  // likely already actioned. Reviews without a messageId always pass through.
+  const reviewMessageIds = digestInput.reviews
+    .map((r) => r.messageId)
+    .filter((id) => typeof id === 'string' && id.length > 0);
+  const seenIdSet = await seenStore.check(reviewMessageIds);
+  const dedupedReviews = digestInput.reviews.filter(
+    (r) => !r.messageId || !seenIdSet.has(r.messageId),
+  );
+  const suppressedReviewCount = digestInput.reviews.length - dedupedReviews.length;
+  digestInput.reviews = dedupedReviews;
 
   const petpoojaLive = await fetchPetpoojaToday(config.petpoojaWebhook ?? {});
 
@@ -424,6 +439,16 @@ export async function runDigest({ config, deps = {} }) {
     localeTz: config.localeTz,
   });
   await telegram.sendMessage(text);
+
+  // Only mark after the Telegram send succeeds — if send failed we still want
+  // these reviews to surface on the next run. Ignore the mark return value:
+  // mark-failures are logged inside seen-store and should not fail the digest.
+  const newlySurfacedReviewIds = dedupedReviews
+    .map((r) => r.messageId)
+    .filter((id) => typeof id === 'string' && id.length > 0);
+  if (newlySurfacedReviewIds.length > 0) {
+    await seenStore.mark(newlySurfacedReviewIds);
+  }
 
   const attachmentFailures = [];
   const attachmentSources = [
@@ -503,6 +528,7 @@ export async function runDigest({ config, deps = {} }) {
     gbpPerformanceCount: digestInput.gbpPerformance.length,
     hyperpureOrderCount: digestInput.hyperpureOrders.length,
     googleSecurityAlertCount: digestInput.googleSecurityAlerts.length,
+    suppressedReviewCount,
     fetchFailures: digestInput.fetchFailures,
     attachmentFailures: attachmentFailures.length,
     petpoojaLive: petpoojaLive

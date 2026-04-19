@@ -658,6 +658,103 @@ test('fetchMessage rejections are logged (warns to stderr) and counted in fetchF
   }
 });
 
+test('runDigest suppresses reviews already in the seen-store and marks new ones', async () => {
+  // Two reviews in Gmail: one previously seen, one new.
+  const fakeGmail = {
+    users: {
+      messages: {
+        list: async () => ({ data: { messages: [{ id: 'old-rev' }, { id: 'new-rev' }] } }),
+        get: async ({ id }) => ({
+          data: {
+            id,
+            internalDate: String(Date.now() - 3600_000),
+            snippet: '',
+            payload: {
+              headers: [
+                { name: 'From', value: '<businessprofile-noreply@google.com>' },
+                {
+                  name: 'Subject',
+                  value:
+                    id === 'old-rev'
+                      ? 'Ashmita left a review for Blend n Bubbles'
+                      : 'Priya left a review for Blend n Bubbles',
+                },
+              ],
+              parts: [],
+            },
+          },
+        }),
+        attachments: { get: async () => ({ data: { data: '' } }) },
+      },
+    },
+  };
+
+  const messagesSent = [];
+  const fakeTelegram = {
+    sendMessage: async (text) => messagesSent.push(text),
+    sendDocument: async () => {},
+  };
+
+  const markedIds = [];
+  const fakeSeenStore = {
+    configured: true,
+    check: async (ids) => new Set(ids.filter((id) => id === 'old-rev')),
+    mark: async (ids) => {
+      markedIds.push(...ids);
+      return true;
+    },
+  };
+
+  const summary = await runDigest({
+    config: { gmail: {}, telegram: {}, lookbackHours: 12, localeTz: 'Asia/Taipei' },
+    deps: { gmail: fakeGmail, telegram: fakeTelegram, seenStore: fakeSeenStore },
+  });
+
+  // Only Priya's review surfaces; Ashmita's is suppressed by seen-store.
+  assert.equal(summary.suppressedReviewCount, 1);
+  assert.equal(summary.googleReviewCount, 1);
+  const digestText = messagesSent[0];
+  assert.match(digestText, /Priya/);
+  assert.doesNotMatch(digestText, /Ashmita/);
+
+  // Newly-surfaced review is marked; previously seen one is not re-marked.
+  assert.deepEqual(markedIds, ['new-rev']);
+});
+
+test('runDigest without seen-store (unconfigured) surfaces every review', async () => {
+  const fakeGmail = {
+    users: {
+      messages: {
+        list: async () => ({ data: { messages: [{ id: 'r1' }] } }),
+        get: async () => ({
+          data: {
+            id: 'r1',
+            internalDate: String(Date.now() - 3600_000),
+            snippet: '',
+            payload: {
+              headers: [
+                { name: 'From', value: '<businessprofile-noreply@google.com>' },
+                { name: 'Subject', value: 'Priya left a review for Blend n Bubbles' },
+              ],
+              parts: [],
+            },
+          },
+        }),
+        attachments: { get: async () => ({ data: { data: '' } }) },
+      },
+    },
+  };
+  const msgs = [];
+  const fakeTelegram = { sendMessage: async (t) => msgs.push(t), sendDocument: async () => {} };
+  const summary = await runDigest({
+    config: { gmail: {}, telegram: {}, lookbackHours: 12, localeTz: 'Asia/Taipei' },
+    deps: { gmail: fakeGmail, telegram: fakeTelegram },
+  });
+  assert.equal(summary.googleReviewCount, 1);
+  assert.equal(summary.suppressedReviewCount, 0);
+  assert.match(msgs[0], /Priya/);
+});
+
 function makeFakeGmailWithThreeSources() {
   const messageSpecs = {
     pp: {

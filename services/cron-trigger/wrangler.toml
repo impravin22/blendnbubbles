@@ -8,3 +8,11 @@ workers_dev = true
 #   0 13 * * *  →  13:00 UTC = 21:00 Asia/Taipei  (evening digest)
 [triggers]
 crons = ["0 1 * * *", "0 13 * * *"]
+
+# KV namespace for the seen-review store. Create once with:
+#   npx wrangler kv:namespace create DIGEST_STATE
+# and paste the returned id below. Without this binding the /seen endpoints
+# return HTTP 500. The cron dispatcher works without it.
+[[kv_namespaces]]
+binding = "DIGEST_STATE"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
