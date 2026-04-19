@@ -658,6 +658,51 @@ test('fetchMessage rejections are logged (warns to stderr) and counted in fetchF
   }
 });
 
+test('runDigest keeps only the most recent PetPooja report on a backfill run', async () => {
+  const now = Date.now();
+  const fakeGmail = {
+    users: {
+      messages: {
+        list: async () => ({
+          data: { messages: [{ id: 'pp-old' }, { id: 'pp-new' }] },
+        }),
+        get: async ({ id }) => ({
+          data: {
+            id,
+            internalDate: String(
+              id === 'pp-new' ? now - 3600_000 : now - 26 * 3600_000,
+            ),
+            snippet: '',
+            payload: {
+              headers: [
+                { name: 'From', value: '<support@petpooja.com>' },
+                {
+                  name: 'Subject',
+                  value:
+                    id === 'pp-new'
+                      ? 'Report Notification: Today (Apr 19)'
+                      : 'Report Notification: Yesterday (Apr 18)',
+                },
+              ],
+              parts: [],
+            },
+          },
+        }),
+        attachments: { get: async () => ({ data: { data: '' } }) },
+      },
+    },
+  };
+  const msgs = [];
+  const fakeTelegram = { sendMessage: async (t) => msgs.push(t), sendDocument: async () => {} };
+  const summary = await runDigest({
+    config: { gmail: {}, telegram: {}, lookbackHours: 48, localeTz: 'Asia/Taipei' },
+    deps: { gmail: fakeGmail, telegram: fakeTelegram },
+  });
+  assert.equal(summary.petpoojaReportCount, 1);
+  assert.match(msgs[0], /Today \(Apr 19\)/);
+  assert.doesNotMatch(msgs[0], /Yesterday \(Apr 18\)/);
+});
+
 test('runDigest suppresses reviews already in the seen-store and marks new ones', async () => {
   // Two reviews in Gmail: one previously seen, one new.
   const fakeGmail = {

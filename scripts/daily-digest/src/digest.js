@@ -88,12 +88,18 @@ export async function buildDigest({ gmail, lookbackHours }) {
   const unrecognised = [];
   const cutoffMs = Date.now() - lookbackHours * 3600 * 1000;
 
+  // Collect petpooja reports with their received timestamps so we can keep
+  // only the freshest one at the end — backfill runs (e.g. lookback_hours=48)
+  // otherwise surface both last night's AND the night before's report, which
+  // clutters the digest with stale figures.
+  const petpoojaCandidates = [];
+
   for (const msg of messages) {
     const receivedMs = Number(msg.internalDate);
     if (!Number.isFinite(receivedMs) || receivedMs < cutoffMs) continue;
     const parsed = classifyMessage(msg);
     if (isReviewKind(parsed)) reviews.push(parsed);
-    else if (parsed.kind === 'petpooja') petpoojaReports.push(parsed);
+    else if (parsed.kind === 'petpooja') petpoojaCandidates.push({ parsed, receivedMs });
     else if (parsed.kind === 'petpooja-action') petpoojaActions.push(parsed);
     else if (parsed.kind === 'zomato-weekly') zomatoWeekly.push(parsed);
     else if (parsed.kind === 'zomato-settlement') zomatoSettlements.push(parsed);
@@ -105,6 +111,14 @@ export async function buildDigest({ gmail, lookbackHours }) {
     else if (parsed.kind === 'hyperpure-order') hyperpureOrders.push(parsed);
     else if (parsed.kind === 'google-security-alert') googleSecurityAlerts.push(parsed);
     else if (!isSilentKind(parsed)) unrecognised.push(parsed);
+  }
+
+  // Keep only the most recent PetPooja report by received timestamp. One
+  // overnight report per digest — older reports are dropped even if they
+  // fall inside the lookback window.
+  if (petpoojaCandidates.length > 0) {
+    petpoojaCandidates.sort((a, b) => b.receivedMs - a.receivedMs);
+    petpoojaReports.push(petpoojaCandidates[0].parsed);
   }
 
   return {
