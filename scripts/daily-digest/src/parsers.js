@@ -18,6 +18,12 @@ const PETPOOJA_OTP_RE = /one\s*time\s*password|\bOTP\b/i;
 const PETPOOJA_ACTION_RE = /action\s*required|policy\s*update|data\s*retention|important\s*update/i;
 const ZOMATO_ADS_GROWTH_RE = /Zomato\s+Ads\b.*Growth\s+Support|Growth\s+Support\b.*Zomato\s+Ads/i;
 
+// OAuth grant notifications arrive with subject "Security alert" but the body
+// says "You allowed X access to some of your Google Account data". These are
+// informational — the user just completed the OAuth flow. Silence them so the
+// digest only surfaces genuine security events (new sign-in, critical alerts).
+const GOOGLE_OAUTH_GRANT_RE = /you\s+allowed\s+.+\s+access\s+to|access\s+to\s+(?:some\s+of\s+)?your\s+Google\s+Account\s+data|granted\s+.+\s+access\s+to\s+your\s+Google\s+Account/i;
+
 const GOOGLE_REVIEW_SINGLE_RE = /^(.+?)\s+left a review for\s+(.+)$/i;
 const GOOGLE_REVIEW_BATCH_RE = /^(.+?),\s*you got (\d+) new reviews?$/i;
 const GBP_PHOTO_RE = /there['’]?s a new photo on your Business Profile/i;
@@ -61,6 +67,9 @@ export function classifyMessage(message) {
     return parseGoogleBusiness({ subject, from, messageId, snippet });
   }
   if (GOOGLE_ACCOUNTS_SENDERS.has(from)) {
+    if (GOOGLE_OAUTH_GRANT_RE.test(snippet)) {
+      return { kind: 'google-oauth-grant', subject, from, messageId };
+    }
     return {
       kind: 'google-security-alert',
       title: clampTitle(subject),
@@ -297,9 +306,14 @@ export function isReviewKind(parsed) {
   return parsed.kind === 'review-single' || parsed.kind === 'review-batch';
 }
 
-// Truly silent kinds: completely unrelated senders, plus ephemeral noise we
-// never want to relay to Telegram (e.g. PetPooja OTPs — short-lived and
-// relaying them would undermine their 2FA purpose).
+// Truly silent kinds: completely unrelated senders, plus ephemeral/routine
+// noise we never want to relay to Telegram:
+// - petpooja-otp: short-lived 2FA codes; relaying undermines 2FA
+// - google-oauth-grant: routine post-OAuth notifications, not a security event
 export function isSilentKind(parsed) {
-  return parsed.kind === 'unknown' || parsed.kind === 'petpooja-otp';
+  return (
+    parsed.kind === 'unknown' ||
+    parsed.kind === 'petpooja-otp' ||
+    parsed.kind === 'google-oauth-grant'
+  );
 }
