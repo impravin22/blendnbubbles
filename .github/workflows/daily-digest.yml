@@ -3,7 +3,12 @@ name: Daily Digest
 on:
   # Schedule removed — Cloudflare Worker cron fires workflow_dispatch at
   # 01:00 UTC (09:00 TPE) and 13:00 UTC (21:00 TPE) with exact timing.
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      lookback_hours:
+        description: "Hours of Gmail history to scan (default 12 matches 9am/9pm cadence)"
+        required: false
+        default: "12"
   push:
     branches: [main]
     paths:
@@ -55,4 +60,8 @@ jobs:
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Untrusted input is passed via env (not interpolated into run:). The
+          # digest runtime (scripts/daily-digest/src/config.js) validates the
+          # value is a positive finite number before use.
+          DIGEST_LOOKBACK_HOURS: ${{ github.event.inputs.lookback_hours }}
         run: npm start
