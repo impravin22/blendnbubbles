@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import Menu from './Menu';
 import Story from './Story';
+import Offers from './Offers';
 import BobaCatcher from './BobaCatcher';
 
 function ScrollToTop() {
@@ -94,6 +95,7 @@ function AnimatedRoutes() {
             <Route path="/" element={<Homepage />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/story" element={<Story />} />
+            <Route path="/offers" element={<Offers />} />
             <Route path="/play" element={<BobaCatcher />} />
           </Routes>
         </div>
@@ -168,6 +170,9 @@ function Homepage() {
               </li>
               <li className="nav-item">
                 <Link className="nav-link" to="/story">Our Story</Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link" to="/offers">Offers</Link>
               </li>
               <li className="nav-item">
                 <a className="nav-link" href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Visit Us</a>
