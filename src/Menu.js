@@ -110,6 +110,9 @@ function Menu() {
                 <Link className="nav-link" to="/story">Our Story</Link>
               </li>
               <li className="nav-item">
+                <Link className="nav-link" to="/offers">Offers</Link>
+              </li>
+              <li className="nav-item">
                 <a className="nav-link" href="/#contact" onClick={handleVisitUsClick}>Visit Us</a>
               </li>
               <li className="nav-item ms-lg-2">
