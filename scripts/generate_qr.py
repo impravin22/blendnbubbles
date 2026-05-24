@@ -33,8 +33,9 @@ BRAND_BG = (255, 255, 255)
 BRAND_INK = (40, 40, 40)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = REPO_ROOT / "public" / "logo512.png"
+DEFAULT_LOGO_PATH = REPO_ROOT / "public" / "logo512.png"
 PUBLIC_DIR = REPO_ROOT / "public"
+ASSETS_DIR = REPO_ROOT / "scripts" / "assets"
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,9 @@ class QRSpec:
         header: Large headline rendered above the QR (e.g. "OFFERS").
         subheader: Amber pill text under the header (short pitch line).
         footer: Human-readable URL rendered below the QR.
+        logo_path: Optional override of the centre logo. Defaults to the
+            BlendNBubbles brand mark for any channel that does not have its own
+            recognisable glyph (e.g. offers).
     """
 
     slug: str
@@ -54,6 +58,7 @@ class QRSpec:
     header: str
     subheader: str
     footer: str
+    logo_path: Path = DEFAULT_LOGO_PATH
 
 
 SPECS: tuple[QRSpec, ...] = (
@@ -70,6 +75,7 @@ SPECS: tuple[QRSpec, ...] = (
         header="WEBSITE",
         subheader="Bubble tea, Kolkata.",
         footer="blendnbubbles.com",
+        logo_path=ASSETS_DIR / "web.png",
     ),
     QRSpec(
         slug="instagram",
@@ -77,6 +83,7 @@ SPECS: tuple[QRSpec, ...] = (
         header="INSTAGRAM",
         subheader="@blendnbubbles",
         footer="instagram.com/blendnbubbles",
+        logo_path=ASSETS_DIR / "instagram.png",
     ),
     QRSpec(
         slug="google",
@@ -84,6 +91,7 @@ SPECS: tuple[QRSpec, ...] = (
         header="GOOGLE",
         subheader="Find us on Maps",
         footer="Leave a review on Google",
+        logo_path=ASSETS_DIR / "google.png",
     ),
 )
 
@@ -128,10 +136,15 @@ def _build_qr(url: str, size_px: int) -> Image.Image:
     return img.resize((size_px, size_px), Image.LANCZOS)
 
 
-def _overlay_logo(qr_img: Image.Image, *, logo_ratio: float = 0.22) -> Image.Image:
-    """Composite the BlendNBubbles logo onto the centre of the QR with a soft halo."""
-    if not LOGO_PATH.exists():
-        raise FileNotFoundError(f"Missing logo asset: {LOGO_PATH}")
+def _overlay_logo(
+    qr_img: Image.Image,
+    logo_path: Path,
+    *,
+    logo_ratio: float = 0.22,
+) -> Image.Image:
+    """Composite `logo_path` onto the centre of the QR with a soft white halo."""
+    if not logo_path.exists():
+        raise FileNotFoundError(f"Missing logo asset: {logo_path}")
 
     qr_size = qr_img.size[0]
     logo_size = int(qr_size * logo_ratio)
@@ -145,7 +158,7 @@ def _overlay_logo(qr_img: Image.Image, *, logo_ratio: float = 0.22) -> Image.Ima
     halo_pos = ((qr_size - halo_size) // 2, (qr_size - halo_size) // 2)
     qr_img.alpha_composite(halo, dest=halo_pos)
 
-    logo = Image.open(LOGO_PATH).convert("RGBA")
+    logo = Image.open(logo_path).convert("RGBA")
     logo.thumbnail((logo_size, logo_size), Image.LANCZOS)
     logo_pos = ((qr_size - logo.size[0]) // 2, (qr_size - logo.size[1]) // 2)
     qr_img.alpha_composite(logo, dest=logo_pos)
@@ -188,7 +201,10 @@ def _draw_pill(
 
 def _compose_card(spec: QRSpec, qr_size: int, scale: float = 1.0) -> Image.Image:
     """Assemble the full poster for `spec`: header → QR → footer URL on a white card."""
-    base_qr = _overlay_logo(_build_qr(spec.url, int(qr_size * scale)))
+    base_qr = _overlay_logo(
+        _build_qr(spec.url, int(qr_size * scale)),
+        spec.logo_path,
+    )
 
     card_w = int(800 * scale)
     card_h = int(1000 * scale)
@@ -255,7 +271,7 @@ def _render_spec(spec: QRSpec) -> list[Path]:
     """Render all three PNG variants for `spec`. Returns the written paths."""
     written: list[Path] = []
 
-    bare = _overlay_logo(_build_qr(spec.url, 720))
+    bare = _overlay_logo(_build_qr(spec.url, 720), spec.logo_path)
     bare_path = PUBLIC_DIR / f"{spec.slug}-qr-bare.png"
     bare.convert("RGB").save(bare_path, format="PNG", optimize=True)
     written.append(bare_path)
