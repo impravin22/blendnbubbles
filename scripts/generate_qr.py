@@ -5,40 +5,87 @@
 #   "Pillow>=10.3",
 # ]
 # ///
-"""Generate a branded QR code that points to https://blendnbubbles.com/offers.
+"""Generate branded BlendNBubbles QR codes for every customer-facing channel.
 
-Output:
-  public/offers-qr.png          (web/share copy, 800x1000)
-  public/offers-qr-print.png    (print-ready, 2400x3000 @300dpi)
-  public/offers-qr-bare.png     (QR only, no chrome — for ad-hoc reuse)
+Each spec produces three PNG variants in `public/`:
+  {slug}-qr.png          — 800x1000 web/share copy
+  {slug}-qr-print.png    — 2400x3000 @300dpi for fridge magnets / leaflets
+  {slug}-qr-bare.png     — 720x720 QR + logo only, for ad-hoc reuse
 
 Run with:
   cd /Users/kumarpr/Desktop/Projects/blendnbubbles
-  uv run scripts/generate_offers_qr.py
+  uv run scripts/generate_qr.py
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 import qrcode
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from qrcode.constants import ERROR_CORRECT_H
 
-OFFERS_URL = "https://blendnbubbles.com/offers"
-HEADER_TEXT = "OFFERS"
-SUBHEADER_TEXT = "Tap. Sip. Win."
-FOOTER_TEXT = "blendnbubbles.com/offers"
-
-# Brand palette (sampled from existing site hero + buttons).
-BRAND_DARK_TEAL = (15, 60, 60)       # primary dark for QR modules + header
-BRAND_AMBER = (200, 155, 74)         # accent gold for subheader pill
-BRAND_BG = (255, 255, 255)           # clean white card background
-BRAND_INK = (40, 40, 40)             # body ink for footer URL
+# Brand palette sampled from the existing site hero + primary buttons.
+BRAND_DARK_TEAL = (15, 60, 60)
+BRAND_AMBER = (200, 155, 74)
+BRAND_BG = (255, 255, 255)
+BRAND_INK = (40, 40, 40)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = REPO_ROOT / "public" / "logo512.png"
 PUBLIC_DIR = REPO_ROOT / "public"
+
+
+@dataclass(frozen=True)
+class QRSpec:
+    """One customer-facing QR target.
+
+    Attributes:
+        slug: Filename prefix written under `public/` (e.g. "offers" → offers-qr.png).
+        url: Live destination URL encoded into the QR.
+        header: Large headline rendered above the QR (e.g. "OFFERS").
+        subheader: Amber pill text under the header (short pitch line).
+        footer: Human-readable URL rendered below the QR.
+    """
+
+    slug: str
+    url: str
+    header: str
+    subheader: str
+    footer: str
+
+
+SPECS: tuple[QRSpec, ...] = (
+    QRSpec(
+        slug="offers",
+        url="https://blendnbubbles.com/offers",
+        header="OFFERS",
+        subheader="Tap. Sip. Win.",
+        footer="blendnbubbles.com/offers",
+    ),
+    QRSpec(
+        slug="website",
+        url="https://blendnbubbles.com",
+        header="WEBSITE",
+        subheader="Bubble tea, Kolkata.",
+        footer="blendnbubbles.com",
+    ),
+    QRSpec(
+        slug="instagram",
+        url="https://www.instagram.com/blendnbubbles?igsh=Zmg2NW04NzJjdHdx",
+        header="INSTAGRAM",
+        subheader="@blendnbubbles",
+        footer="instagram.com/blendnbubbles",
+    ),
+    QRSpec(
+        slug="google",
+        url="https://share.google/3HwffXhbv7QsQpvID",
+        header="GOOGLE",
+        subheader="Find us on Maps",
+        footer="Leave a review on Google",
+    ),
+)
 
 
 def _load_font(size: int, *, bold: bool = False) -> ImageFont.FreeTypeFont:
@@ -64,15 +111,15 @@ def _load_font(size: int, *, bold: bool = False) -> ImageFont.FreeTypeFont:
     return ImageFont.load_default()
 
 
-def _build_qr(size_px: int) -> Image.Image:
-    """Render the QR at ~`size_px` with high error correction for logo overlay."""
+def _build_qr(url: str, size_px: int) -> Image.Image:
+    """Render a QR for `url` at ~`size_px` with high error correction for logo overlay."""
     qr = qrcode.QRCode(
         version=None,
         error_correction=ERROR_CORRECT_H,
         box_size=12,
         border=2,
     )
-    qr.add_data(OFFERS_URL)
+    qr.add_data(url)
     qr.make(fit=True)
     img = qr.make_image(
         fill_color=BRAND_DARK_TEAL,
@@ -131,8 +178,6 @@ def _draw_pill(
         radius=radius,
         fill=fill,
     )
-    # Pillow's textbbox anchors at the glyph bbox top-left including descender padding;
-    # offset by the bbox origin so visual centring stays clean.
     draw.text(
         (centre_x - text_w / 2 - bbox[0], centre_y - text_h / 2 - bbox[1]),
         text,
@@ -141,9 +186,9 @@ def _draw_pill(
     )
 
 
-def _compose_card(qr_size: int, scale: float = 1.0) -> Image.Image:
-    """Assemble the full poster: header → QR → footer URL on a clean white card."""
-    base_qr = _overlay_logo(_build_qr(int(qr_size * scale)))
+def _compose_card(spec: QRSpec, qr_size: int, scale: float = 1.0) -> Image.Image:
+    """Assemble the full poster for `spec`: header → QR → footer URL on a white card."""
+    base_qr = _overlay_logo(_build_qr(spec.url, int(qr_size * scale)))
 
     card_w = int(800 * scale)
     card_h = int(1000 * scale)
@@ -159,26 +204,26 @@ def _compose_card(qr_size: int, scale: float = 1.0) -> Image.Image:
         width=max(2, int(3 * scale)),
     )
 
-    # Header — "OFFERS"
+    # Header
     header_font = _load_font(int(96 * scale), bold=True)
-    header_bbox = draw.textbbox((0, 0), HEADER_TEXT, font=header_font)
+    header_bbox = draw.textbbox((0, 0), spec.header, font=header_font)
     header_w = header_bbox[2] - header_bbox[0]
     header_y = int(90 * scale)
     draw.text(
         ((card_w - header_w) / 2 - header_bbox[0], header_y - header_bbox[1]),
-        HEADER_TEXT,
+        spec.header,
         font=header_font,
         fill=BRAND_DARK_TEAL,
     )
 
-    # Subheader pill — "Tap. Sip. Win."
+    # Subheader pill
     sub_font = _load_font(int(28 * scale), bold=True)
     pill_y = header_y + int(140 * scale)
     _draw_pill(
         draw,
         centre_x=card_w // 2,
         centre_y=pill_y,
-        text=SUBHEADER_TEXT,
+        text=spec.subheader,
         font=sub_font,
         pad_x=int(28 * scale),
         pad_y=int(12 * scale),
@@ -193,12 +238,12 @@ def _compose_card(qr_size: int, scale: float = 1.0) -> Image.Image:
 
     # Footer URL
     footer_font = _load_font(int(28 * scale), bold=False)
-    footer_bbox = draw.textbbox((0, 0), FOOTER_TEXT, font=footer_font)
+    footer_bbox = draw.textbbox((0, 0), spec.footer, font=footer_font)
     footer_w = footer_bbox[2] - footer_bbox[0]
     footer_y = qr_y + qr_paste_size + int(40 * scale)
     draw.text(
         ((card_w - footer_w) / 2 - footer_bbox[0], footer_y - footer_bbox[1]),
-        FOOTER_TEXT,
+        spec.footer,
         font=footer_font,
         fill=BRAND_INK,
     )
@@ -206,24 +251,33 @@ def _compose_card(qr_size: int, scale: float = 1.0) -> Image.Image:
     return card.convert("RGB")
 
 
+def _render_spec(spec: QRSpec) -> list[Path]:
+    """Render all three PNG variants for `spec`. Returns the written paths."""
+    written: list[Path] = []
+
+    bare = _overlay_logo(_build_qr(spec.url, 720))
+    bare_path = PUBLIC_DIR / f"{spec.slug}-qr-bare.png"
+    bare.convert("RGB").save(bare_path, format="PNG", optimize=True)
+    written.append(bare_path)
+
+    web = _compose_card(spec, qr_size=520, scale=1.0)
+    web_path = PUBLIC_DIR / f"{spec.slug}-qr.png"
+    web.save(web_path, format="PNG", optimize=True)
+    written.append(web_path)
+
+    print_card = _compose_card(spec, qr_size=520, scale=3.0)
+    print_path = PUBLIC_DIR / f"{spec.slug}-qr-print.png"
+    print_card.save(print_path, format="PNG", optimize=True, dpi=(300, 300))
+    written.append(print_path)
+
+    return written
+
+
 def main() -> None:
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
-
-    bare = _overlay_logo(_build_qr(720))
-    bare_path = PUBLIC_DIR / "offers-qr-bare.png"
-    bare.convert("RGB").save(bare_path, format="PNG", optimize=True)
-
-    web = _compose_card(qr_size=520, scale=1.0)
-    web_path = PUBLIC_DIR / "offers-qr.png"
-    web.save(web_path, format="PNG", optimize=True)
-
-    print_card = _compose_card(qr_size=520, scale=3.0)
-    print_path = PUBLIC_DIR / "offers-qr-print.png"
-    print_card.save(print_path, format="PNG", optimize=True, dpi=(300, 300))
-
-    print(f"wrote {bare_path}")
-    print(f"wrote {web_path}")
-    print(f"wrote {print_path}")
+    for spec in SPECS:
+        for path in _render_spec(spec):
+            print(f"wrote {path}")
 
 
 if __name__ == "__main__":
