@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './App.css';
-import SpinWheel from './SpinWheel';
+import SpinWheel, { PRIZES } from './SpinWheel';
 
 function Offers() {
   const [scrolled, setScrolled] = useState(false);
@@ -184,16 +184,13 @@ function Offers() {
 
           <div className="text-center mt-5 reveal">
             <details className="prize-disclosure">
-              <summary className="prize-disclosure-summary">See all 8 prizes</summary>
+              <summary className="prize-disclosure-summary">See all {PRIZES.length} prizes</summary>
               <ul className="prize-disclosure-list mt-3">
-                <li><strong>1.</strong> 1 free stamp on loyalty card</li>
-                <li><strong>2.</strong> 2 free stamps on loyalty card</li>
-                <li><strong>3.</strong> 3 free stamps on loyalty card</li>
-                <li><strong>4.</strong> 50% off next visit + 10% extra for sharing our story</li>
-                <li><strong>5.</strong> 10% off coupon</li>
-                <li><strong>6.</strong> Free boba for a month (1 per week)</li>
-                <li><strong>7.</strong> BnB Hall of Fame (exclusive offers, winners contacted post-anniversary)</li>
-                <li><strong>8.</strong> BnB Anniversary Goodies</li>
+                {PRIZES.map((prize, index) => (
+                  <li key={prize.option}>
+                    <strong>{index + 1}.</strong> {prize.title}
+                  </li>
+                ))}
               </ul>
             </details>
             <p className="text-muted small mt-4 mb-4">All offers available in-store during our anniversary celebrations. One spin per customer, prizes while stocks last.</p>

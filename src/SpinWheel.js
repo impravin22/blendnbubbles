@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Wheel } from 'react-custom-roulette';
 
 /**
@@ -19,7 +19,9 @@ const BRAND_AMBER = '#C89B4A';
 
 // Prize catalogue. `option` is the short label rendered on the wheel slice.
 // `title` and `body` populate the result card and the collapsible list.
-const PRIZES = [
+// Exported so the Offers page can render the same list under the wheel
+// without duplicating copy.
+export const PRIZES = [
   {
     option: '1 STAMP',
     title: '1 Free stamp on your loyalty card',
@@ -109,19 +111,19 @@ function pickRandomPrizeIndex() {
 }
 
 function SpinWheel() {
-  const [savedPrize, setSavedPrize] = useState(null);
+  // CRA does not server-render, so a lazy initialiser is enough to read
+  // localStorage on first mount without flashing the spin button.
+  const [savedPrize, setSavedPrize] = useState(() => loadSavedPrize());
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeIndex, setPrizeIndex] = useState(0);
   const [showResult, setShowResult] = useState(false);
-  const [hasMounted, setHasMounted] = useState(false);
+  const modalCloseButtonRef = useRef(null);
+  const modalTriggerRef = useRef(null);
 
+  // Dev helper to clear the soft lock during local testing. Only attached
+  // in development so production bundles stay clean.
   useEffect(() => {
-    setHasMounted(true);
-    setSavedPrize(loadSavedPrize());
-  }, []);
-
-  // Expose a dev helper so we can reset without DevTools voodoo.
-  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return undefined;
     if (typeof window === 'undefined') return undefined;
     window.__bnbResetSpin = () => {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -153,21 +155,44 @@ function SpinWheel() {
 
   const handleCloseResult = useCallback(() => {
     setShowResult(false);
+    // Return focus to the element that triggered the modal so keyboard
+    // users do not get parked on the page body.
+    if (modalTriggerRef.current) {
+      modalTriggerRef.current.focus();
+    }
   }, []);
+
+  // Trap focus inside the modal and close it on Escape.
+  useEffect(() => {
+    if (!showResult) return undefined;
+    if (typeof window === 'undefined') return undefined;
+
+    // Move focus to the primary action so screen readers + keyboard users
+    // land inside the dialog as soon as it opens.
+    const focusTimer = window.setTimeout(() => {
+      if (modalCloseButtonRef.current) {
+        modalCloseButtonRef.current.focus();
+      }
+    }, 0);
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        handleCloseResult();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showResult, handleCloseResult]);
 
   const activePrize = useMemo(() => {
     if (savedPrize) return PRIZES[savedPrize.prizeIndex];
     return null;
   }, [savedPrize]);
-
-  // Avoid first-paint flash that shows the spin button before localStorage check.
-  if (!hasMounted) {
-    return (
-      <div className="spin-wheel-shell">
-        <div className="spin-wheel-placeholder" aria-hidden="true" />
-      </div>
-    );
-  }
 
   return (
     <div className="spin-wheel-shell">
@@ -201,6 +226,7 @@ function SpinWheel() {
       {!savedPrize && (
         <div className="text-center mt-4">
           <button
+            ref={modalTriggerRef}
             type="button"
             className="btn btn-primary btn-lg spin-cta"
             onClick={handleSpinClick}
@@ -244,6 +270,7 @@ function SpinWheel() {
               Show this screen to staff at the counter to claim your prize.
             </p>
             <button
+              ref={modalCloseButtonRef}
               type="button"
               className="btn btn-primary"
               onClick={handleCloseResult}
