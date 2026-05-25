@@ -60,22 +60,28 @@ function formatTicketShort(ticket) {
 }
 
 /**
- * Fire-and-forget POST to the Apps Script webhook. Uses `keepalive` so
- * the request survives page navigation, and `text/plain` content-type so
- * Apps Script doPost can read e.postData.contents without CORS preflight.
- * Never throws — staff verification by ticket on the screen is the
- * fallback path if the webhook is down.
+ * Fire-and-forget GET to the Apps Script webhook. Uses query params so
+ * Google Workspace web-app policies that block anonymous POST still let
+ * the row land in the Sheet. `keepalive` so the request survives page
+ * navigation. Never throws — staff verification by ticket on the screen
+ * is the fallback if the webhook is down.
  */
 function reportSpin(payload) {
   if (!WEBHOOK_URL) return;
   if (typeof window === 'undefined' || typeof fetch !== 'function') return;
   try {
-    fetch(WEBHOOK_URL, {
-      method: 'POST',
+    const params = new URLSearchParams();
+    Object.keys(payload).forEach(function (key) {
+      const value = payload[key];
+      if (value === undefined || value === null) return;
+      params.append(key, String(value));
+    });
+    const url = `${WEBHOOK_URL}?${params.toString()}`;
+    fetch(url, {
+      method: 'GET',
       mode: 'no-cors',
       keepalive: true,
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
+      credentials: 'omit',
     }).catch(() => undefined);
   } catch (err) {
     // Ignore — wheel result is already on screen.
