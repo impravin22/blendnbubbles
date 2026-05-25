@@ -60,23 +60,57 @@ function formatTicketShort(ticket) {
 }
 
 /**
- * Fire-and-forget GET to the Apps Script webhook. Uses query params so
- * Google Workspace web-app policies that block anonymous POST still let
- * the row land in the Sheet. `keepalive` so the request survives page
- * navigation. Never throws — staff verification by ticket on the screen
- * is the fallback if the webhook is down.
+ * Build the webhook URL with query params. Returns null if the webhook
+ * URL is not configured.
+ */
+function buildWebhookUrl(payload) {
+  if (!WEBHOOK_URL) return null;
+  const params = new URLSearchParams();
+  Object.keys(payload).forEach(function (key) {
+    const value = payload[key];
+    if (value === undefined || value === null) return;
+    params.append(key, String(value));
+  });
+  return `${WEBHOOK_URL}?${params.toString()}`;
+}
+
+/**
+ * Pre-spin: ask the Sheet whether this fingerprint already won. Returns
+ * the prior prize payload or null. Reads the JSON response so we cannot
+ * use `mode: 'no-cors'` here; Apps Script web apps return permissive
+ * CORS headers on GET so cross-origin reads work.
+ */
+async function checkPriorPrize(fpHash) {
+  if (!WEBHOOK_URL || !fpHash) return null;
+  if (typeof fetch !== 'function') return null;
+  try {
+    const url = buildWebhookUrl({ check: 1, fpHash });
+    const res = await fetch(url, { method: 'GET', credentials: 'omit' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !data.alreadySpun) return null;
+    return {
+      ticket: data.ticket || '',
+      prizeIndex: Number(data.prizeIndex),
+      prizeLabel: data.prizeLabel || '',
+      prizeTitle: data.prizeTitle || '',
+      spunAt: data.spunAt || '',
+    };
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Fire-and-forget log of a spin attempt. We do not need to read the
+ * response (the result is already on screen), so `no-cors` is fine and
+ * `keepalive` lets the request survive page navigation.
  */
 function reportSpin(payload) {
-  if (!WEBHOOK_URL) return;
-  if (typeof window === 'undefined' || typeof fetch !== 'function') return;
+  const url = buildWebhookUrl(payload);
+  if (!url) return;
+  if (typeof fetch !== 'function') return;
   try {
-    const params = new URLSearchParams();
-    Object.keys(payload).forEach(function (key) {
-      const value = payload[key];
-      if (value === undefined || value === null) return;
-      params.append(key, String(value));
-    });
-    const url = `${WEBHOOK_URL}?${params.toString()}`;
     fetch(url, {
       method: 'GET',
       mode: 'no-cors',
@@ -86,6 +120,62 @@ function reportSpin(payload) {
   } catch (err) {
     // Ignore — wheel result is already on screen.
   }
+}
+
+/**
+ * Compute a device fingerprint hash. Combines user-agent, screen size,
+ * timezone, language and a small canvas signature. Stable across
+ * incognito + cache-clear on the same browser; differs across browsers
+ * on the same device (e.g. Insta in-app WebView vs Safari).
+ */
+async function computeFingerprint() {
+  if (typeof window === 'undefined') return '';
+  if (typeof crypto === 'undefined' || !crypto.subtle) return '';
+  try {
+    const screenSize = `${window.screen.width}x${window.screen.height}x${window.screen.colorDepth}`;
+    const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || '';
+    const lang = navigator.language || '';
+    let canvasSignature = '';
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 220;
+      canvas.height = 60;
+      const ctx = canvas.getContext('2d');
+      ctx.textBaseline = 'top';
+      ctx.font = '14px "Arial"';
+      ctx.fillStyle = '#0F3C3C';
+      ctx.fillText('bnb-fp-2026', 2, 2);
+      ctx.fillStyle = 'rgba(200,155,74,0.6)';
+      ctx.fillRect(0, 20, 220, 20);
+      canvasSignature = canvas.toDataURL();
+    } catch (err) {
+      canvasSignature = '';
+    }
+    const parts = [navigator.userAgent || '', screenSize, tz, lang, canvasSignature].join('|');
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(parts));
+    return Array.from(new Uint8Array(digest))
+      .map(function (b) { return b.toString(16).padStart(2, '0'); })
+      .join('');
+  } catch (err) {
+    return '';
+  }
+}
+
+/**
+ * Detect in-app browsers that have their own storage context
+ * (Instagram, Facebook, Line, WeChat, Twitter). These can re-spin in
+ * Safari because storage and fingerprint differ — the page surfaces a
+ * banner asking customers to open the link in their real browser.
+ */
+function detectInAppBrowser() {
+  if (typeof navigator === 'undefined') return null;
+  const ua = navigator.userAgent || '';
+  if (/Instagram/i.test(ua)) return 'Instagram';
+  if (/FBAN|FBAV|FB_IAB/.test(ua)) return 'Facebook';
+  if (/Line\//.test(ua)) return 'LINE';
+  if (/MicroMessenger/i.test(ua)) return 'WeChat';
+  if (/Twitter/i.test(ua)) return 'Twitter';
+  return null;
 }
 
 // Prize catalogue. `option` is the short label rendered on the wheel slice.
@@ -190,8 +280,37 @@ function SpinWheel() {
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeIndex, setPrizeIndex] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [fpHash, setFpHash] = useState('');
+  const [inAppBrowser] = useState(() => detectInAppBrowser());
   const modalCloseButtonRef = useRef(null);
   const modalTriggerRef = useRef(null);
+
+  // Compute the device fingerprint once + ask the Sheet whether this
+  // device already won. If so, hydrate the saved-prize card so the
+  // customer cannot replay by clearing localStorage or opening
+  // incognito.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const hash = await computeFingerprint();
+      if (cancelled) return;
+      setFpHash(hash);
+      if (savedPrize || !hash) return;
+      const prior = await checkPriorPrize(hash);
+      if (cancelled || !prior) return;
+      if (prior.prizeIndex >= 0 && prior.prizeIndex < PRIZES.length) {
+        savePrize(prior.prizeIndex, prior.ticket);
+        setSavedPrize({
+          ticket: prior.ticket,
+          prizeIndex: prior.prizeIndex,
+          prizeLabel: PRIZES[prior.prizeIndex].option,
+          prizeTitle: PRIZES[prior.prizeIndex].title,
+          spunAt: prior.spunAt || new Date().toISOString(),
+        });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [savedPrize]);
 
   // Dev helper to clear the soft lock during local testing. Only attached
   // in development so production bundles stay clean.
@@ -226,13 +345,15 @@ function SpinWheel() {
     };
     setSavedPrize(payload);
     // Best-effort log to the Google Sheet so staff can cross-check tickets.
+    // Includes fpHash so the server can dedupe future spins from this device.
     reportSpin({
       ...payload,
+      fpHash,
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
       pageHref: typeof window !== 'undefined' ? window.location.href : '',
     });
     setShowResult(true);
-  }, [prizeIndex]);
+  }, [prizeIndex, fpHash]);
 
   const handleCloseResult = useCallback(() => {
     setShowResult(false);
@@ -275,8 +396,26 @@ function SpinWheel() {
     return null;
   }, [savedPrize]);
 
+  const inAppHref = typeof window !== 'undefined'
+    ? `x-safari-https://${window.location.host}${window.location.pathname}`
+    : '#';
+
   return (
     <div className="spin-wheel-shell">
+      {inAppBrowser && !savedPrize && (
+        <div className="inapp-banner" role="alert">
+          <p className="inapp-banner-title mb-1">
+            Open in your browser to play
+          </p>
+          <p className="inapp-banner-body mb-2">
+            You are viewing this inside the {inAppBrowser} app. To keep the one-spin-per-customer rule fair, please open the page in Safari or Chrome before spinning.
+          </p>
+          <a className="btn btn-primary btn-sm inapp-banner-cta" href={inAppHref}>
+            Open in Safari
+          </a>
+        </div>
+      )}
+
       <div className="spin-wheel-stage">
         <Wheel
           mustStartSpinning={mustSpin}
