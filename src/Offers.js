@@ -94,10 +94,10 @@ function Offers() {
                 <p className="hero-subtitle">Tap. Sip. Win.</p>
                 <h1 className="hero-title">Exclusive Offers</h1>
                 <p className="hero-text">
-                  Something special is brewing for our anniversary. Tap your fridge magnet again soon to unlock weekly offers, winner reveals and surprises made just for our community.
+                  Anniversary specials are live. Sip more, pay less, and take one spin on the wheel for a chance to win something extra.
                 </p>
                 <div className="hero-buttons">
-                  <Link to="/menu" className="btn btn-primary">Browse the Menu</Link>
+                  <a href="#anniversary-offers" className="btn btn-primary">See the Offers</a>
                   <a href="/#contact" onClick={handleVisitUsClick} className="btn btn-outline">Visit Us</a>
                 </div>
               </div>
@@ -118,22 +118,54 @@ function Offers() {
         </div>
       </header>
 
-      {/* Stay tuned section */}
-      <section className="py-5" id="stay-tuned">
+      {/* Anniversary offers grid */}
+      <section className="py-5 bg-light" id="anniversary-offers">
         <div className="container">
-          <div className="row justify-content-center">
-            <div className="col-lg-8 text-center reveal">
-              <h2 className="mb-4">Stay tuned</h2>
-              <p className="lead">
-                This page is your direct line to fresh BlendNBubbles offers. Winners, weekly deals and anniversary specials will land here first.
-              </p>
-              <p>
-                Tap your magnet whenever you want a sip-worthy update. Cheers, mate.
-              </p>
-              <div className="text-center mt-4">
-                <Link to="/" className="btn btn-primary">Back to Home</Link>
+          <div className="text-center mb-5 reveal">
+            <h2 className="mb-3">Anniversary Offers</h2>
+            <p className="lead text-muted mb-0">Live now. Walk in, sip, win.</p>
+          </div>
+          <div className="row g-4">
+            <div className="col-md-6 col-lg-3 reveal reveal-delay-1">
+              <div className="card h-100 text-center offer-card">
+                <div className="card-body d-flex flex-column">
+                  <span className="offer-tag mb-3 align-self-center">&#8377;139</span>
+                  <h3 className="h5 fw-bold mb-2">All Tea, Smoothie &amp; Coffee</h3>
+                  <p className="text-muted mb-0">Every drink on the menu, one flat anniversary price.</p>
+                </div>
               </div>
             </div>
+            <div className="col-md-6 col-lg-3 reveal reveal-delay-2">
+              <div className="card h-100 text-center offer-card">
+                <div className="card-body d-flex flex-column">
+                  <span className="offer-tag mb-3 align-self-center">&#8377;99</span>
+                  <h3 className="h5 fw-bold mb-2">All Sodas</h3>
+                  <p className="text-muted mb-0">Bubbly fizz, refreshing pours, anniversary price.</p>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-3 reveal reveal-delay-3">
+              <div className="card h-100 text-center offer-card">
+                <div className="card-body d-flex flex-column">
+                  <span className="offer-tag mb-3 align-self-center">FREE</span>
+                  <h3 className="h5 fw-bold mb-2">Snacks</h3>
+                  <p className="text-muted mb-0">On the house with every order during the celebration.</p>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-6 col-lg-3 reveal reveal-delay-4">
+              <div className="card h-100 text-center offer-card">
+                <div className="card-body d-flex flex-column">
+                  <span className="offer-tag offer-tag-spin mb-3 align-self-center">SPIN &amp; WIN</span>
+                  <h3 className="h5 fw-bold mb-2">Anniversary Spin Wheel</h3>
+                  <p className="text-muted mb-0">Take one spin in-store for a chance to win an extra offer. One play per customer.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="text-center mt-5 reveal">
+            <p className="text-muted small mb-4">Offers available in-store during our anniversary celebrations. One spin per customer, prizes while stocks last.</p>
+            <Link to="/" className="btn btn-primary">Back to Home</Link>
           </div>
         </div>
       </section>

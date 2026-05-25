@@ -1508,3 +1508,42 @@ section h2::after {
     height: 150px;
   }
 }
+
+/* Anniversary offers cards (/offers page) */
+.offer-card {
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(15, 60, 60, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  background: #ffffff;
+}
+
+.offer-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 30px rgba(15, 60, 60, 0.16);
+}
+
+.offer-card .card-body {
+  padding: 1.75rem 1.25rem;
+}
+
+.offer-tag {
+  display: inline-block;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: var(--gold-gradient);
+  color: #ffffff;
+  padding: 0.4rem 1.1rem;
+  border-radius: 999px;
+  line-height: 1.1;
+  box-shadow: 0 4px 12px rgba(187, 135, 80, 0.25);
+}
+
+.offer-tag-spin {
+  background: var(--primary);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  box-shadow: 0 4px 12px rgba(15, 60, 60, 0.25);
+}
