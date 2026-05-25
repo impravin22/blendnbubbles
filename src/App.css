@@ -1661,6 +1661,34 @@ section h2::after {
   animation: spinModalPop 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Claim ticket pill — shown inside the result card and the modal */
+.spin-ticket {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 14px;
+  border: 1.5px dashed var(--primary);
+  background: rgba(15, 60, 60, 0.04);
+}
+
+.spin-ticket-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--primary);
+}
+
+.spin-ticket-code {
+  font-family: 'Space Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+}
+
 @keyframes spinOverlayFade {
   from { opacity: 0; }
   to   { opacity: 1; }

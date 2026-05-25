@@ -17,6 +17,71 @@ const STORAGE_KEY = 'bnb_anniversary_spin_v1';
 const BRAND_TEAL = '#0F3C3C';
 const BRAND_AMBER = '#C89B4A';
 
+// Apps Script web-app URL that appends each spin result to a Google Sheet.
+// Configure via REACT_APP_SPIN_WEBHOOK_URL in `.env.production` (or `.env`).
+// If unset, the wheel still works locally — staff just cannot cross-check
+// against a sheet. See setup steps at the bottom of this file.
+const WEBHOOK_URL = process.env.REACT_APP_SPIN_WEBHOOK_URL || '';
+
+/**
+ * Generate a short claim ticket. Uses crypto.randomUUID() when available
+ * (all modern browsers since 2022) and falls back to a v4-style string
+ * built from Math.random() for very old browsers.
+ */
+function generateTicket() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback v4-ish — not cryptographically strong, but fine for a claim ID.
+  const hex = '0123456789abcdef';
+  let out = '';
+  for (let i = 0; i < 36; i += 1) {
+    if (i === 8 || i === 13 || i === 18 || i === 23) {
+      out += '-';
+    } else if (i === 14) {
+      out += '4';
+    } else if (i === 19) {
+      out += hex[(Math.random() * 4) | 8];
+    } else {
+      out += hex[(Math.random() * 16) | 0];
+    }
+  }
+  return out;
+}
+
+/**
+ * Short, customer-friendly version of the ticket — first 8 hex chars,
+ * upper-cased, dash-separated for readability (e.g. "A1B2-C3D4").
+ * Staff can still look up the full UUID in the Sheet if they need to.
+ */
+function formatTicketShort(ticket) {
+  const stripped = ticket.replace(/-/g, '').toUpperCase();
+  return `${stripped.slice(0, 4)}-${stripped.slice(4, 8)}`;
+}
+
+/**
+ * Fire-and-forget POST to the Apps Script webhook. Uses `keepalive` so
+ * the request survives page navigation, and `text/plain` content-type so
+ * Apps Script doPost can read e.postData.contents without CORS preflight.
+ * Never throws — staff verification by ticket on the screen is the
+ * fallback path if the webhook is down.
+ */
+function reportSpin(payload) {
+  if (!WEBHOOK_URL) return;
+  if (typeof window === 'undefined' || typeof fetch !== 'function') return;
+  try {
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      keepalive: true,
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    }).catch(() => undefined);
+  } catch (err) {
+    // Ignore — wheel result is already on screen.
+  }
+}
+
 // Prize catalogue. `option` is the short label rendered on the wheel slice.
 // `title` and `body` populate the result card and the collapsible list.
 // Exported so the Offers page can render the same list under the wheel
@@ -91,9 +156,10 @@ function loadSavedPrize() {
   }
 }
 
-function savePrize(prizeIndex) {
-  if (typeof window === 'undefined') return;
+function savePrize(prizeIndex, ticket) {
+  if (typeof window === 'undefined') return null;
   const payload = {
+    ticket,
     prizeIndex,
     prizeLabel: PRIZES[prizeIndex].option,
     prizeTitle: PRIZES[prizeIndex].title,
@@ -104,6 +170,7 @@ function savePrize(prizeIndex) {
   } catch (err) {
     // Storage full / disabled — staff can still verify in-store.
   }
+  return payload;
 }
 
 function pickRandomPrizeIndex() {
@@ -143,12 +210,20 @@ function SpinWheel() {
 
   const handleStopSpinning = useCallback(() => {
     setMustSpin(false);
-    savePrize(prizeIndex);
-    setSavedPrize({
+    const ticket = generateTicket();
+    const payload = savePrize(prizeIndex, ticket) || {
+      ticket,
       prizeIndex,
       prizeLabel: PRIZES[prizeIndex].option,
       prizeTitle: PRIZES[prizeIndex].title,
       spunAt: new Date().toISOString(),
+    };
+    setSavedPrize(payload);
+    // Best-effort log to the Google Sheet so staff can cross-check tickets.
+    reportSpin({
+      ...payload,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+      pageHref: typeof window !== 'undefined' ? window.location.href : '',
     });
     setShowResult(true);
   }, [prizeIndex]);
@@ -246,6 +321,12 @@ function SpinWheel() {
           <p className="spin-result-eyebrow mb-2">YOUR PRIZE</p>
           <h3 className="spin-result-title mb-2">{activePrize.title}</h3>
           <p className="text-muted mb-3">{activePrize.body}</p>
+          {savedPrize.ticket && (
+            <div className="spin-ticket mb-3" aria-label="Claim ticket">
+              <span className="spin-ticket-label">CLAIM TICKET</span>
+              <span className="spin-ticket-code">{formatTicketShort(savedPrize.ticket)}</span>
+            </div>
+          )}
           <p className="small mb-0">
             <strong>Show this screen to staff at the counter.</strong>
           </p>
@@ -265,7 +346,13 @@ function SpinWheel() {
             <h3 id="spin-result-headline" className="spin-result-title mb-2">
               {activePrize.title}
             </h3>
-            <p className="text-muted mb-4">{activePrize.body}</p>
+            <p className="text-muted mb-3">{activePrize.body}</p>
+            {savedPrize?.ticket && (
+              <div className="spin-ticket mb-4" aria-label="Claim ticket">
+                <span className="spin-ticket-label">CLAIM TICKET</span>
+                <span className="spin-ticket-code">{formatTicketShort(savedPrize.ticket)}</span>
+              </div>
+            )}
             <p className="small fw-bold mb-4">
               Show this screen to staff at the counter to claim your prize.
             </p>
@@ -283,5 +370,55 @@ function SpinWheel() {
     </div>
   );
 }
+
+/*
+ * ---------------------------------------------------------------------------
+ * Apps Script setup (one-time, to enable the Google Sheet audit log)
+ * ---------------------------------------------------------------------------
+ *
+ * 1. Create a new Google Sheet (e.g. "BnB Anniversary Spins"). The first
+ *    row will be filled with headers automatically on the first spin.
+ *
+ * 2. Sheet → Extensions → Apps Script. Replace the default file with:
+ *
+ *      const SHEET_ID = 'PASTE_SHEET_ID_HERE';
+ *      const HEADERS = ['ReceivedAt', 'Ticket', 'PrizeIndex', 'PrizeLabel',
+ *                       'PrizeTitle', 'SpunAt', 'UserAgent', 'PageHref'];
+ *
+ *      function doPost(e) {
+ *        const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+ *        if (sheet.getLastRow() === 0) sheet.appendRow(HEADERS);
+ *        let body = {};
+ *        try { body = JSON.parse(e.postData.contents || '{}'); } catch (_) {}
+ *        sheet.appendRow([
+ *          new Date(),
+ *          body.ticket || '',
+ *          body.prizeIndex,
+ *          body.prizeLabel || '',
+ *          body.prizeTitle || '',
+ *          body.spunAt || '',
+ *          body.userAgent || '',
+ *          body.pageHref || '',
+ *        ]);
+ *        return ContentService
+ *          .createTextOutput(JSON.stringify({ ok: true }))
+ *          .setMimeType(ContentService.MimeType.JSON);
+ *      }
+ *
+ * 3. Deploy → New deployment → Type: Web app → Execute as: Me →
+ *    Who has access: Anyone. Copy the resulting /exec URL.
+ *
+ * 4. In the blendnbubbles repo, add to `.env.production` (or `.env`):
+ *
+ *      REACT_APP_SPIN_WEBHOOK_URL=https://script.google.com/macros/s/.../exec
+ *
+ *    Then `npm run build && npm run deploy`. The wheel will start
+ *    appending one row per spin. Until the env var is set the wheel
+ *    works locally but no row is written.
+ *
+ * Staff verifies a customer by asking for the short ticket on screen
+ * (e.g. "A1B2-C3D4") and finding the row in the Sheet — the short code
+ * is the first 8 hex chars of the UUID.
+ */
 
 export default SpinWheel;
