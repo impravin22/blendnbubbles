@@ -170,8 +170,10 @@ function Offers() {
       {/* Spin & Win wheel */}
       <section className="py-5" id="spin-prizes">
         <div className="container">
-          <div className="text-center mb-4 reveal">
-            <span className="offer-tag offer-tag-spin d-inline-block mb-3">SPIN &amp; WIN</span>
+          <div className="text-center mb-5 reveal">
+            <div className="mb-3">
+              <span className="offer-tag offer-tag-spin">SPIN &amp; WIN</span>
+            </div>
             <h2 className="mb-2">Spin the anniversary wheel</h2>
             <p className="text-muted mb-0">One spin per customer. Land anywhere and the prize is yours.</p>
           </div>
