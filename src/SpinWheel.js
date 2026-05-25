@@ -178,6 +178,18 @@ function detectInAppBrowser() {
   return null;
 }
 
+/**
+ * Coarse platform detection so the in-app banner can pick a deep-link
+ * scheme that the host OS will actually handle.
+ */
+function detectPlatform() {
+  if (typeof navigator === 'undefined') return 'other';
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/.test(ua)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return 'other';
+}
+
 // Prize catalogue. `option` is the short label rendered on the wheel slice.
 // `title` and `body` populate the result card and the collapsible list.
 // Exported so the Offers page can render the same list under the wheel
@@ -282,6 +294,8 @@ function SpinWheel() {
   const [showResult, setShowResult] = useState(false);
   const [fpHash, setFpHash] = useState('');
   const [inAppBrowser] = useState(() => detectInAppBrowser());
+  const [platform] = useState(() => detectPlatform());
+  const [copied, setCopied] = useState(false);
   const modalCloseButtonRef = useRef(null);
   const modalTriggerRef = useRef(null);
 
@@ -396,9 +410,41 @@ function SpinWheel() {
     return null;
   }, [savedPrize]);
 
-  const inAppHref = typeof window !== 'undefined'
-    ? `x-safari-https://${window.location.host}${window.location.pathname}`
+  const pageUrl = typeof window !== 'undefined'
+    ? window.location.href
+    : '';
+  const pageHost = typeof window !== 'undefined' ? window.location.host : '';
+  const pagePath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const iosDeepLink = pageHost ? `x-safari-https://${pageHost}${pagePath}` : '#';
+  const androidDeepLink = pageHost
+    ? `intent://${pageHost}${pagePath}#Intent;scheme=https;package=com.android.chrome;end`
     : '#';
+  const ctaHref = platform === 'android' ? androidDeepLink : iosDeepLink;
+  const ctaLabel = platform === 'android' ? 'Open in Chrome' : 'Open in Safari';
+  const androidInstruction = platform === 'android';
+
+  const handleCopyLink = useCallback(async () => {
+    if (!pageUrl) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(pageUrl);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = pageUrl;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2200);
+    } catch (err) {
+      setCopied(false);
+    }
+  }, [pageUrl]);
 
   return (
     <div className="spin-wheel-shell">
@@ -408,11 +454,25 @@ function SpinWheel() {
             Open in your browser to play
           </p>
           <p className="inapp-banner-body mb-2">
-            You are viewing this inside the {inAppBrowser} app. To keep the one-spin-per-customer rule fair, please open the page in Safari or Chrome before spinning.
+            You are viewing this inside the {inAppBrowser} app. To keep the one-spin-per-customer rule fair, open the page in your real browser before spinning.
           </p>
-          <a className="btn btn-primary btn-sm inapp-banner-cta" href={inAppHref}>
-            Open in Safari
-          </a>
+          {androidInstruction && (
+            <p className="inapp-banner-body inapp-banner-instruction mb-2">
+              Tap the <strong>⋮</strong> menu (top-right) → <strong>Open in Chrome</strong>. The button below will try the same thing if your browser allows it.
+            </p>
+          )}
+          <div className="inapp-banner-actions">
+            <a className="btn btn-primary btn-sm inapp-banner-cta" href={ctaHref}>
+              {ctaLabel}
+            </a>
+            <button
+              type="button"
+              className="btn btn-outline-primary btn-sm inapp-banner-copy"
+              onClick={handleCopyLink}
+            >
+              {copied ? 'Copied!' : 'Copy link'}
+            </button>
+          </div>
         </div>
       )}
 
