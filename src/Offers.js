@@ -159,7 +159,7 @@ function Offers() {
                 <div className="card-body d-flex flex-column">
                   <span className="offer-tag offer-tag-spin mb-3 align-self-center">SPIN &amp; WIN</span>
                   <h3 className="h5 fw-bold mb-2">Anniversary Spin Wheel</h3>
-                  <p className="text-muted mb-0 small">One spin per customer. See the 8 prizes &rarr;</p>
+                  <p className="text-muted mb-0 small">In-store with staff. See the 8 prizes &rarr;</p>
                 </div>
               </a>
             </div>
@@ -174,8 +174,8 @@ function Offers() {
             <div className="mb-3">
               <span className="offer-tag offer-tag-spin">SPIN &amp; WIN</span>
             </div>
-            <h2 className="mb-2">Spin the anniversary wheel</h2>
-            <p className="text-muted mb-0">One spin per customer. Land anywhere and the prize is yours.</p>
+            <h2 className="mb-2">The anniversary spin wheel</h2>
+            <p className="text-muted mb-0">Pop in-store during the celebrations to take your spin. Here is what you could win.</p>
           </div>
 
           <div className="row justify-content-center reveal">
@@ -185,16 +185,14 @@ function Offers() {
           </div>
 
           <div className="text-center mt-5 reveal">
-            <details className="prize-disclosure">
-              <summary className="prize-disclosure-summary">See all {PRIZES.length} prizes</summary>
-              <ul className="prize-disclosure-list mt-3">
-                {PRIZES.map((prize, index) => (
-                  <li key={prize.option}>
-                    <strong>{index + 1}.</strong> {prize.title}
-                  </li>
-                ))}
-              </ul>
-            </details>
+            <h3 className="h5 fw-bold mb-3">All {PRIZES.length} prizes</h3>
+            <ul className="prize-disclosure-list mt-3 mx-auto" style={{ maxWidth: 520 }}>
+              {PRIZES.map((prize, index) => (
+                <li key={prize.option}>
+                  <strong>{index + 1}.</strong> {prize.title}
+                </li>
+              ))}
+            </ul>
             <p className="text-muted small mt-4 mb-4">All offers available in-store during our anniversary celebrations. One spin per customer, prizes while stocks last.</p>
             <Link to="/" className="btn btn-primary">Back to Home</Link>
           </div>

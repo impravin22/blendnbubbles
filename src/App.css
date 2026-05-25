@@ -1604,113 +1604,17 @@ section h2::after {
   }
 }
 
-.spin-cta {
-  min-width: 220px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.spin-result-card {
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 1.5rem 1.25rem;
-  box-shadow: 0 8px 24px rgba(15, 60, 60, 0.08);
-  border: 1px solid rgba(15, 60, 60, 0.08);
-  max-width: 460px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.spin-result-eyebrow {
+/* Static spin-wheel caption (display-only mode) */
+.spin-wheel-caption-eyebrow {
   font-family: 'Poppins', sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.18em;
   color: var(--primary);
+  margin: 0;
 }
 
-.spin-result-title {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
-  color: var(--primary);
-  font-size: 1.35rem;
-  line-height: 1.25;
-}
-
-.spin-result-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 60, 60, 0.72);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.25rem;
-  z-index: 1080;
-  animation: spinOverlayFade 180ms ease-out;
-}
-
-.spin-result-modal {
-  background: #ffffff;
-  border-radius: 22px;
-  padding: 2rem 1.5rem;
-  max-width: 420px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
-  animation: spinModalPop 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes spinOverlayFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes spinModalPop {
-  0%   { transform: scale(0.85); opacity: 0; }
-  100% { transform: scale(1);    opacity: 1; }
-}
-
-/* Collapsible prize list under wheel */
-.prize-disclosure {
-  display: inline-block;
-  text-align: left;
-  max-width: 520px;
-}
-
-.prize-disclosure-summary {
-  list-style: none;
-  cursor: pointer;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 0.02em;
-  color: var(--primary);
-  padding: 0.5rem 1.1rem;
-  border-radius: 999px;
-  background: rgba(15, 60, 60, 0.06);
-  transition: background 0.2s ease;
-  user-select: none;
-}
-
-.prize-disclosure-summary::-webkit-details-marker {
-  display: none;
-}
-
-.prize-disclosure-summary:hover,
-.prize-disclosure[open] .prize-disclosure-summary {
-  background: rgba(15, 60, 60, 0.12);
-}
-
-.prize-disclosure-summary::after {
-  content: ' \25BE';
-  font-size: 0.7rem;
-}
-
-.prize-disclosure[open] .prize-disclosure-summary::after {
-  content: ' \25B4';
-}
-
+/* Prize list under the wheel */
 .prize-disclosure-list {
   list-style: none;
   padding: 1rem 1.25rem;
