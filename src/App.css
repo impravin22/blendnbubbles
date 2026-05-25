@@ -1673,6 +1673,36 @@ section h2::after {
   background: rgba(15, 60, 60, 0.04);
 }
 
+/* In-app browser banner (Instagram / Facebook / Line / WeChat / Twitter) */
+.inapp-banner {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto 1.25rem;
+  padding: 1rem 1.1rem;
+  background: rgba(200, 155, 74, 0.12);
+  border: 1.5px solid var(--secondary);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.inapp-banner-title {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--primary);
+}
+
+.inapp-banner-body {
+  font-size: 0.85rem;
+  color: #2a2a2a;
+  line-height: 1.4;
+}
+
+.inapp-banner-cta {
+  padding: 0.45rem 1.2rem;
+  font-weight: 600;
+}
+
 .spin-ticket-label {
   font-family: 'Poppins', sans-serif;
   font-size: 0.7rem;
