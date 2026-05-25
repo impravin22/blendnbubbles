@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './App.css';
+import SpinWheel from './SpinWheel';
 
 function Offers() {
   const [scrolled, setScrolled] = useState(false);
@@ -166,66 +167,36 @@ function Offers() {
         </div>
       </section>
 
-      {/* Spin & Win prize list */}
+      {/* Spin & Win wheel */}
       <section className="py-5" id="spin-prizes">
         <div className="container">
           <div className="text-center mb-4 reveal">
-            <span className="offer-tag offer-tag-spin">SPIN &amp; WIN</span>
-            <h2 className="mt-3 mb-2">8 prizes on the wheel</h2>
-            <p className="text-muted mb-0">One spin per customer. Land on any of these and it&apos;s yours.</p>
+            <span className="offer-tag offer-tag-spin d-inline-block mb-3">SPIN &amp; WIN</span>
+            <h2 className="mb-2">Spin the anniversary wheel</h2>
+            <p className="text-muted mb-0">One spin per customer. Land anywhere and the prize is yours.</p>
           </div>
-          <div className="row g-3">
-            <div className="col-6 col-md-4 col-lg-3 reveal">
-              <div className="prize-card h-100">
-                <span className="prize-num">1</span>
-                <p className="prize-title mb-0">1 Free stamp on loyalty card</p>
-              </div>
-            </div>
-            <div className="col-6 col-md-4 col-lg-3 reveal">
-              <div className="prize-card h-100">
-                <span className="prize-num">2</span>
-                <p className="prize-title mb-0">2 Free stamps on loyalty card</p>
-              </div>
-            </div>
-            <div className="col-6 col-md-4 col-lg-3 reveal">
-              <div className="prize-card h-100">
-                <span className="prize-num">3</span>
-                <p className="prize-title mb-0">3 Free stamps on loyalty card</p>
-              </div>
-            </div>
-            <div className="col-6 col-md-4 col-lg-3 reveal">
-              <div className="prize-card h-100">
-                <span className="prize-num">4</span>
-                <p className="prize-title mb-0">50% off next visit <span className="prize-bonus">+10% extra for sharing our story</span></p>
-              </div>
-            </div>
-            <div className="col-6 col-md-4 col-lg-3 reveal">
-              <div className="prize-card h-100">
-                <span className="prize-num">5</span>
-                <p className="prize-title mb-0">10% off coupon</p>
-              </div>
-            </div>
-            <div className="col-6 col-md-4 col-lg-3 reveal">
-              <div className="prize-card h-100">
-                <span className="prize-num">6</span>
-                <p className="prize-title mb-0">Free boba for a month <span className="prize-bonus">1 boba per week</span></p>
-              </div>
-            </div>
-            <div className="col-6 col-md-4 col-lg-3 reveal">
-              <div className="prize-card prize-card-hero h-100">
-                <span className="prize-num prize-num-hero">7</span>
-                <p className="prize-title mb-0">BnB Hall of Fame <span className="prize-bonus">exclusive offers, winners contacted post-anniversary</span></p>
-              </div>
-            </div>
-            <div className="col-6 col-md-4 col-lg-3 reveal">
-              <div className="prize-card prize-card-hero h-100">
-                <span className="prize-num prize-num-hero">8</span>
-                <p className="prize-title mb-0">BnB Anniversary Goodies</p>
-              </div>
+
+          <div className="row justify-content-center reveal">
+            <div className="col-12 col-md-10 col-lg-8">
+              <SpinWheel />
             </div>
           </div>
+
           <div className="text-center mt-5 reveal">
-            <p className="text-muted small mb-4">All offers available in-store during our anniversary celebrations. One spin per customer, prizes while stocks last.</p>
+            <details className="prize-disclosure">
+              <summary className="prize-disclosure-summary">See all 8 prizes</summary>
+              <ul className="prize-disclosure-list mt-3">
+                <li><strong>1.</strong> 1 free stamp on loyalty card</li>
+                <li><strong>2.</strong> 2 free stamps on loyalty card</li>
+                <li><strong>3.</strong> 3 free stamps on loyalty card</li>
+                <li><strong>4.</strong> 50% off next visit + 10% extra for sharing our story</li>
+                <li><strong>5.</strong> 10% off coupon</li>
+                <li><strong>6.</strong> Free boba for a month (1 per week)</li>
+                <li><strong>7.</strong> BnB Hall of Fame (exclusive offers, winners contacted post-anniversary)</li>
+                <li><strong>8.</strong> BnB Anniversary Goodies</li>
+              </ul>
+            </details>
+            <p className="text-muted small mt-4 mb-4">All offers available in-store during our anniversary celebrations. One spin per customer, prizes while stocks last.</p>
             <Link to="/" className="btn btn-primary">Back to Home</Link>
           </div>
         </div>
