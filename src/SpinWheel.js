@@ -211,6 +211,11 @@ export const PRIZES = [
     body: 'Show this screen to the counter to redeem the stamps.',
   },
   {
+    option: 'FREE GOODIE',
+    title: 'Free Anniversary Goodie',
+    body: 'A free anniversary goodie from the team. Pick yours up at the counter.',
+  },
+  {
     option: '50% OFF',
     title: '50% off your next visit',
     body: 'Plus 10% extra off when you share our story on socials.',
@@ -224,11 +229,6 @@ export const PRIZES = [
     option: 'SODA ₹99',
     title: 'Any Soda at ₹99',
     body: 'Pick any soda on the menu for ₹99. Show this screen at the counter to redeem.',
-  },
-  {
-    option: 'FREE GOODIE',
-    title: 'Free Anniversary Goodie',
-    body: 'A free anniversary goodie from the team. Pick yours up at the counter.',
   },
   {
     option: 'GOODIES',

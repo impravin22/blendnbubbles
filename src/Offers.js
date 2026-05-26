@@ -93,12 +93,12 @@ function Offers() {
             <div className="row align-items-center">
               <div className="col-lg-7 hero-text-container">
                 <p className="hero-subtitle">Tap. Sip. Win.</p>
-                <h1 className="hero-title">Exclusive Offers</h1>
+                <h1 className="hero-title">Spin &amp; Win</h1>
                 <p className="hero-text">
-                  Anniversary specials are live. Sip more, pay less, and take one spin on the wheel for a chance to win something extra.
+                  Take one spin on the anniversary wheel for a prize you can claim in-store. One play per customer.
                 </p>
                 <div className="hero-buttons">
-                  <a href="#anniversary-offers" className="btn btn-primary">See the Offers</a>
+                  <a href="#spin-prizes" className="btn btn-primary">Spin the Wheel</a>
                   <a href="/#contact" onClick={handleVisitUsClick} className="btn btn-outline">Visit Us</a>
                 </div>
               </div>
@@ -118,54 +118,6 @@ function Offers() {
           </div>
         </div>
       </header>
-
-      {/* Anniversary offers grid */}
-      <section className="py-5 bg-light" id="anniversary-offers">
-        <div className="container">
-          <div className="text-center mb-5 reveal">
-            <h2 className="mb-3">Anniversary Offers</h2>
-            <p className="lead text-muted mb-0">Live now. Walk in, sip, win.</p>
-          </div>
-          <div className="row g-4">
-            <div className="col-md-6 col-lg-3 reveal reveal-delay-1">
-              <div className="card h-100 text-center offer-card">
-                <div className="card-body d-flex flex-column">
-                  <span className="offer-tag mb-3 align-self-center">&#8377;139</span>
-                  <h3 className="h5 fw-bold mb-2">All Tea, Smoothie &amp; Coffee</h3>
-                  <p className="text-muted mb-0">Every drink on the menu, one flat anniversary price.</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 col-lg-3 reveal reveal-delay-2">
-              <div className="card h-100 text-center offer-card">
-                <div className="card-body d-flex flex-column">
-                  <span className="offer-tag mb-3 align-self-center">&#8377;99</span>
-                  <h3 className="h5 fw-bold mb-2">All Sodas</h3>
-                  <p className="text-muted mb-0">Bubbly fizz, refreshing pours, anniversary price.</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 col-lg-3 reveal reveal-delay-3">
-              <div className="card h-100 text-center offer-card">
-                <div className="card-body d-flex flex-column">
-                  <span className="offer-tag mb-3 align-self-center">FREE</span>
-                  <h3 className="h5 fw-bold mb-2">Snacks</h3>
-                  <p className="text-muted mb-0">On the house with every order during the celebration.</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 col-lg-3 reveal reveal-delay-4">
-              <a href="#spin-prizes" className="card h-100 text-center offer-card offer-card-link text-decoration-none">
-                <div className="card-body d-flex flex-column">
-                  <span className="offer-tag offer-tag-spin mb-3 align-self-center">SPIN &amp; WIN</span>
-                  <h3 className="h5 fw-bold mb-2">Anniversary Spin Wheel</h3>
-                  <p className="text-muted mb-0 small">One spin per customer. See the 8 prizes &rarr;</p>
-                </div>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Spin & Win wheel */}
       <section className="py-5" id="spin-prizes">
