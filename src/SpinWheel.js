@@ -221,14 +221,14 @@ export const PRIZES = [
     body: 'Show this screen on your next order to claim the discount.',
   },
   {
-    option: 'FREE BOBA',
-    title: 'Free boba for a month',
-    body: 'One boba per week, on the house. Staff will set you up at the counter.',
+    option: 'SODA ₹99',
+    title: 'Any Soda at ₹99',
+    body: 'Pick any soda on the menu for ₹99. Show this screen at the counter to redeem.',
   },
   {
-    option: 'HALL OF FAME',
-    title: 'BnB Hall of Fame',
-    body: 'Exclusive offers and recognition. Winners contacted post-anniversary.',
+    option: 'FREE GOODIE',
+    title: 'Free Anniversary Goodie',
+    body: 'A free anniversary goodie from the team. Pick yours up at the counter.',
   },
   {
     option: 'GOODIES',
