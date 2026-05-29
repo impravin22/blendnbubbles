@@ -19,9 +19,13 @@ const COMBO_WORDS = ['Jhakas!', 'Mast!', 'Zabardast!', 'Badhiya!', 'Ek dum!', 'F
 const GAME_DURATION = 60;
 
 // ─── Store Location (BlendNBubbles, Barrackpore) ─────────────
-const STORE_LAT = 22.7602;
-const STORE_LNG = 88.3711;
-const MAX_DISTANCE_M = 100; // metres
+// Coordinates sourced from the restaurant's verified Google Maps pin
+// (Senjuti Apartment, Shop 6, Feeder Road). Earlier values were ~280m
+// north-east of the actual shop, which made the geofence impossible to
+// pass even while standing at the counter.
+const STORE_LAT = 22.7579739;
+const STORE_LNG = 88.3688296;
+const MAX_DISTANCE_M = 100; // metres — covers the building footprint and the pavement outside.
 
 function getDistanceMetres(lat1, lon1, lat2, lon2) {
   const R = 6371000;
