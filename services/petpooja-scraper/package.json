@@ -1,0 +1,16 @@
+{
+  "name": "petpooja-scraper",
+  "version": "1.0.0",
+  "description": "Headless Chromium scraper that pulls today / week-to-date / month-to-date revenue + expenses from billing.petpooja.com and posts a {today, week, month} profit JSON to the cron-trigger Worker so the daily Telegram digest can render it.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "scrape": "node src/scrape.js",
+    "scrape:dry": "DRY_RUN=1 node src/scrape.js",
+    "install:browser": "npx playwright install --with-deps chromium",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

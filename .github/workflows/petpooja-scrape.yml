@@ -1,0 +1,74 @@
+name: PetPooja Scrape
+
+# Runs ~10 minutes before each daily-digest cron so the digest has fresh
+# profit numbers to render. The Cloudflare cron-trigger Worker dispatches
+# this workflow_dispatch in addition to the existing daily-digest one.
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "services/petpooja-scraper/**"
+      - ".github/workflows/petpooja-scrape.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: services/petpooja-scraper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: services/petpooja-scraper/package.json
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+
+  scrape:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/petpooja-scraper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: services/petpooja-scraper/package.json
+      - name: Install Node deps
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium (Playwright)
+        run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        env:
+          PETPOOJA_EMAIL: ${{ secrets.PETPOOJA_EMAIL }}
+          PETPOOJA_PASSWORD: ${{ secrets.PETPOOJA_PASSWORD }}
+          PETPOOJA_OUTLET_ID: ${{ secrets.PETPOOJA_OUTLET_ID }}
+          PETPOOJA_LOCALE_TZ: ${{ vars.PETPOOJA_LOCALE_TZ }}
+          SCRAPER_STATS_PUT_URL: ${{ secrets.SCRAPER_STATS_PUT_URL }}
+          SCRAPER_STATS_PUT_TOKEN: ${{ secrets.SCRAPER_STATS_PUT_TOKEN }}
+        run: npm run scrape
+      - name: Notify Telegram on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            exit 0
+          fi
+          MESSAGE="⚠️ PetPooja scrape failed. Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}" >/dev/null || true

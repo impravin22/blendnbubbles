@@ -56,5 +56,12 @@ export function loadConfig(env = process.env) {
       env.DIGEST_STATE_URL && env.DIGEST_STATE_TOKEN
         ? { url: env.DIGEST_STATE_URL, token: env.DIGEST_STATE_TOKEN }
         : null,
+    // Profit feed populated by the petpooja-scraper GitHub Action. Re-uses
+    // the same Worker host + token as seenStore — the Worker exposes both
+    // the dedupe endpoints and /petpooja-stats/get under one bearer.
+    petpoojaStats:
+      env.DIGEST_STATE_URL && env.DIGEST_STATE_TOKEN
+        ? { url: env.DIGEST_STATE_URL, token: env.DIGEST_STATE_TOKEN }
+        : null,
   };
 }

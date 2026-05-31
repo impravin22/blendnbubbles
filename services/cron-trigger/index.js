@@ -71,6 +71,13 @@ export default {
       return handleSeen(request, env, url.pathname);
     }
 
+    if (
+      url.pathname === "/petpooja-stats/put" ||
+      url.pathname === "/petpooja-stats/get"
+    ) {
+      return handlePetpoojaStats(request, env, url.pathname);
+    }
+
     if (url.pathname === "/" || url.pathname === "/health") {
       return new Response("blendnbubbles-cron worker OK", { status: 200 });
     }
@@ -126,6 +133,71 @@ async function handleSeen(request, env, pathname) {
     ),
   );
   return jsonResponse({ marked: ids.length });
+}
+
+// PetPooja stats endpoints
+//   POST /petpooja-stats/put — scraper uploads latest summary (auth:
+//     SCRAPER_STATS_PUT_TOKEN). Body is JSON; stored in KV under
+//     petpooja-stats:latest with a 7-day TTL so stale data eventually drops.
+//   GET  /petpooja-stats/get — digest pulls latest summary (auth:
+//     DIGEST_STATE_TOKEN, reusing the same token the dedupe endpoints use).
+// Two separate tokens so a leaked digest token can't corrupt stats; a leaked
+// scraper token can't replay seen-dedupe writes.
+const PETPOOJA_STATS_KEY = "petpooja-stats:latest";
+const PETPOOJA_STATS_TTL_SECONDS = 7 * 24 * 60 * 60;
+const PETPOOJA_STATS_MAX_BYTES = 32 * 1024;
+
+async function handlePetpoojaStats(request, env, pathname) {
+  if (!env.DIGEST_STATE) {
+    return new Response("KV namespace DIGEST_STATE not bound", { status: 500 });
+  }
+  const auth = request.headers.get("authorization") ?? "";
+  if (pathname === "/petpooja-stats/put") {
+    if (request.method !== "POST") {
+      return new Response("method not allowed", { status: 405 });
+    }
+    if (!env.SCRAPER_STATS_PUT_TOKEN) {
+      return new Response("server misconfigured", { status: 500 });
+    }
+    if (auth !== `Bearer ${env.SCRAPER_STATS_PUT_TOKEN}`) {
+      return new Response("unauthorized", { status: 401 });
+    }
+    const body = await request.text();
+    if (body.length > PETPOOJA_STATS_MAX_BYTES) {
+      return jsonResponse({ error: "payload too large" }, 400);
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      return jsonResponse({ error: "invalid JSON body" }, 400);
+    }
+    if (!parsed || typeof parsed !== "object" || parsed.schemaVersion !== 1) {
+      return jsonResponse({ error: "schemaVersion must be 1" }, 400);
+    }
+    await env.DIGEST_STATE.put(PETPOOJA_STATS_KEY, body, {
+      expirationTtl: PETPOOJA_STATS_TTL_SECONDS,
+    });
+    return jsonResponse({ ok: true, bytes: body.length });
+  }
+  // GET /petpooja-stats/get
+  if (request.method !== "GET") {
+    return new Response("method not allowed", { status: 405 });
+  }
+  if (!env.DIGEST_STATE_TOKEN) {
+    return new Response("server misconfigured", { status: 500 });
+  }
+  if (auth !== `Bearer ${env.DIGEST_STATE_TOKEN}`) {
+    return new Response("unauthorized", { status: 401 });
+  }
+  const stored = await env.DIGEST_STATE.get(PETPOOJA_STATS_KEY);
+  if (!stored) {
+    return jsonResponse({ ok: false, reason: "no-stats-yet" }, 404);
+  }
+  return new Response(stored, {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
 }
 
 function sanitiseIds(raw) {
