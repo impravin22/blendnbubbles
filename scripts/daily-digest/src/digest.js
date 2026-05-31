@@ -61,6 +61,37 @@ export async function fetchPetpoojaToday({ url, token } = {}, { fetchImpl = fetc
 }
 
 /**
+ * Pull today / week-to-date / month-to-date profit + revenue snapshots from
+ * the cron-trigger Worker's /petpooja-stats/get endpoint. The snapshot is
+ * uploaded by the petpooja-scraper GitHub Action twice a day, ~10 minutes
+ * before each digest cron. Returns { ok, snapshot } so the renderer can show
+ * Today / Week / Month profit lines next to the order-count lines.
+ */
+export async function fetchPetpoojaStats({ url, token } = {}, { fetchImpl = fetch } = {}) {
+  if (!url || !token) return { ok: false, reason: 'not-configured' };
+  try {
+    const origin = url.replace(/\/$/, '');
+    const res = await fetchImpl(`${origin}/petpooja-stats/get`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (res.status === 404) return { ok: false, reason: 'no-stats-yet' };
+    if (!res.ok) {
+      const reason = `HTTP ${res.status}`;
+      console.warn(`petpooja-stats fetch failed: ${reason}`);
+      return { ok: false, reason };
+    }
+    const data = await res.json();
+    if (!data?.stats) return { ok: false, reason: 'body-missing-stats' };
+    return { ok: true, snapshot: data };
+  } catch (err) {
+    const reason = err?.message ?? 'fetch-threw';
+    console.warn('petpooja-stats fetch threw:', reason);
+    return { ok: false, reason };
+  }
+}
+
+/**
  * Pull today / week-to-date / month-to-date revenue + order counts from the
  * webhook's /petpooja-summary endpoint. Falls back to /petpooja-today when
  * the summary endpoint is unavailable so older webhook deployments still
@@ -204,6 +235,7 @@ export function formatDigestText({
   hyperpureOrders = [],
   googleSecurityAlerts = [],
   petpoojaLive = null,
+  petpoojaStats = null,
   fetchFailures = 0,
   unrecognised = [],
   localeTz,
@@ -310,6 +342,30 @@ export function formatDigestText({
     }
   } else if (live && live.reason !== 'not-configured') {
     lines.push(`  • ⚠️ Live feed unavailable (${escapeHtml(live.reason)})`);
+  }
+  // Profit lines from the petpooja-scraper snapshot (uploaded by the GH
+  // Action ~10 minutes before each digest). Each bucket carries netSales
+  // and expenses scraped from billing.petpooja.com; profit = netSales -
+  // expenses. Stale-snapshot ages above 12 hours surface a warning so the
+  // owner notices a stuck scraper.
+  const stats = petpoojaStats?.ok ? petpoojaStats.snapshot : null;
+  if (stats?.stats) {
+    const profitToday = stats.stats.today?.profit;
+    const profitWeek = stats.stats.weekToDate?.profit;
+    const profitMonth = stats.stats.monthToDate?.profit;
+    const profitLine = `  • 💵 Profit: today ${formatRupees(profitToday)} • week ${formatRupees(profitWeek)} • month ${formatRupees(profitMonth)}`;
+    lines.push(profitLine);
+    if (stats.fetchedAt) {
+      const ageMs = now.getTime() - new Date(stats.fetchedAt).getTime();
+      const ageHours = ageMs / (60 * 60 * 1000);
+      if (ageHours > 12) {
+        lines.push(
+          `    ⚠️ Scraper snapshot is ${ageHours.toFixed(1)}h old — check petpooja-scrape action`,
+        );
+      }
+    }
+  } else if (petpoojaStats && petpoojaStats.reason && !['not-configured', 'no-stats-yet'].includes(petpoojaStats.reason)) {
+    lines.push(`  • ⚠️ Profit feed unavailable (${escapeHtml(petpoojaStats.reason)})`);
   }
   if (petpoojaReports.length === 0) {
     if (!live?.ok) lines.push('  • No overnight report yet — check again later');
@@ -481,7 +537,10 @@ export async function runDigest({ config, deps = {} }) {
   const suppressedReviewCount = digestInput.reviews.length - dedupedReviews.length;
   digestInput.reviews = dedupedReviews;
 
-  const petpoojaLive = await fetchPetpoojaSummary(config.petpoojaWebhook ?? {});
+  const [petpoojaLive, petpoojaStats] = await Promise.all([
+    fetchPetpoojaSummary(config.petpoojaWebhook ?? {}),
+    fetchPetpoojaStats(config.petpoojaStats ?? {}),
+  ]);
 
   // Parse PetPooja xlsx attachments up-front so the summary can land in the
   // main digest text BEFORE the attachment itself is forwarded. On failure
@@ -506,6 +565,7 @@ export async function runDigest({ config, deps = {} }) {
   const text = formatDigestText({
     ...digestInput,
     petpoojaLive,
+    petpoojaStats,
     localeTz: config.localeTz,
   });
   await telegram.sendMessage(text);
@@ -655,6 +715,17 @@ function formatRevenueLine(label, bucket) {
     ? ` (${bucket.rejectedCount} rejected)`
     : '';
   return `  • ${label}: ₹${rupees} from ${orderCount} orders${rejectedSuffix}`;
+}
+
+// Profit numbers may be negative on loss days (e.g. big one-off equipment
+// imports). Format with a leading sign when below zero so the digest doesn't
+// look like a casual rounding error.
+function formatRupees(amount) {
+  if (amount == null || !Number.isFinite(Number(amount))) return '—';
+  const n = Math.round(Number(amount));
+  const sign = n < 0 ? '-' : '';
+  const absStr = Math.abs(n).toLocaleString('en-IN');
+  return `${sign}₹${absStr}`;
 }
 
 function isSundayEvening(now, localeTz) {

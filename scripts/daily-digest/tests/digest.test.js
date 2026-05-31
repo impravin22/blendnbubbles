@@ -947,3 +947,97 @@ test('fetchPetpoojaSummary returns not-configured when URL or token missing', as
 test('fetchPetpoojaToday is still exported for callers that only want today', async () => {
   assert.equal(typeof fetchPetpoojaToday, 'function');
 });
+
+test('formatDigestText renders profit line when petpoojaStats snapshot present', async () => {
+  const { formatDigestText } = await import('../src/digest.js');
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    petpoojaStats: {
+      ok: true,
+      snapshot: {
+        schemaVersion: 1,
+        fetchedAt: new Date('2026-05-31T12:00:00Z').toISOString(),
+        stats: {
+          today: { profit: 1234 },
+          weekToDate: { profit: 9876 },
+          monthToDate: { profit: 50002 },
+        },
+      },
+    },
+    now: new Date('2026-05-31T12:30:00Z'),
+    localeTz: 'Asia/Kolkata',
+  });
+  assert.match(text, /💵 Profit: today ₹1,234 • week ₹9,876 • month ₹50,002/);
+});
+
+test('formatDigestText flags stale petpoojaStats snapshot above 12h', async () => {
+  const { formatDigestText } = await import('../src/digest.js');
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    petpoojaStats: {
+      ok: true,
+      snapshot: {
+        schemaVersion: 1,
+        fetchedAt: new Date('2026-05-30T00:00:00Z').toISOString(),
+        stats: { today: { profit: 0 }, weekToDate: { profit: 0 }, monthToDate: { profit: 0 } },
+      },
+    },
+    now: new Date('2026-05-31T12:30:00Z'),
+    localeTz: 'Asia/Kolkata',
+  });
+  assert.match(text, /Scraper snapshot is \d+\.\dh old/);
+});
+
+test('formatDigestText handles negative profit with leading sign', async () => {
+  const { formatDigestText } = await import('../src/digest.js');
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    petpoojaStats: {
+      ok: true,
+      snapshot: {
+        schemaVersion: 1,
+        fetchedAt: new Date().toISOString(),
+        stats: {
+          today: { profit: -150 },
+          weekToDate: { profit: -2500 },
+          monthToDate: { profit: -163091 },
+        },
+      },
+    },
+    localeTz: 'Asia/Kolkata',
+  });
+  assert.match(text, /-₹150/);
+  assert.match(text, /-₹2,500/);
+  assert.match(text, /-₹1,63,091/);
+});
+
+test('fetchPetpoojaStats reports not-configured when URL or token missing', async () => {
+  const { fetchPetpoojaStats } = await import('../src/digest.js');
+  const r = await fetchPetpoojaStats({}, { fetchImpl: async () => {} });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'not-configured');
+});
+
+test('fetchPetpoojaStats returns no-stats-yet on 404 from worker', async () => {
+  const { fetchPetpoojaStats } = await import('../src/digest.js');
+  const fetchImpl = async () => ({ ok: false, status: 404, async json() { return {}; } });
+  const r = await fetchPetpoojaStats({ url: 'https://w', token: 't' }, { fetchImpl });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'no-stats-yet');
+});
+
+test('fetchPetpoojaStats returns the snapshot on 200', async () => {
+  const { fetchPetpoojaStats } = await import('../src/digest.js');
+  const payload = {
+    schemaVersion: 1,
+    fetchedAt: new Date().toISOString(),
+    stats: { today: { profit: 100 }, weekToDate: { profit: 500 }, monthToDate: { profit: 2000 } },
+  };
+  const fetchImpl = async () => ({ ok: true, status: 200, async json() { return payload; } });
+  const r = await fetchPetpoojaStats({ url: 'https://w/', token: 't' }, { fetchImpl });
+  assert.equal(r.ok, true);
+  assert.equal(r.snapshot.stats.monthToDate.profit, 2000);
+});
