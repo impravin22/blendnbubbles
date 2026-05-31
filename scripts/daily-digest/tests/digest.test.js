@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatDigestText, runDigest, escapeHtml } from '../src/digest.js';
+import {
+  formatDigestText,
+  runDigest,
+  escapeHtml,
+  fetchPetpoojaSummary,
+  fetchPetpoojaToday,
+} from '../src/digest.js';
 import { loadConfig } from '../src/config.js';
 
 test('formatDigestText quiet-day covers every section', () => {
@@ -845,3 +851,99 @@ function makeFakeGmailWithThreeSources() {
     },
   };
 }
+
+test('formatDigestText renders 3 revenue lines when petpoojaLive carries summary', () => {
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    petpoojaLive: {
+      ok: true,
+      today: { orderCount: 12, totalRupees: 3200, rejectedCount: 1 },
+      weekToDate: { orderCount: 78, totalRupees: 21450, rejectedCount: 3 },
+      monthToDate: { orderCount: 312, totalRupees: 86658, rejectedCount: 9 },
+    },
+    localeTz: 'Asia/Kolkata',
+  });
+  assert.match(text, /💰 Today \(live\): ₹3,200 from 12 orders \(1 rejected\)/);
+  assert.match(text, /🗓️ Week-to-date: ₹21,450 from 78 orders \(3 rejected\)/);
+  assert.match(text, /📅 Month-to-date: ₹86,658 from 312 orders \(9 rejected\)/);
+});
+
+test('formatDigestText keeps backward compat with today-only petpoojaLive shape', () => {
+  // Older webhook deploys (or test stubs) pass the legacy
+  // { ok, orderCount, totalRupees } shape — render must still emit a Today line.
+  const text = formatDigestText({
+    reviews: [],
+    petpoojaReports: [],
+    petpoojaLive: { ok: true, orderCount: 5, totalRupees: 1500, rejectedCount: 0, date: '2026-05-30' },
+    localeTz: 'Asia/Kolkata',
+  });
+  assert.match(text, /💰 Today \(live\): ₹1,500 from 5 orders/);
+  assert.doesNotMatch(text, /Week-to-date/);
+  assert.doesNotMatch(text, /Month-to-date/);
+});
+
+test('fetchPetpoojaSummary hits /petpooja-summary with bearer auth', async () => {
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url, init });
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          ok: true,
+          today: { date: '2026-05-30', orderCount: 7, totalRupees: 2000, rejectedCount: 0 },
+          weekToDate: { startDate: '2026-05-25', endDate: '2026-05-30', orderCount: 41, totalRupees: 12500, rejectedCount: 2 },
+          monthToDate: { startDate: '2026-05-01', endDate: '2026-05-30', orderCount: 188, totalRupees: 63450, rejectedCount: 6 },
+        };
+      },
+    };
+  };
+  const result = await fetchPetpoojaSummary({ url: 'https://wh/', token: 'tkn' }, { fetchImpl });
+  assert.equal(result.ok, true);
+  assert.equal(result.today.totalRupees, 2000);
+  assert.equal(result.weekToDate.totalRupees, 12500);
+  assert.equal(result.monthToDate.totalRupees, 63450);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://wh/petpooja-summary');
+  assert.equal(calls[0].init.headers.Authorization, 'Bearer tkn');
+});
+
+test('fetchPetpoojaSummary falls back to /petpooja-today when summary endpoint is 404', async () => {
+  const fetchImpl = async (url) => {
+    if (url.endsWith('/petpooja-summary')) {
+      return { ok: false, status: 404, async json() { return { ok: false }; } };
+    }
+    if (url.endsWith('/petpooja-today')) {
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          return { ok: true, date: '2026-05-30', orderCount: 3, totalRupees: 850, rejectedCount: 0 };
+        },
+      };
+    }
+    throw new Error('unexpected URL: ' + url);
+  };
+  const result = await fetchPetpoojaSummary({ url: 'https://wh', token: 'tkn' }, { fetchImpl });
+  assert.equal(result.ok, true);
+  assert.equal(result.today.totalRupees, 850);
+  assert.equal(result.weekToDate, undefined);
+  assert.equal(result.monthToDate, undefined);
+});
+
+test('fetchPetpoojaSummary returns not-configured when URL or token missing', async () => {
+  const r1 = await fetchPetpoojaSummary({}, { fetchImpl: async () => {} });
+  assert.equal(r1.ok, false);
+  assert.equal(r1.reason, 'not-configured');
+  const r2 = await fetchPetpoojaSummary({ url: 'https://wh' }, { fetchImpl: async () => {} });
+  assert.equal(r2.ok, false);
+  assert.equal(r2.reason, 'not-configured');
+});
+
+// fetchPetpoojaToday is kept for back-compat — touch-test the export so a
+// future refactor doesn't silently remove it.
+test('fetchPetpoojaToday is still exported for callers that only want today', async () => {
+  assert.equal(typeof fetchPetpoojaToday, 'function');
+});

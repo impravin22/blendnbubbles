@@ -2,7 +2,12 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { handleWebhook } from './handler.js';
-import { loadOrders, aggregateToday, assertAllowedPath } from './storage.js';
+import {
+  loadOrders,
+  aggregateToday,
+  aggregateSummary,
+  assertAllowedPath,
+} from './storage.js';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const EXPECTED_TOKEN = process.env.PETPOOJA_SHARED_TOKEN;
@@ -56,6 +61,21 @@ const server = http.createServer(async (req, res) => {
       }
       const orders = await loadOrders(STORE_PATH);
       const summary = aggregateToday(orders, { localeTz: LOCALE_TZ });
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-store');
+      res.end(JSON.stringify({ ok: true, ...summary }));
+      return;
+    }
+    if (req.method === 'GET' && pathname === '/petpooja-summary') {
+      if (!authorised(req)) {
+        res.statusCode = 401;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ok: false, error: 'bad-token' }));
+        return;
+      }
+      const orders = await loadOrders(STORE_PATH);
+      const summary = aggregateSummary(orders, { localeTz: LOCALE_TZ });
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Cache-Control', 'no-store');
