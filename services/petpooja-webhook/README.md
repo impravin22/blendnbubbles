@@ -55,6 +55,9 @@ curl -X POST http://localhost:8787/petpooja-webhook \
 
 # Pull today's summary
 curl -H "Authorization: Bearer $DIGEST_API_TOKEN" http://localhost:8787/petpooja-today
+
+# Pull today + week-to-date + month-to-date in one call
+curl -H "Authorization: Bearer $DIGEST_API_TOKEN" http://localhost:8787/petpooja-summary
 ```
 
 ## Deploying

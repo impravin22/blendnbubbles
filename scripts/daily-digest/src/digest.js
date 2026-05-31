@@ -60,6 +60,57 @@ export async function fetchPetpoojaToday({ url, token } = {}, { fetchImpl = fetc
   }
 }
 
+/**
+ * Pull today / week-to-date / month-to-date revenue + order counts from the
+ * webhook's /petpooja-summary endpoint. Falls back to /petpooja-today when
+ * the summary endpoint is unavailable so older webhook deployments still
+ * yield the today line, just without weekly / monthly figures.
+ */
+export async function fetchPetpoojaSummary({ url, token } = {}, { fetchImpl = fetch } = {}) {
+  if (!url || !token) {
+    console.warn('petpoojaWebhook not configured — live-sales line omitted');
+    return { ok: false, reason: 'not-configured' };
+  }
+  try {
+    const res = await fetchImpl(`${url.replace(/\/$/, '')}/petpooja-summary`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (res.status === 404) {
+      // Webhook not yet redeployed with /petpooja-summary — fall back to
+      // /petpooja-today so we still surface the live line.
+      const today = await fetchPetpoojaToday({ url, token }, { fetchImpl });
+      if (!today.ok) return today;
+      return {
+        ok: true,
+        today: {
+          date: today.date,
+          orderCount: today.orderCount,
+          totalRupees: today.totalRupees,
+          rejectedCount: today.rejectedCount,
+        },
+      };
+    }
+    if (!res.ok) {
+      const reason = `HTTP ${res.status}`;
+      console.warn(`petpooja-summary fetch failed: ${reason}`);
+      return { ok: false, reason };
+    }
+    const data = await res.json();
+    if (!data?.ok) return { ok: false, reason: 'body-not-ok' };
+    return {
+      ok: true,
+      today: data.today,
+      weekToDate: data.weekToDate,
+      monthToDate: data.monthToDate,
+    };
+  } catch (err) {
+    const reason = err?.message ?? 'fetch-threw';
+    console.warn('petpooja-summary fetch threw:', reason);
+    return { ok: false, reason };
+  }
+}
+
 export async function buildDigest({ gmail, lookbackHours }) {
   const query = `(${GMAIL_SEARCH_QUERY}) newer_than:${Math.max(1, Math.ceil(lookbackHours / 24))}d`;
   const stubs = await searchMessages(gmail, query);
@@ -246,17 +297,22 @@ export function formatDigestText({
   lines.push('');
 
   lines.push('<b>📊 PetPooja — Barrackpore Branch</b>');
-  if (petpoojaLive?.ok) {
-    const rupees = (petpoojaLive.totalRupees ?? 0).toLocaleString('en-IN');
-    lines.push(
-      `  • 💰 Today (live): ₹${rupees} from ${petpoojaLive.orderCount} orders` +
-        (petpoojaLive.rejectedCount ? ` (${petpoojaLive.rejectedCount} rejected)` : ''),
-    );
-  } else if (petpoojaLive && petpoojaLive.reason !== 'not-configured') {
-    lines.push(`  • ⚠️ Live feed unavailable (${escapeHtml(petpoojaLive.reason)})`);
+  const live = normalisePetpoojaLive(petpoojaLive);
+  if (live?.ok) {
+    if (live.today) {
+      lines.push(formatRevenueLine('💰 Today (live)', live.today));
+    }
+    if (live.weekToDate) {
+      lines.push(formatRevenueLine('🗓️ Week-to-date', live.weekToDate));
+    }
+    if (live.monthToDate) {
+      lines.push(formatRevenueLine('📅 Month-to-date', live.monthToDate));
+    }
+  } else if (live && live.reason !== 'not-configured') {
+    lines.push(`  • ⚠️ Live feed unavailable (${escapeHtml(live.reason)})`);
   }
   if (petpoojaReports.length === 0) {
-    if (!petpoojaLive?.ok) lines.push('  • No overnight report yet — check again later');
+    if (!live?.ok) lines.push('  • No overnight report yet — check again later');
   } else {
     for (const report of petpoojaReports) {
       lines.push(`  • ${escapeHtml(report.reportTitle)}`);
@@ -425,7 +481,7 @@ export async function runDigest({ config, deps = {} }) {
   const suppressedReviewCount = digestInput.reviews.length - dedupedReviews.length;
   digestInput.reviews = dedupedReviews;
 
-  const petpoojaLive = await fetchPetpoojaToday(config.petpoojaWebhook ?? {});
+  const petpoojaLive = await fetchPetpoojaSummary(config.petpoojaWebhook ?? {});
 
   // Parse PetPooja xlsx attachments up-front so the summary can land in the
   // main digest text BEFORE the attachment itself is forwarded. On failure
@@ -546,9 +602,59 @@ export async function runDigest({ config, deps = {} }) {
     fetchFailures: digestInput.fetchFailures,
     attachmentFailures: attachmentFailures.length,
     petpoojaLive: petpoojaLive
-      ? { orderCount: petpoojaLive.orderCount, totalRupees: petpoojaLive.totalRupees }
+      ? {
+          today: petpoojaLive.today
+            ? {
+                orderCount: petpoojaLive.today.orderCount,
+                totalRupees: petpoojaLive.today.totalRupees,
+              }
+            : null,
+          weekToDate: petpoojaLive.weekToDate
+            ? {
+                orderCount: petpoojaLive.weekToDate.orderCount,
+                totalRupees: petpoojaLive.weekToDate.totalRupees,
+              }
+            : null,
+          monthToDate: petpoojaLive.monthToDate
+            ? {
+                orderCount: petpoojaLive.monthToDate.orderCount,
+                totalRupees: petpoojaLive.monthToDate.totalRupees,
+              }
+            : null,
+        }
       : null,
   };
+}
+
+// Older callers + tests may pass petpoojaLive in the today-only shape
+// `{ ok, orderCount, totalRupees, rejectedCount }`. Normalise to the new
+// `{ ok, today, weekToDate, monthToDate }` shape so the render block only has
+// to handle one structure.
+function normalisePetpoojaLive(petpoojaLive) {
+  if (!petpoojaLive) return null;
+  if (!petpoojaLive.ok) return petpoojaLive;
+  if (petpoojaLive.today || petpoojaLive.weekToDate || petpoojaLive.monthToDate) {
+    return petpoojaLive;
+  }
+  return {
+    ok: true,
+    today: {
+      date: petpoojaLive.date,
+      orderCount: petpoojaLive.orderCount,
+      totalRupees: petpoojaLive.totalRupees,
+      rejectedCount: petpoojaLive.rejectedCount,
+    },
+  };
+}
+
+function formatRevenueLine(label, bucket) {
+  if (!bucket) return `  • ${label}: —`;
+  const rupees = Number(bucket.totalRupees ?? 0).toLocaleString('en-IN');
+  const orderCount = Number(bucket.orderCount ?? 0);
+  const rejectedSuffix = bucket.rejectedCount
+    ? ` (${bucket.rejectedCount} rejected)`
+    : '';
+  return `  • ${label}: ₹${rupees} from ${orderCount} orders${rejectedSuffix}`;
 }
 
 function isSundayEvening(now, localeTz) {

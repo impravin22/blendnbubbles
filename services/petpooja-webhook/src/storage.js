@@ -78,28 +78,117 @@ export async function saveOrder(order, storePath = DEFAULT_PATH) {
 }
 
 export function aggregateToday(orders, { now = new Date(), localeTz = 'Asia/Kolkata' } = {}) {
-  let formatter;
-  try {
-    formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: localeTz,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  } catch (err) {
-    throw new Error(`aggregateToday: invalid localeTz "${localeTz}"`);
-  }
+  const formatter = makeDayFormatter(localeTz);
   const todayKey = formatter.format(now);
   const todays = Object.values(orders).filter((o) => {
     if (!o?.receivedAt) return false;
     const key = formatter.format(new Date(o.receivedAt));
     return key === todayKey;
   });
-  const successful = todays.filter((o) => o.status === 'Success');
   return {
     date: todayKey,
+    ...summariseOrders(todays),
+  };
+}
+
+/**
+ * Aggregate every order whose receivedAt date-key falls between startKey and
+ * endKey (inclusive), where the keys are en-CA "YYYY-MM-DD" strings in the
+ * configured timezone. Returns the same shape as aggregateToday minus the
+ * `date` field, with a `startDate` and `endDate` instead so callers can
+ * distinguish week-to-date from month-to-date.
+ */
+export function aggregateRange(orders, { startKey, endKey, localeTz = 'Asia/Kolkata' } = {}) {
+  if (!startKey || !endKey) {
+    throw new Error('aggregateRange: startKey and endKey are required');
+  }
+  if (startKey > endKey) {
+    throw new Error(`aggregateRange: startKey "${startKey}" is after endKey "${endKey}"`);
+  }
+  const formatter = makeDayFormatter(localeTz);
+  const inRange = Object.values(orders).filter((o) => {
+    if (!o?.receivedAt) return false;
+    const key = formatter.format(new Date(o.receivedAt));
+    return key >= startKey && key <= endKey;
+  });
+  return {
+    startDate: startKey,
+    endDate: endKey,
+    ...summariseOrders(inRange),
+  };
+}
+
+/**
+ * Convenience: builds today / week-to-date / month-to-date summaries in one
+ * pass over the orders store. Week starts on Monday in the configured tz.
+ */
+export function aggregateSummary(orders, { now = new Date(), localeTz = 'Asia/Kolkata' } = {}) {
+  const formatter = makeDayFormatter(localeTz);
+  const todayKey = formatter.format(now);
+  const weekStartKey = formatter.format(startOfWeek(now, localeTz));
+  const monthStartKey = formatter.format(startOfMonth(now, localeTz));
+  return {
+    today: aggregateToday(orders, { now, localeTz }),
+    weekToDate: aggregateRange(orders, {
+      startKey: weekStartKey,
+      endKey: todayKey,
+      localeTz,
+    }),
+    monthToDate: aggregateRange(orders, {
+      startKey: monthStartKey,
+      endKey: todayKey,
+      localeTz,
+    }),
+  };
+}
+
+function summariseOrders(orders) {
+  const successful = orders.filter((o) => o.status === 'Success');
+  return {
     orderCount: successful.length,
     totalRupees: successful.reduce((sum, o) => sum + (Number(o.total) || 0), 0),
-    rejectedCount: todays.filter((o) => o.status === 'Rejected').length,
+    rejectedCount: orders.filter((o) => o.status === 'Rejected').length,
   };
+}
+
+function makeDayFormatter(localeTz) {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: localeTz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  } catch (err) {
+    throw new Error(`storage: invalid localeTz "${localeTz}"`);
+  }
+}
+
+// Monday of the week containing `from`, expressed in the local timezone.
+// We read the weekday name in the target tz, then roll the UTC Date back by
+// that many days. Re-formatting through makeDayFormatter then yields the
+// correct Monday YYYY-MM-DD string regardless of the host's local offset.
+function startOfWeek(from, localeTz) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: localeTz,
+    weekday: 'short',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(from);
+  const weekdayName = parts.find((p) => p.type === 'weekday')?.value;
+  const weekdayMap = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+  const offset = weekdayMap[weekdayName] ?? 0;
+  const out = new Date(from);
+  out.setUTCDate(out.getUTCDate() - offset);
+  return out;
+}
+
+// 1st of the month containing `from`, expressed in the local timezone.
+// Anchor at noon UTC on the 1st so a ±12h tz offset still reports day 1.
+function startOfMonth(from, localeTz) {
+  const formatter = makeDayFormatter(localeTz);
+  const today = formatter.format(from);
+  const [year, month] = today.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, 1, 12, 0, 0));
 }
