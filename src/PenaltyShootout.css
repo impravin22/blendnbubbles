@@ -322,6 +322,7 @@
 .pen-lb-row:first-child { background: linear-gradient(45deg, #BB8750, #CEAA67); }
 .pen-lb-highlight { background: rgba(206, 170, 103, 0.18); border-color: var(--secondary); }
 .pen-lb-rank { font-weight: 900; font-size: 18px; width: 32px; text-align: center; }
+.pen-lb-flag { font-size: 20px; line-height: 1; }
 .pen-lb-name { flex: 1; text-align: left; font-weight: 600; font-size: 15px; color: #fff; }
 .pen-lb-score { font-weight: 900; font-size: 15px; color: #fff; }
 
@@ -385,6 +386,7 @@
   color: #fff;
 }
 .pen-sb-team-keeper { color: rgba(255, 255, 255, 0.7); }
+.pen-sb-flag { font-size: 15px; }
 .pen-sb-score {
   font-family: 'Poppins', sans-serif;
   font-weight: 900;

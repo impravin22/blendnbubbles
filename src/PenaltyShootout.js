@@ -11,7 +11,12 @@ import {
   applyPowerWobble,
   getReward,
 } from './penaltyLogic';
+import TeamSelectScreen from './TeamSelectScreen';
+import { getTeamByCode, numberColourFor } from './teams';
 import './PenaltyShootout.css';
+
+// The striker's kit falls back to the BnB home colours until a nation is picked.
+const BNB_TEAM = { code: 'BNB', name: 'BnB FC', flag: '🧋', primary: '#004d4d', secondary: '#CEAA67' };
 
 const GAME_KEY = 'football';
 
@@ -115,13 +120,16 @@ function StartScreen({ onStart, highScore }) {
   );
 }
 
-function GameHUD({ streak, shotNumber }) {
-  // Broadcast-style scoreboard bug: BnB FC vs the Keeper, live score = streak.
+function GameHUD({ streak, shotNumber, team }) {
+  // Broadcast-style scoreboard bug: the player's nation vs the Keeper, live
+  // score = streak. The badge keeps the BnB mark; the team shows flag + code.
   return (
     <div className="pen-hud">
       <div className="pen-scorebug">
         <span className="pen-sb-badge">BnB</span>
-        <span className="pen-sb-team">BnB FC</span>
+        <span className="pen-sb-team">
+          <span className="pen-sb-flag" aria-hidden="true">{team.flag}</span> {team.code}
+        </span>
         <span className="pen-sb-score">{streak}</span>
         <span className="pen-sb-sep">-</span>
         <span className="pen-sb-score pen-sb-score-keeper">{shotNumber - 1 - streak}</span>
@@ -226,6 +234,9 @@ function LeaderboardScreen({ leaderboard, playerScore, loading, onRestart }) {
                 <span className="pen-lb-rank">
                   {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                 </span>
+                {getTeamByCode(entry.team) && (
+                  <span className="pen-lb-flag" aria-hidden="true">{getTeamByCode(entry.team).flag}</span>
+                )}
                 <span className="pen-lb-name">{entry.name}</span>
                 <span className="pen-lb-score">{entry.score} goals</span>
               </div>
@@ -267,6 +278,7 @@ function PenaltyShootout() {
   const [submitError, setSubmitError] = useState('');
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('bobaPlayerName') || '');
   const [playerPhone, setPlayerPhone] = useState(() => localStorage.getItem('bobaPlayerPhone') || '');
+  const [team, setTeam] = useState(() => getTeamByCode(localStorage.getItem('penaltyTeam')) || BNB_TEAM);
 
   useEffect(() => {
     const prevTitle = document.title;
@@ -322,10 +334,11 @@ function PenaltyShootout() {
     }
   }, [geom]);
 
-  const createState = useCallback((w, h) => ({
+  const createState = useCallback((w, h, kit) => ({
     w,
     h,
     g: geom(w, h),
+    team: kit, // selected nation kit, drives the striker colours + scorebug
     phase: 'aiming', // aiming | shooting | result
     streak: 0,
     shotNumber: 1,
@@ -473,7 +486,7 @@ function PenaltyShootout() {
 
     // Striker in the BnB home kit, planted just behind/left of the spot so the
     // ball sits at his feet. Drawn before the ball so the ball layers on top.
-    drawStriker(ctx, g.ballX0 - 46, g.ballY0 - 6);
+    drawStriker(ctx, g.ballX0 - 46, g.ballY0 - 6, s.team);
 
     // Ball
     const ballPx = ballPixel(s);
@@ -586,7 +599,7 @@ function PenaltyShootout() {
     try {
       localStorage.setItem('bobaPlayerName', playerName.trim());
       localStorage.setItem('bobaPlayerPhone', playerPhone.trim());
-      await submitScore(playerName, playerPhone, streak, GAME_KEY);
+      await submitScore(playerName, playerPhone, streak, GAME_KEY, team.code);
       setSubmitted(true);
       submitTimeoutRef.current = setTimeout(async () => {
         let data = [];
@@ -597,7 +610,7 @@ function PenaltyShootout() {
         }
         const included = data.some((e) => e.name === playerName.trim() && e.score === streak);
         if (!included) {
-          data.push({ id: 'self', name: playerName.trim(), score: streak });
+          data.push({ id: 'self', name: playerName.trim(), score: streak, team: team.code });
           data.sort((a, b) => b.score - a.score);
           data = data.slice(0, 10);
         }
@@ -610,7 +623,7 @@ function PenaltyShootout() {
     } finally {
       setSubmitting(false);
     }
-  }, [playerName, playerPhone, streak]);
+  }, [playerName, playerPhone, streak, team]);
 
   const handleSkipToLeaderboard = useCallback(async () => {
     await loadLeaderboard();
@@ -618,7 +631,10 @@ function PenaltyShootout() {
   }, [loadLeaderboard]);
 
   // ─── Start ─────────────────────────────────────────────────
-  const startGame = useCallback(() => {
+  // `kit` is the nation chosen on the team-select screen; falls back to the
+  // current team (used by "Play Again", which reuses the last selection).
+  const startGame = useCallback((kit) => {
+    const activeKit = kit || team;
     setScreen('playing');
     setStreak(0);
     setShotNumber(1);
@@ -631,11 +647,18 @@ function PenaltyShootout() {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      stateRef.current = createState(rect.width, rect.height);
+      stateRef.current = createState(rect.width, rect.height, activeKit);
       stateRef.current.lastTs = performance.now();
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     });
-  }, [setupCanvas, createState, gameLoop]);
+  }, [setupCanvas, createState, gameLoop, team]);
+
+  // Chosen on the team-select screen: remember it and kick off immediately.
+  const handlePickTeam = useCallback((picked) => {
+    setTeam(picked);
+    localStorage.setItem('penaltyTeam', picked.code);
+    startGame(picked);
+  }, [startGame]);
 
   // ─── Input (drag to shoot) ─────────────────────────────────
   useEffect(() => {
@@ -713,10 +736,17 @@ function PenaltyShootout() {
 
   return (
     <div className="pen-game-container">
-      {screen === 'start' && <StartScreen onStart={startGame} highScore={highScore} />}
+      {screen === 'start' && <StartScreen onStart={() => setScreen('teamselect')} highScore={highScore} />}
+      {screen === 'teamselect' && (
+        <TeamSelectScreen
+          onPick={handlePickTeam}
+          onBack={() => setScreen('start')}
+          initialCode={team.code}
+        />
+      )}
       {screen === 'playing' && (
         <>
-          <GameHUD streak={streak} shotNumber={shotNumber} />
+          <GameHUD streak={streak} shotNumber={shotNumber} team={team} />
           <canvas
             ref={canvasRef}
             className="pen-canvas"
@@ -746,7 +776,7 @@ function PenaltyShootout() {
           leaderboard={leaderboard}
           playerScore={streak}
           loading={lbLoading}
-          onRestart={startGame}
+          onRestart={() => setScreen('teamselect')}
         />
       )}
     </div>
@@ -837,11 +867,15 @@ function drawKeeper(ctx, x, y, lean) {
   ctx.restore();
 }
 
-// BnB home kit striker behind the ball: teal jersey, gold trim, number 26
-// for the '26 season. Purely cosmetic; sits just below the penalty spot.
-function drawStriker(ctx, x, y) {
-  const HOME = '#004d4d';
-  const TRIM = '#CEAA67';
+// Striker behind the ball, wearing the picked nation's kit (jersey = primary,
+// shoulder / sleeve trim = secondary). Number stays 26 for the '26 season; its
+// colour is derived from the jersey luminance so it stays legible on any kit.
+// Purely cosmetic; sits just below the penalty spot.
+function drawStriker(ctx, x, y, team) {
+  const kit = team || { primary: '#004d4d', secondary: '#CEAA67' };
+  const HOME = kit.primary;
+  const TRIM = kit.secondary;
+  const NUM = numberColourFor(kit.primary);
   ctx.save();
   ctx.translate(x, y);
 
@@ -849,7 +883,7 @@ function drawStriker(ctx, x, y) {
   ctx.fillStyle = '#ffffff';
   roundRect(ctx, -9, 14, 7, 14, 3); ctx.fill();
   roundRect(ctx, 2, 14, 7, 14, 3); ctx.fill();
-  // socks (teal)
+  // socks (kit colour)
   ctx.fillStyle = HOME;
   ctx.fillRect(-9, 26, 7, 6);
   ctx.fillRect(2, 26, 7, 6);
@@ -858,7 +892,7 @@ function drawStriker(ctx, x, y) {
   ctx.fillStyle = HOME;
   roundRect(ctx, -11, -15, 22, 31, 6);
   ctx.fill();
-  // gold shoulder trim
+  // shoulder trim (accent colour)
   ctx.fillStyle = TRIM;
   ctx.fillRect(-11, -15, 22, 4);
   // sleeves
@@ -869,7 +903,7 @@ function drawStriker(ctx, x, y) {
   ctx.fillRect(-16, -13, 6, 3);
   ctx.fillRect(10, -13, 6, 3);
   // number 26
-  ctx.fillStyle = TRIM;
+  ctx.fillStyle = NUM;
   ctx.font = '900 11px Poppins, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('26', 0, 4);
