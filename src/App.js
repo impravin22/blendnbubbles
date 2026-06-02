@@ -7,6 +7,7 @@ import Menu from './Menu';
 import Story from './Story';
 import Offers from './Offers';
 import BobaCatcher from './BobaCatcher';
+import PenaltyShootout from './PenaltyShootout';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -97,6 +98,7 @@ function AnimatedRoutes() {
             <Route path="/story" element={<Story />} />
             <Route path="/offers" element={<Offers />} />
             <Route path="/play" element={<BobaCatcher />} />
+            <Route path="/play/football" element={<PenaltyShootout />} />
           </Routes>
         </div>
       </CSSTransition>
