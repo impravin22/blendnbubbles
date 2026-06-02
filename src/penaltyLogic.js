@@ -21,6 +21,9 @@ export const GOAL_WORDS = [
   'Jhakkas shot!',
   'Khelechho!',
   'Asadharon!',
+  // Repeated so it comes up more often than the other shouts.
+  'Bahot acha kiye dost!',
+  'Bahot acha kiye dost!',
   'Bahot acha kiye dost!',
   'Back of the net!',
 ];
