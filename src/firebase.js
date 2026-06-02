@@ -27,15 +27,19 @@ function getWeekKey() {
 // missing the field is treated as a Boba Catcher score at read time.
 const DEFAULT_GAME = 'bobacatcher';
 
-export async function submitScore(name, phone, score, game = DEFAULT_GAME) {
-  return addDoc(collection(db, 'leaderboard'), {
+export async function submitScore(name, phone, score, game = DEFAULT_GAME, team = null) {
+  const doc = {
     name: name.trim(),
     phone: phone.trim(),
     score,
     game,
     week: getWeekKey(),
     createdAt: new Date(),
-  });
+  };
+  // Only write the team field when a nation was chosen, so Boba Catcher rows
+  // (which have no team) are not given an empty value.
+  if (team) doc.team = team;
+  return addDoc(collection(db, 'leaderboard'), doc);
 }
 
 export async function getWeeklyLeaderboard(game = DEFAULT_GAME) {
