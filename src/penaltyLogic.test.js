@@ -1,77 +1,86 @@
 import {
   getKeeperDifficulty,
-  pickKeeperGuess,
+  keeperOscX,
   isSaved,
   dragToAim,
   applyPowerWobble,
   getReward,
-  AIM_ZONES,
 } from './penaltyLogic';
 
-// Deterministic RNG: replays a fixed queue of values, looping.
-function seededRng(values) {
-  let i = 0;
-  return () => values[i++ % values.length];
-}
-
-describe('getKeeperDifficulty', () => {
-  test('grows with streak but stays capped (always beatable)', () => {
-    const easy = getKeeperDifficulty(0);
-    const hard = getKeeperDifficulty(50);
-    expect(hard.reachX).toBeGreaterThan(easy.reachX);
-    expect(hard.readChance).toBeGreaterThan(easy.readChance);
-    // Caps keep a corner reachable: reach never spans the whole goal, and
-    // readChance stays below 1 so a ~15% "keeper guessed wrong" escape remains.
-    expect(hard.reachX).toBeLessThanOrEqual(0.44);
-    expect(hard.reachY).toBeLessThanOrEqual(0.56);
-    expect(hard.readChance).toBeLessThanOrEqual(0.9);
+describe('getKeeperDifficulty (tiered by kick count)', () => {
+  test('three tiers: easy <=10, medium 11-20, hard 21+', () => {
+    const easy = getKeeperDifficulty(5);
+    const medium = getKeeperDifficulty(15);
+    const hard = getKeeperDifficulty(25);
+    // Coverage and pace grow tier over tier.
+    expect(medium.reachX).toBeGreaterThan(easy.reachX);
+    expect(hard.reachX).toBeGreaterThan(medium.reachX);
+    expect(medium.dive).toBeGreaterThan(easy.dive);
+    expect(hard.dive).toBeGreaterThan(medium.dive);
+    expect(medium.oscSpeed).toBeGreaterThan(easy.oscSpeed);
+    expect(hard.oscSpeed).toBeGreaterThanOrEqual(medium.oscSpeed);
   });
 
-  test('clamps negative streak to zero baseline', () => {
-    expect(getKeeperDifficulty(-5)).toEqual(getKeeperDifficulty(0));
-  });
-});
-
-describe('pickKeeperGuess', () => {
-  test('reads both axes near the shooter aim when rng is below readChance', () => {
-    // streak 0 → readChance 0.30. First rng value 0.05 < 0.30 → read branch.
-    // rng 0.5 on the jitter terms → zero offset, so the dive lands on the aim.
-    const rng = seededRng([0.05, 0.5, 0.5]);
-    const guess = pickKeeperGuess({ x: 0.84, y: 0.22 }, 0, rng);
-    expect(guess.read).toBe(true);
-    // Read dive tracks the shooter's x (±0.08) AND y (±0.15).
-    expect(Math.abs(guess.x - 0.84)).toBeLessThanOrEqual(0.08);
-    expect(Math.abs(guess.y - 0.22)).toBeLessThanOrEqual(0.15);
+  test('tier boundaries fall on 10 and 20', () => {
+    expect(getKeeperDifficulty(10)).toEqual(getKeeperDifficulty(1)); // both easy
+    expect(getKeeperDifficulty(11)).toEqual(getKeeperDifficulty(20)); // both medium
+    expect(getKeeperDifficulty(21)).not.toEqual(getKeeperDifficulty(20)); // hard begins
   });
 
-  test('commits to a random zone when rng is above readChance', () => {
-    // First rng 0.95 > 0.30 → random-zone branch; second picks the zone index.
-    const rng = seededRng([0.95, 0]);
-    const guess = pickKeeperGuess({ x: 0.5, y: 0.5 }, 0, rng);
-    expect(guess.read).toBe(false);
-    expect(guess.x).toBe(AIM_ZONES[0].x);
-    expect(guess.y).toBe(AIM_ZONES[0].y);
+  test('clamps a kick below one to the first kick', () => {
+    expect(getKeeperDifficulty(0)).toEqual(getKeeperDifficulty(1));
+  });
+
+  test('hard tier stays capped so a placed shot is always scoreable', () => {
+    const veryHard = getKeeperDifficulty(999);
+    expect(veryHard.dive).toBeLessThanOrEqual(0.26);
+    expect(veryHard.reachX).toBeLessThanOrEqual(0.24);
+    expect(veryHard.reachY).toBeLessThanOrEqual(0.46);
+    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.0045);
   });
 });
 
-describe('isSaved', () => {
-  const diff = getKeeperDifficulty(0); // reachX 0.20, reachY 0.31
-
-  test('saves a shot inside the keeper reach box', () => {
-    const keeper = { x: 0.5, y: 0.5 };
-    expect(isSaved({ x: 0.55, y: 0.55 }, keeper, diff)).toBe(true);
+describe('keeperOscX (visible glide)', () => {
+  test('starts centred at time zero', () => {
+    const diff = getKeeperDifficulty(5);
+    expect(keeperOscX(0, diff)).toBeCloseTo(0.5, 6);
   });
 
-  test('lets a corner past a centred keeper', () => {
-    const keeper = { x: 0.5, y: 0.5 };
-    // Top-right corner is outside both reach axes.
-    expect(isSaved({ x: 0.84, y: 0.22 }, keeper, diff)).toBe(false);
+  test('stays within the oscillation range either side of centre', () => {
+    const diff = getKeeperDifficulty(25);
+    for (let t = 0; t < 10000; t += 137) {
+      const x = keeperOscX(t, diff);
+      expect(x).toBeGreaterThanOrEqual(0.5 - diff.oscRange - 1e-9);
+      expect(x).toBeLessThanOrEqual(0.5 + diff.oscRange + 1e-9);
+    }
+  });
+});
+
+describe('isSaved (lunge from the keeper position)', () => {
+  const easy = getKeeperDifficulty(5); // dive 0.06, reachX 0.12, reachY 0.22, guardY 0.62
+
+  test('saves a low shot right at the keeper', () => {
+    expect(isSaved({ x: 0.5, y: 0.62 }, 0.5, easy)).toBe(true);
   });
 
-  test('even a max-difficulty keeper cannot cover the opposite corner', () => {
-    const hard = getKeeperDifficulty(99);
-    const keeperLeft = { x: 0.16, y: 0.7 };
-    expect(isSaved({ x: 0.84, y: 0.18 }, keeperLeft, hard)).toBe(false);
+  test('a shot far from the keeper beats the lunge', () => {
+    // Keeper at 0.5, shot to the right post; lunge is capped at 0.06.
+    expect(isSaved({ x: 0.9, y: 0.62 }, 0.5, easy)).toBe(false);
+  });
+
+  test('a high shot clears the guarded height', () => {
+    // Same x as the keeper but up near the crossbar.
+    expect(isSaved({ x: 0.5, y: 0.2 }, 0.5, easy)).toBe(false);
+  });
+
+  test('a shot within the lunge window is saved', () => {
+    expect(isSaved({ x: 0.56, y: 0.6 }, 0.5, easy)).toBe(true);
+  });
+
+  test('even the hardest keeper cannot cover the opposite corner', () => {
+    const hard = getKeeperDifficulty(999);
+    // Keeper pinned to the left, shot to the top-right corner.
+    expect(isSaved({ x: 0.88, y: 0.2 }, 0.2, hard)).toBe(false);
   });
 });
 
@@ -79,7 +88,7 @@ describe('dragToAim', () => {
   test('straight-up drag aims centre-high with mid power', () => {
     const aim = dragToAim(0, -150, 220);
     expect(aim.x).toBeCloseTo(0.5, 5);
-    expect(aim.y).toBeLessThan(0.5); // higher in the goal
+    expect(aim.y).toBeLessThan(0.5);
     expect(aim.power).toBeGreaterThan(0);
     expect(aim.power).toBeLessThanOrEqual(1);
   });
@@ -108,7 +117,6 @@ describe('applyPowerWobble', () => {
 
   test('high-power shots wobble away from the target', () => {
     const aim = { x: 0.5, y: 0.5 };
-    // rng 1 → max positive wobble; power 1 → over = 0.3 → wobble 0.054.
     const out = applyPowerWobble(aim, 1, () => 1);
     expect(out.x).toBeGreaterThan(0.5);
   });
