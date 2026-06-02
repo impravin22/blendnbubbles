@@ -48,8 +48,13 @@
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* flex-start + auto margins on the content keep it centred when it fits but
+     let it scroll from the top when it is taller than the screen. */
+  justify-content: flex-start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 22px;
   box-sizing: border-box;
   background:
@@ -66,6 +71,7 @@
   text-align: center;
   max-width: 360px;
   width: 100%;
+  margin-block: auto; /* vertical centring that still allows scrolling */
 }
 
 /* ===== Start ===== */

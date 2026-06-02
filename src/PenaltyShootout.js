@@ -350,6 +350,7 @@ function PenaltyShootout() {
     elapsed: 0, // ms since play started, drives the keeper glide
     keeperX: 0.5, // current normalised keeper position (updated while aiming)
     keeperXAtShot: 0.5, // keeper position captured at the moment of the shot
+    willSave: false, // outcome decided at the shot, drives the dive animation
     keeperDiff: getKeeperDifficulty(1),
     // shot in flight
     shotAim: null, // normalised landing point
@@ -495,11 +496,18 @@ function PenaltyShootout() {
     const ballPx = ballPixel(s);
     drawBall(ctx, ballPx.x, ballPx.y, ballPx.scale);
 
-    // Result flash word
+    // Result flash word: shrink the font so long phrases fit the screen width.
     if (s.phase === 'result' && s.flashWord) {
       ctx.save();
       ctx.textAlign = 'center';
-      ctx.font = '900 40px Poppins, sans-serif';
+      const maxW = w * 0.9;
+      let fontSize = 40;
+      ctx.font = `900 ${fontSize}px Poppins, sans-serif`;
+      const measured = ctx.measureText(s.flashWord).width;
+      if (measured > maxW) {
+        fontSize = Math.max(16, Math.floor((fontSize * maxW) / measured));
+        ctx.font = `900 ${fontSize}px Poppins, sans-serif`;
+      }
       ctx.fillStyle = s.lastResult === 'goal' ? '#CEAA67' : '#e74c3c';
       ctx.shadowColor = 'rgba(0,0,0,0.5)';
       ctx.shadowBlur = 12;
@@ -525,7 +533,7 @@ function PenaltyShootout() {
       s.flightT += delta / SHOT_FLIGHT_MS;
       if (s.flightT >= 1) {
         s.flightT = 1;
-        const saved = isSaved(s.shotAim, s.keeperXAtShot, s.keeperDiff);
+        const saved = s.willSave;
         if (saved) {
           s.phase = 'result';
           s.lastResult = 'save';
@@ -705,6 +713,9 @@ function PenaltyShootout() {
       // Freeze the keeper where it was at the instant of the shot: the player
       // shot away from that position, so the keeper must lunge from there.
       s.keeperXAtShot = s.keeperX;
+      // Decide the outcome now so the dive animation can match it: a save dives
+      // onto the ball, a goal stops short.
+      s.willSave = isSaved(aim, s.keeperXAtShot, s.keeperDiff);
       s.flightT = 0;
       s.phase = 'shooting';
     };
@@ -813,14 +824,30 @@ function keeperPixel(s) {
   const guardYpx = g.goalTop + g.goalH * diff.guardY;
   const xToPx = (nx) => g.goalLeft + nx * g.goalW;
   if ((s.phase === 'shooting' || s.phase === 'result') && s.shotAim) {
-    // Lunge from where the keeper was at the shot toward the ball, capped by dive.
-    const lunge = Math.max(-diff.dive, Math.min(diff.dive, s.shotAim.x - s.keeperXAtShot));
-    const effX = s.keeperXAtShot + lunge;
+    // The dive target depends on the outcome so the animation reads true:
+    //   save  -> commit right onto the ball (a clear catch)
+    //   goal  -> stop at the keeper's reach limit (a clear miss, ball sneaks by)
+    let targetX;
+    let targetY;
+    if (s.willSave) {
+      targetX = s.shotAim.x;
+      targetY = s.shotAim.y;
+    } else {
+      const lungeX = Math.max(-diff.dive, Math.min(diff.dive, s.shotAim.x - s.keeperXAtShot));
+      const lungeY = Math.max(-diff.diveVert, Math.min(diff.diveVert, s.shotAim.y - diff.guardY));
+      targetX = s.keeperXAtShot + lungeX;
+      targetY = diff.guardY + lungeY;
+    }
     const t = Math.min(1, s.flightT * 1.15);
     const e = 1 - (1 - t) * (1 - t); // ease-out
     const startPx = xToPx(s.keeperXAtShot);
-    const endPx = xToPx(effX);
-    return { x: startPx + (endPx - startPx) * e, y: guardYpx, lean: Math.sign(effX - s.keeperXAtShot) };
+    const endPx = xToPx(targetX);
+    const endYpx = g.goalTop + g.goalH * targetY;
+    return {
+      x: startPx + (endPx - startPx) * e,
+      y: guardYpx + (endYpx - guardYpx) * e,
+      lean: Math.sign(targetX - s.keeperXAtShot),
+    };
   }
   // Aiming / idle: the keeper glides at its current position, upright.
   return { x: xToPx(s.keeperX), y: guardYpx, lean: 0 };

@@ -68,9 +68,15 @@ describe('isSaved (lunge from the keeper position)', () => {
     expect(isSaved({ x: 0.9, y: 0.62 }, 0.5, easy)).toBe(false);
   });
 
-  test('a high shot clears the guarded height', () => {
-    // Same x as the keeper but up near the crossbar.
+  test('an early-tier high shot clears the keeper (top bins is open)', () => {
+    // Same x as the keeper but near the crossbar; easy keeper cannot stretch up.
     expect(isSaved({ x: 0.5, y: 0.2 }, 0.5, easy)).toBe(false);
+  });
+
+  test('a late-tier keeper stretches up to save top bins when lined up', () => {
+    const hard = getKeeperDifficulty(999);
+    // Top-of-goal shot right at the keeper's column: the vertical leap reaches it.
+    expect(isSaved({ x: 0.5, y: 0.18 }, 0.5, hard)).toBe(true);
   });
 
   test('a shot within the lunge window is saved', () => {
@@ -79,7 +85,7 @@ describe('isSaved (lunge from the keeper position)', () => {
 
   test('even the hardest keeper cannot cover the opposite corner', () => {
     const hard = getKeeperDifficulty(999);
-    // Keeper pinned to the left, shot to the top-right corner.
+    // Keeper pinned to the left, shot to the top-right corner: too far sideways.
     expect(isSaved({ x: 0.88, y: 0.2 }, 0.2, hard)).toBe(false);
   });
 });
