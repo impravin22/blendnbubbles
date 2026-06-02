@@ -15,7 +15,8 @@ const ITEM_TYPES = [
 ];
 
 const POPPING_COLORS = ['#FF6B9D', '#C084FC', '#34D399', '#FB923C', '#60A5FA'];
-const COMBO_WORDS = ['Jhakas!', 'Mast!', 'Zabardast!', 'Badhiya!', 'Ek dum!', 'Fatafat!', 'Jhakkas!', 'Bahot acha kiye dost!'];
+// 'Bahot acha kiye dost!' is repeated so it comes up more often than the others.
+const COMBO_WORDS = ['Jhakas!', 'Mast!', 'Zabardast!', 'Badhiya!', 'Ek dum!', 'Fatafat!', 'Jhakkas!', 'Bahot acha kiye dost!', 'Bahot acha kiye dost!', 'Bahot acha kiye dost!'];
 const GAME_DURATION = 60;
 
 // ─── Store Location (BlendNBubbles, Barrackpore) ─────────────
