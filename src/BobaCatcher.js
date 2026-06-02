@@ -26,7 +26,7 @@ const GAME_DURATION = 60;
 // pass even while standing at the counter.
 const STORE_LAT = 22.7579739;
 const STORE_LNG = 88.3688296;
-const MAX_DISTANCE_M = 100; // metres — covers the building footprint and the pavement outside.
+const MAX_DISTANCE_M = 100; // metres: covers the building footprint and the pavement outside.
 
 function getDistanceMetres(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -616,10 +616,23 @@ function BobaCatcher() {
     ctx.globalAlpha = alpha;
 
     if (p.type === 'text') {
-      ctx.font = `bold ${p.size}px Poppins, sans-serif`;
+      // Shrink long phrases to fit the screen, and keep them inside the margins.
+      const dpr = window.devicePixelRatio || 1;
+      const cssW = ctx.canvas.width / dpr;
+      const maxW = cssW * 0.9;
+      let size = p.size;
+      ctx.font = `bold ${size}px Poppins, sans-serif`;
+      let measured = ctx.measureText(p.text).width;
+      if (measured > maxW) {
+        size = Math.max(9, (size * maxW) / measured);
+        ctx.font = `bold ${size}px Poppins, sans-serif`;
+        measured = ctx.measureText(p.text).width;
+      }
       ctx.textAlign = 'center';
       ctx.fillStyle = p.color;
-      ctx.fillText(p.text, p.x, p.y);
+      const half = measured / 2;
+      const x = Math.min(Math.max(p.x, 6 + half), cssW - 6 - half);
+      ctx.fillText(p.text, x, p.y);
     } else {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);

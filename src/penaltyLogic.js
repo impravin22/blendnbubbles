@@ -46,11 +46,15 @@ export const SAVE_WORDS = [
  */
 export function getKeeperDifficulty(kick) {
   const k = Math.max(1, kick);
+  // `dive` is the horizontal lunge, `diveVert` the vertical stretch toward the
+  // shot. diveVert grows with the tier so top-corner ("top bins") shots stop
+  // being free goals once the streak climbs, while staying small early so the
+  // first ten kicks are easy.
   if (k <= 10) {
-    return { oscRange: 0.16, oscSpeed: 0.0016, dive: 0.06, reachX: 0.12, reachY: 0.22, guardY: 0.62 };
+    return { oscRange: 0.16, oscSpeed: 0.0016, dive: 0.06, diveVert: 0.1, reachX: 0.12, reachY: 0.22, guardY: 0.62 };
   }
   if (k <= 20) {
-    return { oscRange: 0.24, oscSpeed: 0.0026, dive: 0.12, reachX: 0.15, reachY: 0.3, guardY: 0.6 };
+    return { oscRange: 0.24, oscSpeed: 0.0026, dive: 0.12, diveVert: 0.2, reachX: 0.15, reachY: 0.3, guardY: 0.6 };
   }
   // Hard tier ramps further with each kick past 20 but stays capped so a
   // well-placed shot away from the keeper is always scoreable.
@@ -59,6 +63,7 @@ export function getKeeperDifficulty(kick) {
     oscRange: 0.3,
     oscSpeed: Math.min(0.003 + over * 0.0001, 0.0045),
     dive: Math.min(0.16 + over * 0.004, 0.26),
+    diveVert: Math.min(0.26 + over * 0.006, 0.42),
     reachX: Math.min(0.17 + over * 0.003, 0.24),
     reachY: Math.min(0.34 + over * 0.004, 0.46),
     guardY: 0.58,
@@ -76,18 +81,25 @@ export function keeperOscX(elapsedMs, difficulty) {
 
 /**
  * Whether the shot is saved. The keeper lunges from its position at the moment
- * of the shot (`keeperX`) toward the shot, limited by `dive`, then saves if the
- * shot lands inside its reach box around that lunge point. Shooting far enough
- * from the keeper, or high over its guarded height, beats it.
+ * of the shot toward the ball in both axes: horizontally from `keeperX`
+ * (limited by `dive`) and vertically from `guardY` (limited by `diveVert`),
+ * then saves if the ball lands inside its reach box around that lunge point.
+ * Shooting far enough sideways from the keeper, or higher than it can stretch,
+ * beats it.
  */
 export function isSaved(aim, keeperX, difficulty) {
-  const toShot = aim.x - keeperX;
-  const lunge = Math.max(-difficulty.dive, Math.min(difficulty.dive, toShot));
-  const effectiveX = keeperX + lunge;
+  const lungeX = clampDive(aim.x - keeperX, difficulty.dive);
+  const lungeY = clampDive(aim.y - difficulty.guardY, difficulty.diveVert);
+  const effectiveX = keeperX + lungeX;
+  const effectiveY = difficulty.guardY + lungeY;
   return (
     Math.abs(aim.x - effectiveX) <= difficulty.reachX &&
-    Math.abs(aim.y - difficulty.guardY) <= difficulty.reachY
+    Math.abs(aim.y - effectiveY) <= difficulty.reachY
   );
+}
+
+function clampDive(delta, limit) {
+  return Math.max(-limit, Math.min(limit, delta));
 }
 
 /**
