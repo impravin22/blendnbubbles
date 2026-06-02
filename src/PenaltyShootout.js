@@ -811,38 +811,40 @@ function keeperPixel(s) {
   return { x: baseX, y: baseY, lean: 0 };
 }
 
-// Keeper in a lime/black GK kit (contrasts the teal+gold BnB striker), with
-// a jersey number 1, shorts, socks and gloves. Arms reach toward the dive.
+// Keeper in the BnB home kit (teal jersey, gold trim, number 1) with white
+// gloves, scaled up so it reads clearly. Arms reach toward the dive.
 function drawKeeper(ctx, x, y, lean) {
-  const GK = '#c6ff3d';
-  const GK_DARK = '#1c1c1c';
+  const BNB = '#004d4d'; // BnB teal jersey
+  const TRIM = '#CEAA67'; // BnB gold trim
+  const SCALE = 1.35; // keeper sized up so it reads clearly against the goal
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(lean * 0.32);
+  ctx.scale(SCALE, SCALE);
 
   // legs / shorts
-  ctx.fillStyle = GK_DARK;
+  ctx.fillStyle = BNB;
   roundRect(ctx, -10, 16, 8, 16, 3); ctx.fill(); // left leg
   roundRect(ctx, 2, 16, 8, 16, 3); ctx.fill(); // right leg
-  // socks
-  ctx.fillStyle = GK;
+  // socks (gold)
+  ctx.fillStyle = TRIM;
   ctx.fillRect(-10, 30, 8, 6);
   ctx.fillRect(2, 30, 8, 6);
 
   // jersey torso
-  ctx.fillStyle = GK;
+  ctx.fillStyle = BNB;
   roundRect(ctx, -12, -16, 24, 34, 7);
   ctx.fill();
-  // side panels (kit detailing)
-  ctx.fillStyle = GK_DARK;
+  // gold side panels (kit detailing)
+  ctx.fillStyle = TRIM;
   ctx.fillRect(-12, -16, 4, 34);
   ctx.fillRect(8, -16, 4, 34);
   // collar
-  ctx.fillStyle = GK_DARK;
+  ctx.fillStyle = TRIM;
   roundRect(ctx, -7, -18, 14, 6, 3);
   ctx.fill();
   // number 1
-  ctx.fillStyle = GK_DARK;
+  ctx.fillStyle = TRIM;
   ctx.font = '900 14px Poppins, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('1', 0, 6);
@@ -853,8 +855,8 @@ function drawKeeper(ctx, x, y, lean) {
   ctx.arc(0, -26, 8, 0, Math.PI * 2);
   ctx.fill();
 
-  // arms (GK kit sleeves) + white gloves reaching out
-  ctx.strokeStyle = GK;
+  // arms (BnB kit sleeves) + white gloves reaching out
+  ctx.strokeStyle = BNB;
   ctx.lineWidth = 7;
   ctx.lineCap = 'round';
   ctx.beginPath();

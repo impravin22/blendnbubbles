@@ -48,16 +48,19 @@ export function getKeeperDifficulty(streak) {
   const s = Math.max(0, streak);
   return {
     // How far the keeper covers around its guessed point (half-width / half-height).
-    // Bigger + faster ramp than v1 so corners stop being free goals once the
-    // streak climbs, but the caps keep the opposite corner reachable.
-    reachX: Math.min(0.19 + s * 0.02, 0.4),
-    reachY: Math.min(0.3 + s * 0.018, 0.52),
+    // Tuned harder again: higher base reach and caps so placed shots are saved
+    // more often. The horizontal cap (0.44) still stays below the distance from
+    // one post-zone to the other, so the far corner is always reachable.
+    reachX: Math.min(0.2 + s * 0.024, 0.44),
+    reachY: Math.min(0.31 + s * 0.024, 0.56),
     // Probability the keeper reads the shooter's placement rather than
-    // committing to a random zone. Climbs fast, but stays below 1 so there is
-    // always a ~15% "keeper guessed wrong" escape; runs stay finite.
-    readChance: Math.min(0.3 + s * 0.07, 0.85),
+    // committing to a random zone. The opening kicks stay roughly fair
+    // (base 0.32) but it ramps steeply and caps high, so building a long streak
+    // gets brutal. Stays below 1 so there is always a ~10% "keeper guessed
+    // wrong" escape; runs stay finite.
+    readChance: Math.min(0.32 + s * 0.09, 0.9),
     // Keeper dive speed multiplier (cosmetic; surfaced for the renderer).
-    diveSpeed: Math.min(1.1 + s * 0.07, 2.4),
+    diveSpeed: Math.min(1.2 + s * 0.07, 2.6),
   };
 }
 

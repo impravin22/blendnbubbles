@@ -22,9 +22,9 @@ describe('getKeeperDifficulty', () => {
     expect(hard.readChance).toBeGreaterThan(easy.readChance);
     // Caps keep a corner reachable: reach never spans the whole goal, and
     // readChance stays below 1 so a ~15% "keeper guessed wrong" escape remains.
-    expect(hard.reachX).toBeLessThanOrEqual(0.4);
-    expect(hard.reachY).toBeLessThanOrEqual(0.52);
-    expect(hard.readChance).toBeLessThanOrEqual(0.85);
+    expect(hard.reachX).toBeLessThanOrEqual(0.44);
+    expect(hard.reachY).toBeLessThanOrEqual(0.56);
+    expect(hard.readChance).toBeLessThanOrEqual(0.9);
   });
 
   test('clamps negative streak to zero baseline', () => {
@@ -55,7 +55,7 @@ describe('pickKeeperGuess', () => {
 });
 
 describe('isSaved', () => {
-  const diff = getKeeperDifficulty(0); // reachX 0.16, reachY 0.26
+  const diff = getKeeperDifficulty(0); // reachX 0.20, reachY 0.31
 
   test('saves a shot inside the keeper reach box', () => {
     const keeper = { x: 0.5, y: 0.5 };
