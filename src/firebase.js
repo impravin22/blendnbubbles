@@ -22,23 +22,35 @@ function getWeekKey() {
   return `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
-export async function submitScore(name, phone, score) {
+// Default game key for documents written before the multi-game split.
+// Boba Catcher scores were stored without a `game` field, so any document
+// missing the field is treated as a Boba Catcher score at read time.
+const DEFAULT_GAME = 'bobacatcher';
+
+export async function submitScore(name, phone, score, game = DEFAULT_GAME) {
   return addDoc(collection(db, 'leaderboard'), {
     name: name.trim(),
     phone: phone.trim(),
     score,
+    game,
     week: getWeekKey(),
     createdAt: new Date(),
   });
 }
 
-export async function getWeeklyLeaderboard() {
+export async function getWeeklyLeaderboard(game = DEFAULT_GAME) {
+  // Filter by week server-side, then split by game client-side. The game
+  // filter runs in JS (not a Firestore `where`) so legacy documents that
+  // predate the `game` field still surface on the Boba Catcher board
+  // instead of disappearing.
   const q = query(
     collection(db, 'leaderboard'),
     where('week', '==', getWeekKey())
   );
   const snap = await getDocs(q);
-  const entries = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const entries = snap.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(entry => (entry.game || DEFAULT_GAME) === game);
   entries.sort((a, b) => b.score - a.score);
   return entries.slice(0, 10);
 }

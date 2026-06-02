@@ -26,7 +26,7 @@
     "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build && npm run postbuild",
-    "postbuild": "cd build && mkdir -p menu story play offers && cp index.html menu/index.html && cp index.html story/index.html && cp index.html play/index.html && cp index.html offers/index.html",
+    "postbuild": "cd build && mkdir -p menu story play play/football offers && cp index.html menu/index.html && cp index.html story/index.html && cp index.html play/index.html && cp index.html play/football/index.html && cp index.html offers/index.html",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
