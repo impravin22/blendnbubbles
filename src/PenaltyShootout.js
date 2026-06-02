@@ -5,7 +5,7 @@ import {
   GOAL_WORDS,
   SAVE_WORDS,
   getKeeperDifficulty,
-  pickKeeperGuess,
+  keeperOscX,
   isSaved,
   dragToAim,
   applyPowerWobble,
@@ -346,10 +346,13 @@ function PenaltyShootout() {
     dragging: false,
     dragStart: null,
     dragCur: null,
+    // keeper (visible, gliding)
+    elapsed: 0, // ms since play started, drives the keeper glide
+    keeperX: 0.5, // current normalised keeper position (updated while aiming)
+    keeperXAtShot: 0.5, // keeper position captured at the moment of the shot
+    keeperDiff: getKeeperDifficulty(1),
     // shot in flight
     shotAim: null, // normalised landing point
-    keeperGuess: null, // normalised dive point
-    keeperDiff: getKeeperDifficulty(0),
     flightT: 0,
     resultTimer: 0,
     lastResult: null, // 'goal' | 'save'
@@ -511,12 +514,18 @@ function PenaltyShootout() {
     if (!s) return;
     const delta = Math.min(ts - s.lastTs, 50);
     s.lastTs = ts;
+    s.elapsed += delta;
+
+    // The keeper glides visibly along the goal while the player lines up.
+    if (s.phase === 'aiming') {
+      s.keeperX = keeperOscX(s.elapsed, s.keeperDiff);
+    }
 
     if (s.phase === 'shooting') {
       s.flightT += delta / SHOT_FLIGHT_MS;
       if (s.flightT >= 1) {
         s.flightT = 1;
-        const saved = isSaved(s.shotAim, s.keeperGuess, s.keeperDiff);
+        const saved = isSaved(s.shotAim, s.keeperXAtShot, s.keeperDiff);
         if (saved) {
           s.phase = 'result';
           s.lastResult = 'save';
@@ -537,14 +546,14 @@ function PenaltyShootout() {
           if (endGameRef.current) endGameRef.current(s.streak);
           return;
         }
-        // next penalty, harder keeper
+        // next penalty: difficulty steps up by kick number (1-10 easy,
+        // 11-20 harder, 21+ much harder).
         s.shotNumber += 1;
         s.phase = 'aiming';
         s.shotAim = null;
-        s.keeperGuess = null;
         s.flightT = 0;
         s.flashWord = '';
-        s.keeperDiff = getKeeperDifficulty(s.streak);
+        s.keeperDiff = getKeeperDifficulty(s.shotNumber);
       }
     }
 
@@ -693,8 +702,9 @@ function PenaltyShootout() {
       const rawAim = dragToAim(dragX, dragY, 220);
       const aim = applyPowerWobble(rawAim, rawAim.power);
       s.shotAim = aim;
-      s.keeperGuess = pickKeeperGuess(aim, s.streak);
-      s.keeperDiff = getKeeperDifficulty(s.streak);
+      // Freeze the keeper where it was at the instant of the shot: the player
+      // shot away from that position, so the keeper must lunge from there.
+      s.keeperXAtShot = s.keeperX;
       s.flightT = 0;
       s.phase = 'shooting';
     };
@@ -799,16 +809,21 @@ function ballPixel(s) {
 
 function keeperPixel(s) {
   const { g } = s;
-  const baseX = (g.goalLeft + g.goalRight) / 2;
-  const baseY = g.goalTop + g.goalH * 0.62;
-  if ((s.phase === 'shooting' || s.phase === 'result') && s.keeperGuess) {
-    const t = Math.min(1, s.flightT * 1.1);
+  const diff = s.keeperDiff;
+  const guardYpx = g.goalTop + g.goalH * diff.guardY;
+  const xToPx = (nx) => g.goalLeft + nx * g.goalW;
+  if ((s.phase === 'shooting' || s.phase === 'result') && s.shotAim) {
+    // Lunge from where the keeper was at the shot toward the ball, capped by dive.
+    const lunge = Math.max(-diff.dive, Math.min(diff.dive, s.shotAim.x - s.keeperXAtShot));
+    const effX = s.keeperXAtShot + lunge;
+    const t = Math.min(1, s.flightT * 1.15);
     const e = 1 - (1 - t) * (1 - t); // ease-out
-    const gx = g.goalLeft + s.keeperGuess.x * g.goalW;
-    const gy = g.goalTop + s.keeperGuess.y * g.goalH;
-    return { x: baseX + (gx - baseX) * e, y: baseY + (gy - baseY) * e, lean: Math.sign(gx - baseX) };
+    const startPx = xToPx(s.keeperXAtShot);
+    const endPx = xToPx(effX);
+    return { x: startPx + (endPx - startPx) * e, y: guardYpx, lean: Math.sign(effX - s.keeperXAtShot) };
   }
-  return { x: baseX, y: baseY, lean: 0 };
+  // Aiming / idle: the keeper glides at its current position, upright.
+  return { x: xToPx(s.keeperX), y: guardYpx, lean: 0 };
 }
 
 // Keeper in the BnB home kit (teal jersey, gold trim, number 1) with white

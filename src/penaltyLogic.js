@@ -6,9 +6,12 @@
 // Coordinate space: the goal mouth is normalised to 0..1 on both axes.
 //   x: 0 = left post, 1 = right post
 //   y: 0 = crossbar (top), 1 = ground line (bottom)
-// The keeper starts centred at roughly { x: 0.5, y: 0.62 } and dives
-// toward a guessed point. A shot is saved when it lands inside the
-// keeper's reach box around that guessed point.
+//
+// Skill model (not luck): the keeper glides side to side along the goal line
+// in plain sight while the player aims. On release the keeper lunges from
+// wherever it is toward the shot, but it can only cover a limited window, so
+// the player watches it and shoots the open side. Difficulty steps up by kick
+// count: easy for the first 10, harder to 20, much harder after that.
 
 // Bengali / Hindi goal exclamations, matching Boba Catcher's flavour.
 export const GOAL_WORDS = [
@@ -22,79 +25,64 @@ export const GOAL_WORDS = [
 ];
 
 export const SAVE_WORDS = [
-  'Keeper read it!',
+  'Keeper got it!',
   'Saved!',
   'Denied!',
   'So close!',
 ];
 
-// Six aim targets the reticle can snap to: 3 across × 2 high. Corners are
-// the safe picks (keeper struggles to reach), centre is risky.
-export const AIM_ZONES = [
-  { id: 'TL', x: 0.16, y: 0.22, label: 'Top left' },
-  { id: 'TC', x: 0.5, y: 0.18, label: 'Top centre' },
-  { id: 'TR', x: 0.84, y: 0.22, label: 'Top right' },
-  { id: 'BL', x: 0.16, y: 0.7, label: 'Bottom left' },
-  { id: 'BC', x: 0.5, y: 0.72, label: 'Bottom centre' },
-  { id: 'BR', x: 0.84, y: 0.7, label: 'Bottom right' },
-];
-
 /**
- * Keeper difficulty grows with the current streak but is capped so a
- * well-placed corner is always scoreable. Returns the reach half-box and
- * the chance the keeper "reads" the shooter's side.
+ * Keeper behaviour for a given kick number (1-based). Returns how far and how
+ * fast the keeper paces along the goal (oscRange / oscSpeed), how far it can
+ * lunge toward the shot (dive), its reach half-box (reachX / reachY) and the
+ * height it guards (guardY). Three tiers:
+ *   kicks 1-10  : easy   - slow, narrow coverage, net wide open
+ *   kicks 11-20 : medium - quicker, covers more
+ *   kicks 21+   : hard   - fast and wide, but a sliver is always open
  */
-export function getKeeperDifficulty(streak) {
-  const s = Math.max(0, streak);
+export function getKeeperDifficulty(kick) {
+  const k = Math.max(1, kick);
+  if (k <= 10) {
+    return { oscRange: 0.16, oscSpeed: 0.0016, dive: 0.06, reachX: 0.12, reachY: 0.22, guardY: 0.62 };
+  }
+  if (k <= 20) {
+    return { oscRange: 0.24, oscSpeed: 0.0026, dive: 0.12, reachX: 0.15, reachY: 0.3, guardY: 0.6 };
+  }
+  // Hard tier ramps further with each kick past 20 but stays capped so a
+  // well-placed shot away from the keeper is always scoreable.
+  const over = k - 20;
   return {
-    // How far the keeper covers around its guessed point (half-width / half-height).
-    // Tuned harder again: higher base reach and caps so placed shots are saved
-    // more often. The horizontal cap (0.44) still stays below the distance from
-    // one post-zone to the other, so the far corner is always reachable.
-    reachX: Math.min(0.2 + s * 0.024, 0.44),
-    reachY: Math.min(0.31 + s * 0.024, 0.56),
-    // Probability the keeper reads the shooter's placement rather than
-    // committing to a random zone. The opening kicks stay roughly fair
-    // (base 0.32) but it ramps steeply and caps high, so building a long streak
-    // gets brutal. Stays below 1 so there is always a ~10% "keeper guessed
-    // wrong" escape; runs stay finite.
-    readChance: Math.min(0.32 + s * 0.09, 0.9),
-    // Keeper dive speed multiplier (cosmetic; surfaced for the renderer).
-    diveSpeed: Math.min(1.2 + s * 0.07, 2.6),
+    oscRange: 0.3,
+    oscSpeed: Math.min(0.003 + over * 0.0001, 0.0045),
+    dive: Math.min(0.16 + over * 0.004, 0.26),
+    reachX: Math.min(0.17 + over * 0.003, 0.24),
+    reachY: Math.min(0.34 + over * 0.004, 0.46),
+    guardY: 0.58,
   };
 }
 
 /**
- * Decide where the keeper dives. With probability `readChance` it lunges
- * near the shooter's aim (with jitter so reads are not perfect); otherwise
- * it commits to a random zone. `rng` is injectable for deterministic tests.
+ * Visible keeper position along the goal at a given elapsed time. A smooth
+ * left-right glide (sine) the player can read and shoot away from. Returns a
+ * normalised x in [0.5 - oscRange, 0.5 + oscRange].
  */
-export function pickKeeperGuess(aim, streak, rng = Math.random) {
-  const { readChance } = getKeeperDifficulty(streak);
-  if (rng() < readChance) {
-    // A read dive now tracks BOTH axes (v1 only read the side and always
-    // sat mid-low, so top corners were untouchable). Tighter horizontal
-    // error + real vertical tracking means a well-read shot can be saved.
-    const jitterX = (rng() - 0.5) * 0.16; // ±0.08 horizontal read error
-    const jitterY = (rng() - 0.5) * 0.3; // ±0.15 vertical read error
-    return {
-      x: clamp01(aim.x + jitterX),
-      y: clamp01(aim.y + jitterY),
-      read: true,
-    };
-  }
-  const zone = AIM_ZONES[Math.floor(rng() * AIM_ZONES.length)];
-  return { x: zone.x, y: zone.y, read: false };
+export function keeperOscX(elapsedMs, difficulty) {
+  return 0.5 + difficulty.oscRange * Math.sin(elapsedMs * difficulty.oscSpeed);
 }
 
 /**
- * A shot is saved when the landing point falls inside the keeper's reach
- * box around its dive point.
+ * Whether the shot is saved. The keeper lunges from its position at the moment
+ * of the shot (`keeperX`) toward the shot, limited by `dive`, then saves if the
+ * shot lands inside its reach box around that lunge point. Shooting far enough
+ * from the keeper, or high over its guarded height, beats it.
  */
-export function isSaved(aim, keeper, difficulty) {
+export function isSaved(aim, keeperX, difficulty) {
+  const toShot = aim.x - keeperX;
+  const lunge = Math.max(-difficulty.dive, Math.min(difficulty.dive, toShot));
+  const effectiveX = keeperX + lunge;
   return (
-    Math.abs(aim.x - keeper.x) <= difficulty.reachX &&
-    Math.abs(aim.y - keeper.y) <= difficulty.reachY
+    Math.abs(aim.x - effectiveX) <= difficulty.reachX &&
+    Math.abs(aim.y - difficulty.guardY) <= difficulty.reachY
   );
 }
 
