@@ -21,6 +21,7 @@ export const GOAL_WORDS = [
   'Jhakkas shot!',
   'Khelechho!',
   'Asadharon!',
+  'Bahot acha kiye dost!',
   'Back of the net!',
 ];
 
