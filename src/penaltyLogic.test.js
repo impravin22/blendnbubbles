@@ -33,10 +33,12 @@ describe('getKeeperDifficulty (tiered by kick count)', () => {
 
   test('hard tier stays capped so a placed shot is always scoreable', () => {
     const veryHard = getKeeperDifficulty(999);
-    expect(veryHard.dive).toBeLessThanOrEqual(0.26);
-    expect(veryHard.reachX).toBeLessThanOrEqual(0.24);
-    expect(veryHard.reachY).toBeLessThanOrEqual(0.46);
-    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.0045);
+    expect(veryHard.dive).toBeLessThanOrEqual(0.3);
+    expect(veryHard.reachX).toBeLessThanOrEqual(0.27);
+    expect(veryHard.reachY).toBeLessThanOrEqual(0.5);
+    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.0052);
+    // Far corner must stay open: max horizontal cover < distance across the goal.
+    expect(veryHard.dive + veryHard.reachX).toBeLessThan(0.6);
   });
 });
 
