@@ -40,33 +40,34 @@ export const SAVE_WORDS = [
  * fast the keeper paces along the goal (oscRange / oscSpeed), how far it can
  * lunge toward the shot (dive), its reach half-box (reachX / reachY) and the
  * height it guards (guardY). Three tiers:
- *   kicks 1-10  : easy   - slow, narrow coverage, net wide open
- *   kicks 11-20 : medium - quicker, covers more
- *   kicks 21+   : hard   - fast and wide, but a sliver is always open
+ *   kicks 1-5  : hard    - busy keeper, punishes loose placement from the start
+ *   kicks 6-10 : harder  - quicker and wider
+ *   kicks 11+  : extreme - fast and wide, ramping, but a corner is always open
  */
 export function getKeeperDifficulty(kick) {
   const k = Math.max(1, kick);
   // `dive` is the horizontal lunge, `diveVert` the vertical stretch toward the
-  // shot. diveVert grows with the tier so top-corner ("top bins") shots stop
-  // being free goals once the streak climbs, while staying small early so the
-  // first ten kicks are easy.
+  // shot. The keeper is hard from the very first kick, harder after 5 goals,
+  // and extreme after 10. Caps keep the far corner reachable so it stays fair.
+  if (k <= 5) {
+    // Hard from kick 1: a busy keeper that already punishes loose placement.
+    return { oscRange: 0.3, oscSpeed: 0.0034, dive: 0.18, diveVert: 0.28, reachX: 0.2, reachY: 0.36, guardY: 0.6 };
+  }
   if (k <= 10) {
-    return { oscRange: 0.18, oscSpeed: 0.0019, dive: 0.08, diveVert: 0.12, reachX: 0.14, reachY: 0.25, guardY: 0.62 };
+    // Harder after 5 goals.
+    return { oscRange: 0.34, oscSpeed: 0.0044, dive: 0.24, diveVert: 0.36, reachX: 0.24, reachY: 0.44, guardY: 0.58 };
   }
-  if (k <= 20) {
-    return { oscRange: 0.26, oscSpeed: 0.0031, dive: 0.15, diveVert: 0.24, reachX: 0.18, reachY: 0.34, guardY: 0.6 };
-  }
-  // Hard tier ramps further with each kick past 20 but stays capped so a
+  // Extreme after 10 goals: ramps with each further kick but stays capped so a
   // well-placed shot away from the keeper is always scoreable.
-  const over = k - 20;
+  const over = k - 10;
   return {
-    oscRange: 0.34,
-    oscSpeed: Math.min(0.0036 + over * 0.00012, 0.0052),
-    dive: Math.min(0.19 + over * 0.005, 0.3),
-    diveVert: Math.min(0.3 + over * 0.007, 0.46),
-    reachX: Math.min(0.2 + over * 0.0035, 0.27),
-    reachY: Math.min(0.38 + over * 0.005, 0.5),
-    guardY: 0.58,
+    oscRange: 0.4,
+    oscSpeed: Math.min(0.005 + over * 0.0001, 0.0065),
+    dive: Math.min(0.26 + over * 0.005, 0.32),
+    diveVert: Math.min(0.4 + over * 0.006, 0.52),
+    reachX: Math.min(0.25 + over * 0.002, 0.27),
+    reachY: Math.min(0.48 + over * 0.004, 0.56),
+    guardY: 0.56,
   };
 }
 
