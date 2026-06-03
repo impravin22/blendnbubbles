@@ -40,10 +40,10 @@ describe('getKeeperDifficulty (tiered by kick count)', () => {
 
   test('extreme tier stays capped so a placed shot is always scoreable', () => {
     const veryHard = getKeeperDifficulty(999);
-    expect(veryHard.dive).toBeLessThanOrEqual(0.32);
-    expect(veryHard.reachX).toBeLessThanOrEqual(0.27);
-    expect(veryHard.reachY).toBeLessThanOrEqual(0.56);
-    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.0065);
+    expect(veryHard.dive).toBeLessThanOrEqual(0.35);
+    expect(veryHard.reachX).toBeLessThanOrEqual(0.24);
+    expect(veryHard.reachY).toBeLessThanOrEqual(0.62);
+    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.026);
     // Far corner must stay open: max horizontal cover < distance across the goal.
     expect(veryHard.dive + veryHard.reachX).toBeLessThan(0.6);
   });
@@ -66,15 +66,15 @@ describe('keeperOscX (visible glide)', () => {
 });
 
 describe('isSaved (lunge from the keeper position)', () => {
-  const tier1 = getKeeperDifficulty(1); // dive 0.18, diveVert 0.28, reachX 0.2, reachY 0.36, guardY 0.6
+  const tier1 = getKeeperDifficulty(1); // dive 0.3, diveVert 0.46, reachX 0.21, reachY 0.5, guardY 0.6
 
   test('saves a low shot right at the keeper', () => {
     expect(isSaved({ x: 0.5, y: 0.62 }, 0.5, tier1)).toBe(true);
   });
 
-  test('a shot far from the keeper beats the lunge', () => {
-    // Keeper at 0.5, shot to the right post; horizontal lunge is capped.
-    expect(isSaved({ x: 0.9, y: 0.62 }, 0.5, tier1)).toBe(false);
+  test('a shot to the opposite corner beats the lunge', () => {
+    // Keeper pinned to the left post; a low shot to the right post is too far.
+    expect(isSaved({ x: 0.9, y: 0.62 }, 0.16, tier1)).toBe(false);
   });
 
   test('even tier 1 stretches up to save a centred top-bins shot', () => {
