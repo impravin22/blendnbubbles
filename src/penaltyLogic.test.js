@@ -8,35 +8,42 @@ import {
 } from './penaltyLogic';
 
 describe('getKeeperDifficulty (tiered by kick count)', () => {
-  test('three tiers: easy <=10, medium 11-20, hard 21+', () => {
-    const easy = getKeeperDifficulty(5);
-    const medium = getKeeperDifficulty(15);
-    const hard = getKeeperDifficulty(25);
+  test('three tiers: hard 1-5, harder 6-10, extreme 11+', () => {
+    const hard = getKeeperDifficulty(3);
+    const harder = getKeeperDifficulty(8);
+    const extreme = getKeeperDifficulty(15);
     // Coverage and pace grow tier over tier.
-    expect(medium.reachX).toBeGreaterThan(easy.reachX);
-    expect(hard.reachX).toBeGreaterThan(medium.reachX);
-    expect(medium.dive).toBeGreaterThan(easy.dive);
-    expect(hard.dive).toBeGreaterThan(medium.dive);
-    expect(medium.oscSpeed).toBeGreaterThan(easy.oscSpeed);
-    expect(hard.oscSpeed).toBeGreaterThanOrEqual(medium.oscSpeed);
+    expect(harder.reachX).toBeGreaterThan(hard.reachX);
+    expect(extreme.reachX).toBeGreaterThan(harder.reachX);
+    expect(harder.dive).toBeGreaterThan(hard.dive);
+    expect(extreme.dive).toBeGreaterThan(harder.dive);
+    expect(harder.oscSpeed).toBeGreaterThan(hard.oscSpeed);
+    expect(extreme.oscSpeed).toBeGreaterThanOrEqual(harder.oscSpeed);
   });
 
-  test('tier boundaries fall on 10 and 20', () => {
-    expect(getKeeperDifficulty(10)).toEqual(getKeeperDifficulty(1)); // both easy
-    expect(getKeeperDifficulty(11)).toEqual(getKeeperDifficulty(20)); // both medium
-    expect(getKeeperDifficulty(21)).not.toEqual(getKeeperDifficulty(20)); // hard begins
+  test('tier boundaries fall on 5 and 10', () => {
+    expect(getKeeperDifficulty(5)).toEqual(getKeeperDifficulty(1)); // both hard tier
+    expect(getKeeperDifficulty(6)).toEqual(getKeeperDifficulty(10)); // both harder tier
+    expect(getKeeperDifficulty(11)).not.toEqual(getKeeperDifficulty(10)); // extreme begins
+  });
+
+  test('the first kick is already hard, not eased in', () => {
+    // Tier-1 coverage is well above a "wide open net" baseline.
+    const first = getKeeperDifficulty(1);
+    expect(first.reachX).toBeGreaterThanOrEqual(0.2);
+    expect(first.diveVert).toBeGreaterThanOrEqual(0.25);
   });
 
   test('clamps a kick below one to the first kick', () => {
     expect(getKeeperDifficulty(0)).toEqual(getKeeperDifficulty(1));
   });
 
-  test('hard tier stays capped so a placed shot is always scoreable', () => {
+  test('extreme tier stays capped so a placed shot is always scoreable', () => {
     const veryHard = getKeeperDifficulty(999);
-    expect(veryHard.dive).toBeLessThanOrEqual(0.3);
+    expect(veryHard.dive).toBeLessThanOrEqual(0.32);
     expect(veryHard.reachX).toBeLessThanOrEqual(0.27);
-    expect(veryHard.reachY).toBeLessThanOrEqual(0.5);
-    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.0052);
+    expect(veryHard.reachY).toBeLessThanOrEqual(0.56);
+    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.0065);
     // Far corner must stay open: max horizontal cover < distance across the goal.
     expect(veryHard.dive + veryHard.reachX).toBeLessThan(0.6);
   });
@@ -59,36 +66,40 @@ describe('keeperOscX (visible glide)', () => {
 });
 
 describe('isSaved (lunge from the keeper position)', () => {
-  const easy = getKeeperDifficulty(5); // dive 0.06, reachX 0.12, reachY 0.22, guardY 0.62
+  const tier1 = getKeeperDifficulty(1); // dive 0.18, diveVert 0.28, reachX 0.2, reachY 0.36, guardY 0.6
 
   test('saves a low shot right at the keeper', () => {
-    expect(isSaved({ x: 0.5, y: 0.62 }, 0.5, easy)).toBe(true);
+    expect(isSaved({ x: 0.5, y: 0.62 }, 0.5, tier1)).toBe(true);
   });
 
   test('a shot far from the keeper beats the lunge', () => {
-    // Keeper at 0.5, shot to the right post; lunge is capped at 0.06.
-    expect(isSaved({ x: 0.9, y: 0.62 }, 0.5, easy)).toBe(false);
+    // Keeper at 0.5, shot to the right post; horizontal lunge is capped.
+    expect(isSaved({ x: 0.9, y: 0.62 }, 0.5, tier1)).toBe(false);
   });
 
-  test('an early-tier high shot clears the keeper (top bins is open)', () => {
-    // Same x as the keeper but near the crossbar; easy keeper cannot stretch up.
-    expect(isSaved({ x: 0.5, y: 0.2 }, 0.5, easy)).toBe(false);
+  test('even tier 1 stretches up to save a centred top-bins shot', () => {
+    // Hard from kick 1: a top shot in the keeper's own column is saved.
+    expect(isSaved({ x: 0.5, y: 0.2 }, 0.5, tier1)).toBe(true);
   });
 
-  test('a late-tier keeper stretches up to save top bins when lined up', () => {
-    const hard = getKeeperDifficulty(999);
-    // Top-of-goal shot right at the keeper's column: the vertical leap reaches it.
-    expect(isSaved({ x: 0.5, y: 0.18 }, 0.5, hard)).toBe(true);
+  test('a far top corner away from the keeper is still open at tier 1', () => {
+    // Keeper pinned left; top-right shot is too far sideways to reach.
+    expect(isSaved({ x: 0.85, y: 0.2 }, 0.2, tier1)).toBe(false);
+  });
+
+  test('the extreme keeper stretches up to save top bins when lined up', () => {
+    const extreme = getKeeperDifficulty(999);
+    expect(isSaved({ x: 0.5, y: 0.18 }, 0.5, extreme)).toBe(true);
   });
 
   test('a shot within the lunge window is saved', () => {
-    expect(isSaved({ x: 0.56, y: 0.6 }, 0.5, easy)).toBe(true);
+    expect(isSaved({ x: 0.56, y: 0.6 }, 0.5, tier1)).toBe(true);
   });
 
-  test('even the hardest keeper cannot cover the opposite corner', () => {
-    const hard = getKeeperDifficulty(999);
+  test('even the extreme keeper cannot cover the opposite corner', () => {
+    const extreme = getKeeperDifficulty(999);
     // Keeper pinned to the left, shot to the top-right corner: too far sideways.
-    expect(isSaved({ x: 0.88, y: 0.2 }, 0.2, hard)).toBe(false);
+    expect(isSaved({ x: 0.88, y: 0.2 }, 0.2, extreme)).toBe(false);
   });
 });
 
