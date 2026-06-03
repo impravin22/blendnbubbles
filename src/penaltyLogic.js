@@ -51,21 +51,21 @@ export function getKeeperDifficulty(kick) {
   // being free goals once the streak climbs, while staying small early so the
   // first ten kicks are easy.
   if (k <= 10) {
-    return { oscRange: 0.16, oscSpeed: 0.0016, dive: 0.06, diveVert: 0.1, reachX: 0.12, reachY: 0.22, guardY: 0.62 };
+    return { oscRange: 0.18, oscSpeed: 0.0019, dive: 0.08, diveVert: 0.12, reachX: 0.14, reachY: 0.25, guardY: 0.62 };
   }
   if (k <= 20) {
-    return { oscRange: 0.24, oscSpeed: 0.0026, dive: 0.12, diveVert: 0.2, reachX: 0.15, reachY: 0.3, guardY: 0.6 };
+    return { oscRange: 0.26, oscSpeed: 0.0031, dive: 0.15, diveVert: 0.24, reachX: 0.18, reachY: 0.34, guardY: 0.6 };
   }
   // Hard tier ramps further with each kick past 20 but stays capped so a
   // well-placed shot away from the keeper is always scoreable.
   const over = k - 20;
   return {
-    oscRange: 0.3,
-    oscSpeed: Math.min(0.003 + over * 0.0001, 0.0045),
-    dive: Math.min(0.16 + over * 0.004, 0.26),
-    diveVert: Math.min(0.26 + over * 0.006, 0.42),
-    reachX: Math.min(0.17 + over * 0.003, 0.24),
-    reachY: Math.min(0.34 + over * 0.004, 0.46),
+    oscRange: 0.34,
+    oscSpeed: Math.min(0.0036 + over * 0.00012, 0.0052),
+    dive: Math.min(0.19 + over * 0.005, 0.3),
+    diveVert: Math.min(0.3 + over * 0.007, 0.46),
+    reachX: Math.min(0.2 + over * 0.0035, 0.27),
+    reachY: Math.min(0.38 + over * 0.005, 0.5),
     guardY: 0.58,
   };
 }
