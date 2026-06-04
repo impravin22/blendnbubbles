@@ -554,8 +554,8 @@ function PenaltyShootout() {
           if (endGameRef.current) endGameRef.current(s.streak);
           return;
         }
-        // next penalty: difficulty steps up by kick number (1-10 easy,
-        // 11-20 harder, 21+ much harder).
+        // next penalty: difficulty steps up by kick number (1-5 hard,
+        // 6-10 harder, 11+ extreme).
         s.shotNumber += 1;
         s.phase = 'aiming';
         s.shotAim = null;

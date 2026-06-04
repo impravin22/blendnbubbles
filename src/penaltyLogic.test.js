@@ -43,7 +43,7 @@ describe('getKeeperDifficulty (tiered by kick count)', () => {
     expect(veryHard.dive).toBeLessThanOrEqual(0.35);
     expect(veryHard.reachX).toBeLessThanOrEqual(0.24);
     expect(veryHard.reachY).toBeLessThanOrEqual(0.62);
-    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.026);
+    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.006);
     // Far corner must stay open: max horizontal cover < distance across the goal.
     expect(veryHard.dive + veryHard.reachX).toBeLessThan(0.6);
   });

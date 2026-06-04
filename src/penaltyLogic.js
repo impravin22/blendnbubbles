@@ -53,18 +53,18 @@ export function getKeeperDifficulty(kick) {
     // Hard from kick 1: a fast keeper that patrols wide, lunges far sideways AND
     // springs high, so it covers the top bins on its side too. A centred keeper
     // covers nearly the whole goal; only the corner away from it is open.
-    return { oscRange: 0.4, oscSpeed: 0.011, dive: 0.3, diveVert: 0.46, reachX: 0.21, reachY: 0.5, guardY: 0.6 };
+    return { oscRange: 0.4, oscSpeed: 0.0034, dive: 0.3, diveVert: 0.46, reachX: 0.21, reachY: 0.5, guardY: 0.6 };
   }
   if (k <= 10) {
     // Harder after 5 goals: faster still, wider patrol, longer reach.
-    return { oscRange: 0.44, oscSpeed: 0.015, dive: 0.32, diveVert: 0.54, reachX: 0.23, reachY: 0.56, guardY: 0.58 };
+    return { oscRange: 0.44, oscSpeed: 0.0044, dive: 0.32, diveVert: 0.54, reachX: 0.23, reachY: 0.56, guardY: 0.58 };
   }
   // Extreme after 10 goals: ramps with each further kick but stays capped so a
   // well-placed shot to the corner away from the keeper is always scoreable.
   const over = k - 10;
   return {
     oscRange: 0.46,
-    oscSpeed: Math.min(0.018 + over * 0.0004, 0.026),
+    oscSpeed: Math.min(0.0048 + over * 0.0002, 0.0058),
     dive: Math.min(0.34 + over * 0.002, 0.35),
     diveVert: Math.min(0.58 + over * 0.006, 0.64),
     reachX: Math.min(0.235 + over * 0.001, 0.24),
@@ -76,7 +76,7 @@ export function getKeeperDifficulty(kick) {
 // Sharpening factor for the keeper glide: a tanh curve pushes the sine toward
 // its extremes, so the keeper dwells at the posts and snaps across the middle
 // ("goes to corners often") instead of loitering in the centre.
-const OSC_SHARPEN = 2.0;
+const OSC_SHARPEN = 1.5;
 const OSC_SHARPEN_NORM = Math.tanh(OSC_SHARPEN);
 
 /**
