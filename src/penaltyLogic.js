@@ -39,36 +39,36 @@ export const SAVE_WORDS = [
  * Keeper behaviour for a given kick number (1-based). Returns how far and how
  * fast the keeper paces along the goal (oscRange / oscSpeed), how far it can
  * lunge toward the shot (dive), its reach half-box (reachX / reachY) and the
- * height it guards (guardY). Three tiers:
- *   kicks 1-5  : hard    - busy keeper, punishes loose placement from the start
- *   kicks 6-10 : harder  - quicker and wider
- *   kicks 11+  : extreme - fast and wide, ramping, but a corner is always open
+ * height it guards (guardY). Three tiers, steep on purpose:
+ *   kick 1  : beatable - real keeper but stays low, leaving corners + top bins
+ *   kick 2  : very hard - after the first goal: fast, wide, springs high
+ *   kick 3+ : extreme   - after two goals: fastest and widest, ramping
  */
 export function getKeeperDifficulty(kick) {
   const k = Math.max(1, kick);
   // `dive` is the horizontal lunge, `diveVert` the vertical stretch toward the
-  // shot. The keeper is hard from the very first kick, harder after 5 goals,
-  // and extreme after 10. Caps keep the far corner reachable so it stays fair.
-  if (k <= 5) {
-    // Hard from kick 1: a fast keeper that patrols wide, lunges far sideways AND
-    // springs high, so it covers the top bins on its side too. A centred keeper
-    // covers nearly the whole goal; only the corner away from it is open.
-    return { oscRange: 0.4, oscSpeed: 0.0034, dive: 0.3, diveVert: 0.46, reachX: 0.21, reachY: 0.5, guardY: 0.6 };
+  // shot. The first kick is winnable so players get on the board; it spikes hard
+  // after that. Caps keep the corner away from the keeper reachable so it's fair.
+  if (k <= 1) {
+    // First kick: approachable. The keeper stays low and narrow, so a placed
+    // corner or a shot into the top bins beats it.
+    return { oscRange: 0.34, oscSpeed: 0.0038, dive: 0.18, diveVert: 0.12, reachX: 0.16, reachY: 0.26, guardY: 0.62 };
   }
-  if (k <= 10) {
-    // Harder after 5 goals: faster still, wider patrol, longer reach.
-    return { oscRange: 0.44, oscSpeed: 0.0044, dive: 0.32, diveVert: 0.54, reachX: 0.23, reachY: 0.56, guardY: 0.58 };
+  if (k <= 2) {
+    // After 1 goal: very hard. Fast, wide patrol, long lunge, springs high to
+    // cover the top bins on its side.
+    return { oscRange: 0.42, oscSpeed: 0.0065, dive: 0.3, diveVert: 0.46, reachX: 0.22, reachY: 0.5, guardY: 0.6 };
   }
-  // Extreme after 10 goals: ramps with each further kick but stays capped so a
+  // After 2 goals: extreme. Ramps with each further kick but stays capped so a
   // well-placed shot to the corner away from the keeper is always scoreable.
-  const over = k - 10;
+  const over = k - 2;
   return {
     oscRange: 0.46,
-    oscSpeed: Math.min(0.0048 + over * 0.0002, 0.0058),
-    dive: Math.min(0.34 + over * 0.002, 0.35),
-    diveVert: Math.min(0.58 + over * 0.006, 0.64),
-    reachX: Math.min(0.235 + over * 0.001, 0.24),
-    reachY: Math.min(0.58 + over * 0.004, 0.62),
+    oscSpeed: Math.min(0.0072 + over * 0.0003, 0.009),
+    dive: Math.min(0.31 + over * 0.003, 0.34),
+    diveVert: Math.min(0.5 + over * 0.006, 0.62),
+    reachX: Math.min(0.22 + over * 0.002, 0.24),
+    reachY: Math.min(0.54 + over * 0.004, 0.6),
     guardY: 0.56,
   };
 }
