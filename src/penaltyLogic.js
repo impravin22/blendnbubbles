@@ -67,11 +67,11 @@ export function getKeeperDifficulty(kick) {
   const over = k - 5;
   return {
     oscRange: 0.46,
-    oscSpeed: Math.min(0.0085 + over * 0.0003, 0.0098),
-    dive: Math.min(0.3 + over * 0.003, 0.33),
-    diveVert: Math.min(0.5 + over * 0.006, 0.6),
-    reachX: Math.min(0.23 + over * 0.001, 0.25),
-    reachY: Math.min(0.56 + over * 0.004, 0.6),
+    oscSpeed: Math.min(0.0092 + over * 0.0005, 0.011),
+    dive: Math.min(0.31 + over * 0.004, 0.33),
+    diveVert: Math.min(0.52 + over * 0.006, 0.62),
+    reachX: Math.min(0.24 + over * 0.003, 0.26),
+    reachY: Math.min(0.56 + over * 0.005, 0.62),
     guardY: 0.56,
   };
 }
