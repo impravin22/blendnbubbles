@@ -39,36 +39,39 @@ export const SAVE_WORDS = [
  * Keeper behaviour for a given kick number (1-based). Returns how far and how
  * fast the keeper paces along the goal (oscRange / oscSpeed), how far it can
  * lunge toward the shot (dive), its reach half-box (reachX / reachY) and the
- * height it guards (guardY). Three tiers, steep on purpose:
- *   kick 1  : beatable - real keeper but stays low, leaving corners + top bins
- *   kick 2  : very hard - after the first goal: fast, wide, springs high
- *   kick 3+ : extreme   - after two goals: fastest and widest, ramping
+ * height it guards (guardY). The curve is built around the reward (free drink
+ * at 5 goals), so it ramps tier by tier:
+ *   kick 1   : easy      - wide open net, get on the board
+ *   kick 2   : medium    - decent placement needed
+ *   kick 3-4 : very hard - fast, wide, springs high
+ *   kick 5+  : extreme   - the reward kick: fastest and widest, ramping
  */
 export function getKeeperDifficulty(kick) {
   const k = Math.max(1, kick);
   // `dive` is the horizontal lunge, `diveVert` the vertical stretch toward the
-  // shot. The first kick is winnable so players get on the board; it spikes hard
-  // after that. Caps keep the corner away from the keeper reachable so it's fair.
+  // shot. Caps keep the corner away from the keeper reachable so it stays fair.
   if (k <= 1) {
-    // First kick: approachable. The keeper stays low and narrow, so a placed
-    // corner or a shot into the top bins beats it.
-    return { oscRange: 0.34, oscSpeed: 0.0038, dive: 0.18, diveVert: 0.12, reachX: 0.16, reachY: 0.26, guardY: 0.62 };
+    // Goal 1: easy. Slow, low, narrow keeper leaves the corners and top bins.
+    return { oscRange: 0.3, oscSpeed: 0.0034, dive: 0.14, diveVert: 0.1, reachX: 0.13, reachY: 0.24, guardY: 0.62 };
   }
   if (k <= 2) {
-    // After 1 goal: very hard. Fast, wide patrol, long lunge, springs high to
-    // cover the top bins on its side.
-    return { oscRange: 0.42, oscSpeed: 0.0065, dive: 0.3, diveVert: 0.46, reachX: 0.22, reachY: 0.5, guardY: 0.6 };
+    // Goal 2: medium. Quicker and wider; needs a placed shot.
+    return { oscRange: 0.36, oscSpeed: 0.005, dive: 0.2, diveVert: 0.24, reachX: 0.16, reachY: 0.34, guardY: 0.6 };
   }
-  // After 2 goals: extreme. Ramps with each further kick but stays capped so a
-  // well-placed shot to the corner away from the keeper is always scoreable.
-  const over = k - 2;
+  if (k <= 4) {
+    // Goals 3-4: very hard. Fast, wide patrol, long lunge, springs high.
+    return { oscRange: 0.42, oscSpeed: 0.0072, dive: 0.28, diveVert: 0.44, reachX: 0.21, reachY: 0.5, guardY: 0.58 };
+  }
+  // Goal 5+ (the reward kick): extreme. Ramps with each further kick but stays
+  // capped so a well-placed shot to the corner away from the keeper is scoreable.
+  const over = k - 5;
   return {
     oscRange: 0.46,
-    oscSpeed: Math.min(0.0072 + over * 0.0003, 0.009),
-    dive: Math.min(0.31 + over * 0.003, 0.34),
-    diveVert: Math.min(0.5 + over * 0.006, 0.62),
-    reachX: Math.min(0.22 + over * 0.002, 0.24),
-    reachY: Math.min(0.54 + over * 0.004, 0.6),
+    oscSpeed: Math.min(0.0085 + over * 0.0003, 0.0098),
+    dive: Math.min(0.3 + over * 0.003, 0.33),
+    diveVert: Math.min(0.5 + over * 0.006, 0.6),
+    reachX: Math.min(0.23 + over * 0.001, 0.25),
+    reachY: Math.min(0.56 + over * 0.004, 0.6),
     guardY: 0.56,
   };
 }

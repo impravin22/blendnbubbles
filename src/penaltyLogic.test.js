@@ -8,30 +8,36 @@ import {
 } from './penaltyLogic';
 
 describe('getKeeperDifficulty (tiered by kick count)', () => {
-  test('spikes hard after the first goal: beatable, very hard, extreme', () => {
-    const first = getKeeperDifficulty(1);
-    const veryHard = getKeeperDifficulty(2);
-    const extreme = getKeeperDifficulty(3);
-    // Coverage and pace grow sharply tier over tier.
-    expect(veryHard.reachX).toBeGreaterThan(first.reachX);
+  test('ramps across four tiers: easy, medium, very hard, extreme', () => {
+    const easy = getKeeperDifficulty(1);
+    const medium = getKeeperDifficulty(2);
+    const veryHard = getKeeperDifficulty(3);
+    const extreme = getKeeperDifficulty(5);
+    // Coverage and pace grow tier over tier toward the reward kick.
+    expect(medium.reachX).toBeGreaterThan(easy.reachX);
+    expect(veryHard.reachX).toBeGreaterThan(medium.reachX);
     expect(extreme.reachX).toBeGreaterThan(veryHard.reachX);
-    expect(veryHard.dive).toBeGreaterThan(first.dive);
+    expect(medium.dive).toBeGreaterThan(easy.dive);
+    expect(veryHard.dive).toBeGreaterThan(medium.dive);
     expect(extreme.dive).toBeGreaterThan(veryHard.dive);
-    expect(veryHard.oscSpeed).toBeGreaterThan(first.oscSpeed);
+    expect(medium.oscSpeed).toBeGreaterThan(easy.oscSpeed);
+    expect(veryHard.oscSpeed).toBeGreaterThan(medium.oscSpeed);
     expect(extreme.oscSpeed).toBeGreaterThan(veryHard.oscSpeed);
   });
 
-  test('tier boundaries fall on the first and second goal', () => {
-    expect(getKeeperDifficulty(2)).not.toEqual(getKeeperDifficulty(1)); // very hard begins
-    expect(getKeeperDifficulty(3)).not.toEqual(getKeeperDifficulty(2)); // extreme begins
+  test('tier boundaries fall on goals 1, 2 and 4 (reward at 5)', () => {
+    expect(getKeeperDifficulty(2)).not.toEqual(getKeeperDifficulty(1)); // medium begins
+    expect(getKeeperDifficulty(3)).not.toEqual(getKeeperDifficulty(2)); // very hard begins
+    expect(getKeeperDifficulty(4)).toEqual(getKeeperDifficulty(3)); // 3-4 share the very-hard tier
+    expect(getKeeperDifficulty(5)).not.toEqual(getKeeperDifficulty(4)); // extreme begins on the reward kick
   });
 
   test('the first kick is the most beatable tier', () => {
-    const first = getKeeperDifficulty(1);
-    const veryHard = getKeeperDifficulty(2);
+    const easy = getKeeperDifficulty(1);
+    const medium = getKeeperDifficulty(2);
     // First kick leaves more of the goal open than later kicks.
-    expect(first.dive + first.reachX).toBeLessThan(veryHard.dive + veryHard.reachX);
-    expect(first.diveVert).toBeLessThan(veryHard.diveVert);
+    expect(easy.dive + easy.reachX).toBeLessThan(medium.dive + medium.reachX);
+    expect(easy.diveVert).toBeLessThan(medium.diveVert);
   });
 
   test('clamps a kick below one to the first kick', () => {
@@ -40,10 +46,10 @@ describe('getKeeperDifficulty (tiered by kick count)', () => {
 
   test('extreme tier stays capped so a placed shot is always scoreable', () => {
     const veryHard = getKeeperDifficulty(999);
-    expect(veryHard.dive).toBeLessThanOrEqual(0.34);
-    expect(veryHard.reachX).toBeLessThanOrEqual(0.24);
+    expect(veryHard.dive).toBeLessThanOrEqual(0.33);
+    expect(veryHard.reachX).toBeLessThanOrEqual(0.25);
     expect(veryHard.reachY).toBeLessThanOrEqual(0.6);
-    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.009);
+    expect(veryHard.oscSpeed).toBeLessThanOrEqual(0.0098);
     // Far corner must stay open: max horizontal cover < distance across the goal.
     expect(veryHard.dive + veryHard.reachX).toBeLessThan(0.6);
   });
@@ -66,7 +72,7 @@ describe('keeperOscX (visible glide)', () => {
 });
 
 describe('isSaved (lunge from the keeper position)', () => {
-  const first = getKeeperDifficulty(1); // dive 0.18, diveVert 0.12, reachX 0.16, reachY 0.26, guardY 0.62
+  const first = getKeeperDifficulty(1); // easy: dive 0.14, diveVert 0.1, reachX 0.13, reachY 0.24, guardY 0.62
 
   test('saves a low shot right at the keeper', () => {
     expect(isSaved({ x: 0.5, y: 0.62 }, 0.5, first)).toBe(true);
