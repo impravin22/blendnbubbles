@@ -355,9 +355,21 @@ function PenaltyShootout() {
     // shot in flight
     shotAim: null, // normalised landing point
     flightT: 0,
+    ballSpin: 0, // accumulated ball rotation during flight
     resultTimer: 0,
     lastResult: null, // 'goal' | 'save'
     flashWord: '',
+    // effects (decay over time; all skipped when reduced motion is on)
+    reduced: typeof window !== 'undefined'
+      && window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    shake: 0, // camera-shake magnitude in px, decays
+    crowdFlash: 0, // 0..1 crowd celebration brightness, decays
+    netRipple: null, // { x, y, t } net bulge at the ball's impact point
+    confetti: [], // active confetti particles
+    bg: null, // cached offscreen backdrop
+    bgW: 0,
+    bgH: 0,
     lastTs: performance.now(),
   }), [geom]);
 
@@ -365,97 +377,24 @@ function PenaltyShootout() {
   const drawScene = useCallback((ctx, s) => {
     const { w, h, g } = s;
 
-    // Night sky + floodlight glow
-    const sky = ctx.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, '#012a2a');
-    sky.addColorStop(0.6, '#004444');
-    sky.addColorStop(1, '#0a5252');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, w, h);
-
-    const glow = ctx.createRadialGradient(w / 2, -h * 0.1, 0, w / 2, -h * 0.1, w * 0.9);
-    glow.addColorStop(0, 'rgba(206,170,103,0.28)');
-    glow.addColorStop(0.5, 'rgba(206,170,103,0.05)');
-    glow.addColorStop(1, 'rgba(206,170,103,0)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, w, h);
-
-    // Crowd stand behind the goal: a dark tier dotted with speckled fans for
-    // a stadium feel. Static (no per-frame randomness) so it never flickers.
-    const standTop = g.goalTop - 52;
-    const standBot = g.goalTop - 10;
-    if (standBot > 0) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
-      ctx.fillRect(0, standTop, w, standBot - standTop);
-      const cols2 = Math.floor(w / 12);
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < cols2; c++) {
-          // Deterministic pseudo-random shade from indices (no Math.random).
-          const seed = (c * 73 + r * 131) % 7;
-          const shades = ['#CEAA67', '#9fd6c0', '#e8e8e8', '#BB8750', '#7fb7a6', '#d8d8d8', '#c6ff3d'];
-          ctx.fillStyle = shades[seed];
-          ctx.globalAlpha = 0.5;
-          ctx.beginPath();
-          ctx.arc(6 + c * 12 + (r % 2) * 6, standTop + 8 + r * 13, 2.4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      ctx.globalAlpha = 1;
-      ctx.restore();
+    // (Re)build the static backdrop offscreen whenever the size changes, then
+    // blit it each frame. Keeps per-frame work to the moving pieces only.
+    if (!s.bg || s.bgW !== w || s.bgH !== h) {
+      s.bg = buildBackdrop(w, h, g);
+      s.bgW = w;
+      s.bgH = h;
     }
 
-    // Perspective pitch
-    const pitchTop = g.goalBottom - 6;
     ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(w * 0.26, pitchTop);
-    ctx.lineTo(w * 0.74, pitchTop);
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
-    ctx.closePath();
-    ctx.clip();
-    const stripeCount = 7;
-    for (let i = 0; i < stripeCount; i++) {
-      ctx.fillStyle = i % 2 === 0 ? '#1f7a46' : '#155c33';
-      const y0 = pitchTop + ((h - pitchTop) * i) / stripeCount;
-      const y1 = pitchTop + ((h - pitchTop) * (i + 1)) / stripeCount;
-      ctx.fillRect(0, y0, w, y1 - y0);
+    // Camera shake on goal / save.
+    if (s.shake > 0.2 && !s.reduced) {
+      ctx.translate((Math.random() - 0.5) * s.shake, (Math.random() - 0.5) * s.shake);
     }
-    ctx.restore();
 
-    // Goal: net + posts + faint zone hints
-    ctx.save();
-    // net
-    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-    ctx.lineWidth = 1;
-    const cols = 9;
-    const rows = 5;
-    for (let c = 0; c <= cols; c++) {
-      const x = g.goalLeft + (g.goalW * c) / cols;
-      ctx.beginPath();
-      ctx.moveTo(x, g.goalTop);
-      ctx.lineTo(x, g.goalBottom);
-      ctx.stroke();
-    }
-    for (let r = 0; r <= rows; r++) {
-      const y = g.goalTop + (g.goalH * r) / rows;
-      ctx.beginPath();
-      ctx.moveTo(g.goalLeft, y);
-      ctx.lineTo(g.goalRight, y);
-      ctx.stroke();
-    }
-    // posts + crossbar
-    ctx.fillStyle = '#f4f4f4';
-    const bar = 7;
-    ctx.fillRect(g.goalLeft - bar, g.goalTop - bar, g.goalW + bar * 2, bar); // crossbar
-    ctx.fillRect(g.goalLeft - bar, g.goalTop - bar, bar, g.goalH + bar); // left post
-    ctx.fillRect(g.goalRight, g.goalTop - bar, bar, g.goalH + bar); // right post
-    ctx.restore();
+    ctx.drawImage(s.bg, 0, 0, w, h);
 
-    // Keeper
-    const keeperPx = keeperPixel(s);
-    drawKeeper(ctx, keeperPx.x, keeperPx.y, keeperPx.lean);
+    // Crowd celebration flash over the stand band.
+    if (s.crowdFlash > 0.01) drawCrowdFlash(ctx, w, g, s.crowdFlash);
 
     // Aim guide while dragging
     if (s.phase === 'aiming' && s.dragging && s.dragStart && s.dragCur) {
@@ -492,9 +431,33 @@ function PenaltyShootout() {
     // ball sits at his feet. Drawn before the ball so the ball layers on top.
     drawStriker(ctx, g.ballX0 - 46, g.ballY0 - 6, s.team);
 
+    // Net ripple where the ball hit (behind the keeper).
+    if (s.netRipple) drawNetRipple(ctx, g, s.netRipple);
+
+    // Keeper (idle bob + dive handled in keeperPixel)
+    const keeperPx = keeperPixel(s);
+    drawKeeper(ctx, keeperPx.x, keeperPx.y, keeperPx.lean);
+
+    // Ball motion trail during flight.
+    const ballFlying = s.phase === 'shooting' || (s.phase === 'result' && s.shotAim);
+    if (ballFlying && !s.reduced) {
+      for (let i = 1; i <= 3; i++) {
+        const tt = s.flightT - i * 0.06;
+        if (tt <= 0) break;
+        const p = ballAt(s, tt);
+        ctx.save();
+        ctx.globalAlpha = 0.13 * (1 - i / 4);
+        drawBall(ctx, p.x, p.y, p.scale, 0);
+        ctx.restore();
+      }
+    }
+
     // Ball
     const ballPx = ballPixel(s);
-    drawBall(ctx, ballPx.x, ballPx.y, ballPx.scale);
+    drawBall(ctx, ballPx.x, ballPx.y, ballPx.scale, s.ballSpin);
+
+    // Confetti (goal celebration)
+    if (s.confetti.length) drawConfetti(ctx, s.confetti);
 
     // Result flash word: shrink the font so long phrases fit the screen width.
     if (s.phase === 'result' && s.flashWord) {
@@ -514,6 +477,8 @@ function PenaltyShootout() {
       ctx.fillText(s.flashWord, w / 2, h * 0.52);
       ctx.restore();
     }
+
+    ctx.restore();
   }, [aimToPixels]);
 
   // ─── Game loop ─────────────────────────────────────────────
@@ -524,6 +489,9 @@ function PenaltyShootout() {
     s.lastTs = ts;
     s.elapsed += delta;
 
+    // Decay the visual effects.
+    stepEffects(s, delta);
+
     // The keeper glides visibly along the goal while the player lines up.
     if (s.phase === 'aiming') {
       s.keeperX = keeperOscX(s.elapsed, s.keeperDiff);
@@ -531,6 +499,7 @@ function PenaltyShootout() {
 
     if (s.phase === 'shooting') {
       s.flightT += delta / SHOT_FLIGHT_MS;
+      s.ballSpin += delta * 0.02; // the ball spins as it flies
       if (s.flightT >= 1) {
         s.flightT = 1;
         const saved = s.willSave;
@@ -539,12 +508,21 @@ function PenaltyShootout() {
           s.lastResult = 'save';
           s.flashWord = SAVE_WORDS[Math.floor(Math.random() * SAVE_WORDS.length)];
           s.resultTimer = 600;
+          if (!s.reduced) s.shake = 7;
         } else {
           s.streak += 1;
           s.phase = 'result';
           s.lastResult = 'goal';
           s.flashWord = GOAL_WORDS[Math.floor(Math.random() * GOAL_WORDS.length)];
           s.resultTimer = RESULT_HOLD_GOAL_MS;
+          // Celebrate: net ripple at the ball, crowd flash, confetti, big shake.
+          const impact = ballAt(s, 1);
+          s.netRipple = { x: impact.x, y: impact.y, t: 0 };
+          s.crowdFlash = 1;
+          if (!s.reduced) {
+            s.shake = 12;
+            spawnConfetti(s, impact.x, impact.y);
+          }
         }
       }
     } else if (s.phase === 'result') {
@@ -560,7 +538,10 @@ function PenaltyShootout() {
         s.phase = 'aiming';
         s.shotAim = null;
         s.flightT = 0;
+        s.ballSpin = 0;
         s.flashWord = '';
+        s.netRipple = null;
+        s.confetti = [];
         s.keeperDiff = getKeeperDifficulty(s.shotNumber);
       }
     }
@@ -804,16 +785,315 @@ function PenaltyShootout() {
   );
 }
 
+// ─── Static backdrop (pre-rendered once per size) ────────────
+// Draws every non-moving layer to an offscreen canvas so the per-frame loop
+// only has to blit it plus the moving pieces. Keeps things smooth on phones.
+function buildBackdrop(w, h, g) {
+  const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w * dpr));
+  c.height = Math.max(1, Math.round(h * dpr));
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Night sky.
+  const sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#012020');
+  sky.addColorStop(0.55, '#013a3a');
+  sky.addColorStop(1, '#0a5252');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, h);
+
+  drawStands(ctx, w, g);
+  drawPylons(ctx, w, g);
+
+  // Floodlight glow over the pitch.
+  const glow = ctx.createRadialGradient(w / 2, -h * 0.1, 0, w / 2, -h * 0.1, w * 0.95);
+  glow.addColorStop(0, 'rgba(206,170,103,0.3)');
+  glow.addColorStop(0.5, 'rgba(206,170,103,0.05)');
+  glow.addColorStop(1, 'rgba(206,170,103,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, h);
+
+  drawCrowdBase(ctx, w, g);
+  drawPitch(ctx, w, h, g);
+  drawGoal(ctx, g);
+  return c;
+}
+
+// Tiered stands behind the goal, fading up into the dark.
+function drawStands(ctx, w, g) {
+  const base = g.goalTop - 10;
+  ctx.save();
+  for (let i = 0; i < 3; i++) {
+    const y = base - 14 - i * 16;
+    if (y < 0) break;
+    ctx.fillStyle = `rgba(0,0,0,${0.28 + i * 0.08})`;
+    ctx.fillRect(0, y, w, 16);
+  }
+  ctx.restore();
+}
+
+// Two floodlight pylons with a glowing lamp array, upper corners.
+function drawPylons(ctx, w, g) {
+  const top = Math.max(6, g.goalTop - 92);
+  const headY = top;
+  const poleBottom = g.goalTop - 18;
+  if (poleBottom <= headY) return;
+  for (const px of [w * 0.12, w * 0.88]) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(120,130,130,0.5)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(px, headY + 10);
+    ctx.lineTo(px, poleBottom);
+    ctx.stroke();
+    // lamp panel
+    ctx.fillStyle = '#1c2626';
+    roundRect(ctx, px - 16, headY, 32, 12, 3);
+    ctx.fill();
+    for (let i = 0; i < 6; i++) {
+      ctx.fillStyle = i % 2 ? '#fff7e0' : '#ffe9b0';
+      ctx.beginPath();
+      ctx.arc(px - 12 + i * 5, headY + 6, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const lampGlow = ctx.createRadialGradient(px, headY + 6, 0, px, headY + 6, 60);
+    lampGlow.addColorStop(0, 'rgba(255,245,210,0.22)');
+    lampGlow.addColorStop(1, 'rgba(255,245,210,0)');
+    ctx.fillStyle = lampGlow;
+    ctx.fillRect(px - 60, headY - 40, 120, 120);
+    ctx.restore();
+  }
+}
+
+// Static crowd speckle inside the stand band.
+function drawCrowdBase(ctx, w, g) {
+  const standTop = g.goalTop - 52;
+  const standBot = g.goalTop - 10;
+  if (standBot <= 0) return;
+  const shades = ['#CEAA67', '#9fd6c0', '#e8e8e8', '#BB8750', '#7fb7a6', '#d8d8d8', '#c6ff3d'];
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  const cols = Math.floor(w / 12);
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < cols; c++) {
+      ctx.fillStyle = shades[(c * 73 + r * 131) % 7];
+      ctx.beginPath();
+      ctx.arc(6 + c * 12 + (r % 2) * 6, standTop + 8 + r * 13, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// Perspective pitch: striped turf, grain texture, and penalty-box markings.
+function drawPitch(ctx, w, h, g) {
+  const pitchTop = g.goalBottom - 6;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(w * 0.26, pitchTop);
+  ctx.lineTo(w * 0.74, pitchTop);
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.clip();
+
+  const stripes = 7;
+  for (let i = 0; i < stripes; i++) {
+    ctx.fillStyle = i % 2 === 0 ? '#1f7a46' : '#155c33';
+    const y0 = pitchTop + ((h - pitchTop) * i) / stripes;
+    const y1 = pitchTop + ((h - pitchTop) * (i + 1)) / stripes;
+    ctx.fillRect(0, y0, w, y1 - y0);
+  }
+
+  // Grain: faint deterministic speckle for turf texture.
+  ctx.globalAlpha = 0.05;
+  for (let i = 0; i < 240; i++) {
+    const gx = ((i * 977) % 1000) / 1000 * w;
+    const gy = pitchTop + (((i * 613) % 1000) / 1000) * (h - pitchTop);
+    ctx.fillStyle = i % 2 ? '#ffffff' : '#000000';
+    ctx.fillRect(gx, gy, 1.5, 1.5);
+  }
+  ctx.globalAlpha = 1;
+
+  // Penalty markings, drawn in perspective (wider at the bottom).
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 2;
+  const cx = w / 2;
+  const boxTopY = pitchTop + (h - pitchTop) * 0.12;
+  const boxBotY = pitchTop + (h - pitchTop) * 0.62;
+  const boxTopHalf = w * 0.16;
+  const boxBotHalf = w * 0.34;
+  ctx.beginPath();
+  ctx.moveTo(cx - boxTopHalf, boxTopY);
+  ctx.lineTo(cx + boxTopHalf, boxTopY);
+  ctx.lineTo(cx + boxBotHalf, boxBotY);
+  ctx.lineTo(cx - boxBotHalf, boxBotY);
+  ctx.closePath();
+  ctx.stroke();
+  // six-yard box
+  const sixTopY = pitchTop + (h - pitchTop) * 0.04;
+  const sixTopHalf = w * 0.09;
+  const sixBotHalf = w * 0.17;
+  ctx.beginPath();
+  ctx.moveTo(cx - sixTopHalf, sixTopY);
+  ctx.lineTo(cx + sixTopHalf, sixTopY);
+  ctx.lineTo(cx + sixBotHalf, boxTopY);
+  ctx.lineTo(cx - sixBotHalf, boxTopY);
+  ctx.closePath();
+  ctx.stroke();
+  // penalty spot + arc
+  const spotY = pitchTop + (h - pitchTop) * 0.42;
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath();
+  ctx.arc(cx, spotY, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx, boxTopY, w * 0.12, (h - pitchTop) * 0.05, 0, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Goal frame + static net.
+function drawGoal(ctx, g) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = 1;
+  const cols = 9;
+  const rows = 5;
+  for (let c = 0; c <= cols; c++) {
+    const x = g.goalLeft + (g.goalW * c) / cols;
+    ctx.beginPath();
+    ctx.moveTo(x, g.goalTop);
+    ctx.lineTo(x, g.goalBottom);
+    ctx.stroke();
+  }
+  for (let r = 0; r <= rows; r++) {
+    const y = g.goalTop + (g.goalH * r) / rows;
+    ctx.beginPath();
+    ctx.moveTo(g.goalLeft, y);
+    ctx.lineTo(g.goalRight, y);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#f4f4f4';
+  const bar = 7;
+  ctx.fillRect(g.goalLeft - bar, g.goalTop - bar, g.goalW + bar * 2, bar);
+  ctx.fillRect(g.goalLeft - bar, g.goalTop - bar, bar, g.goalH + bar);
+  ctx.fillRect(g.goalRight, g.goalTop - bar, bar, g.goalH + bar);
+  ctx.restore();
+}
+
+// ─── Dynamic effects ─────────────────────────────────────────
+// Decay all the transient effects by elapsed time.
+function stepEffects(s, delta) {
+  if (s.shake > 0) s.shake = Math.max(0, s.shake - delta * 0.05);
+  if (s.crowdFlash > 0) s.crowdFlash = Math.max(0, s.crowdFlash - delta * 0.0016);
+  if (s.netRipple) {
+    s.netRipple.t += delta;
+    if (s.netRipple.t > 700) s.netRipple = null;
+  }
+  if (s.confetti.length) {
+    for (const p of s.confetti) {
+      p.life -= delta;
+      p.x += p.vx * delta;
+      p.y += p.vy * delta;
+      p.vy += 0.0009 * delta; // gravity
+      p.rot += p.vr * delta;
+    }
+    s.confetti = s.confetti.filter((p) => p.life > 0);
+  }
+}
+
+// Brighten the crowd band during a celebration.
+function drawCrowdFlash(ctx, w, g, k) {
+  const standTop = g.goalTop - 52;
+  const standBot = g.goalTop - 8;
+  if (standBot <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = 0.5 * k;
+  const grad = ctx.createLinearGradient(0, standTop, 0, standBot);
+  grad.addColorStop(0, 'rgba(206,170,103,0.9)');
+  grad.addColorStop(1, 'rgba(206,170,103,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, standTop, w, standBot - standTop);
+  ctx.restore();
+}
+
+// A bulge in the net where the ball struck.
+function drawNetRipple(ctx, g, ripple) {
+  const x = Math.max(g.goalLeft + 6, Math.min(g.goalRight - 6, ripple.x));
+  const y = Math.max(g.goalTop + 6, Math.min(g.goalBottom - 4, ripple.y));
+  const p = Math.min(1, ripple.t / 700);
+  // Rings expand outward as the ripple ages; guard radii to stay positive.
+  const grow = p * 22;
+  ctx.save();
+  ctx.strokeStyle = `rgba(255,255,255,${0.45 * (1 - p)})`;
+  ctx.lineWidth = 1.4;
+  for (let i = 1; i <= 3; i++) {
+    const rad = Math.max(1, i * 7 + grow);
+    ctx.beginPath();
+    ctx.ellipse(x, y, rad, Math.max(1, rad * 0.7), 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Spawn a capped burst of confetti at the impact point.
+function spawnConfetti(s, x, y) {
+  const colours = ['#CEAA67', '#BB8750', '#9fd6c0', '#ffffff', '#c6ff3d', '#ff8a65'];
+  const n = 64;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const ang = (Math.PI * 2 * i) / n + Math.random() * 0.4;
+    const spd = 0.12 + Math.random() * 0.26;
+    out.push({
+      x,
+      y,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd - 0.18,
+      vr: (Math.random() - 0.5) * 0.02,
+      rot: Math.random() * Math.PI,
+      size: 3 + Math.random() * 4,
+      colour: colours[i % colours.length],
+      life: 900 + Math.random() * 500,
+      maxLife: 1400,
+    });
+  }
+  s.confetti = out;
+}
+
+function drawConfetti(ctx, particles) {
+  ctx.save();
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, p.life / 500));
+    ctx.fillStyle = p.colour;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
 // ─── Pixel helpers (module-scope, pure) ──────────────────────
+// Ball position along its flight arc at normalised time t (0 = spot, 1 = goal).
+function ballAt(s, t) {
+  const { g } = s;
+  const tgt = { x: g.goalLeft + s.shotAim.x * g.goalW, y: g.goalTop + s.shotAim.y * g.goalH };
+  return {
+    x: g.ballX0 + (tgt.x - g.ballX0) * t,
+    y: g.ballY0 + (tgt.y - g.ballY0) * t - g.arcLift * Math.sin(Math.PI * t),
+    scale: 1 - 0.45 * t,
+  };
+}
+
 function ballPixel(s) {
   const { g } = s;
   if (s.phase === 'shooting' || (s.phase === 'result' && s.shotAim)) {
-    const t = s.flightT;
-    const tgt = { x: g.goalLeft + s.shotAim.x * g.goalW, y: g.goalTop + s.shotAim.y * g.goalH };
-    const x = g.ballX0 + (tgt.x - g.ballX0) * t;
-    const y = g.ballY0 + (tgt.y - g.ballY0) * t - g.arcLift * Math.sin(Math.PI * t);
-    const scale = 1 - 0.45 * t; // shrinks as it flies away
-    return { x, y, scale };
+    return ballAt(s, s.flightT);
   }
   return { x: g.ballX0, y: g.ballY0, scale: 1 };
 }
@@ -849,8 +1129,10 @@ function keeperPixel(s) {
       lean: Math.sign(targetX - s.keeperXAtShot),
     };
   }
-  // Aiming / idle: the keeper glides at its current position, upright.
-  return { x: xToPx(s.keeperX), y: guardYpx, lean: 0 };
+  // Aiming / idle: the keeper glides at its current position with a small
+  // ready-stance bob so it feels alive.
+  const bob = s.reduced ? 0 : Math.sin(s.elapsed * 0.005) * 2;
+  return { x: xToPx(s.keeperX), y: guardYpx + bob, lean: 0 };
 }
 
 // Keeper in the BnB home kit (teal jersey, gold trim, number 1) with white
@@ -960,17 +1242,17 @@ function drawStriker(ctx, x, y, team) {
   ctx.restore();
 }
 
-function drawBall(ctx, x, y, scale) {
+function drawBall(ctx, x, y, scale, spin = 0) {
   const r = 21 * scale;
   ctx.save();
-  // shadow
+  // shadow (fixed under the ball, does not spin)
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = '#000';
   ctx.beginPath();
   ctx.ellipse(x, y + r * 0.9, r * 0.9, r * 0.32, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
-  // ball
+  // ball body with a fixed light highlight
   const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.2, x, y, r);
   grad.addColorStop(0, '#ffffff');
   grad.addColorStop(1, '#dfe6e6');
@@ -978,11 +1260,20 @@ function drawBall(ctx, x, y, scale) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
-  // pentagons (BnB teal)
+  // pentagons (BnB teal), rotated by the spin so the ball visibly turns
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(spin);
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.clip();
   ctx.fillStyle = '#003333';
-  ctx.beginPath(); ctx.arc(x, y - r * 0.12, r * 0.28, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x - r * 0.5, y + r * 0.35, r * 0.16, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x + r * 0.5, y + r * 0.35, r * 0.16, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -r * 0.12, r * 0.28, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-r * 0.5, r * 0.35, r * 0.16, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(r * 0.5, r * 0.35, r * 0.16, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(r * 0.62, -r * 0.4, r * 0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-r * 0.6, -r * 0.32, r * 0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
   ctx.restore();
 }
 
