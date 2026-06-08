@@ -295,7 +295,8 @@ function Homepage() {
               <p>Senjuti Apt. Shop No -6, 68/16, Feeder Road, Barrackpore, Kolkata</p>
               <p>PIN: 700120</p>
               <h4>Hours</h4>
-              <p>Monday - Sunday: 11am - 9pm</p>
+              <p>Tuesday - Sunday: 12pm - 10pm</p>
+              <p>Monday: 4pm - 10pm</p>
               <h4>Contact</h4>
               <p>Phone: +91 9330697501</p>
               <p>Email: blendnbubbles@yahoo.com</p>
