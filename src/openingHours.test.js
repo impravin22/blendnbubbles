@@ -117,6 +117,14 @@ describe('public/index.html human-readable copy', () => {
     );
   });
 
+  test('WebPage description (Google snippet) reflects the new split hours', () => {
+    // Phrased without "from" and without the comma after Sunday, so this
+    // substring targets only the WebPage description, not the FAQ answers.
+    expect(INDEX_HTML).toContain(
+      'Open Tuesday to Sunday 12:00 PM to 10:00 PM, and Monday 4:00 PM to 10:00 PM',
+    );
+  });
+
   test('no stale "11:00 AM" / "9:00 PM" / "11 AM to 9 PM" copy remains', () => {
     expect(INDEX_HTML).not.toContain('11:00 AM');
     expect(INDEX_HTML).not.toContain('9:00 PM');
