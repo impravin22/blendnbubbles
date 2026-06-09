@@ -49,7 +49,6 @@ const RESULT_HOLD_GOAL_MS = 850;
 function StartScreen({ onStart, highScore }) {
   const [locStatus, setLocStatus] = useState('idle');
   const [locMsg, setLocMsg] = useState('');
-
   const handleStart = () => {
     if (!GEOFENCE_ENABLED) {
       onStart();
@@ -686,14 +685,16 @@ function PenaltyShootout() {
       s.dragging = false;
       const dragX = s.dragCur.x - s.dragStart.x;
       const dragY = s.dragCur.y - s.dragStart.y;
-      // Ignore a tap / downward flick: must drag upward toward goal.
-      if (dragY > -20 || Math.hypot(dragX, dragY) < 24) return;
+      // Ignore a tap / downward flick: must drag upward toward goal. A small
+      // up-flick is allowed so low/bottom-corner shots register.
+      if (dragY > -10 || Math.hypot(dragX, dragY) < 24) return;
       const rawAim = dragToAim(dragX, dragY, 220);
       const aim = applyPowerWobble(rawAim, rawAim.power);
       s.shotAim = aim;
-      // Freeze the keeper where it was at the instant of the shot: the player
-      // shot away from that position, so the keeper must lunge from there.
-      s.keeperXAtShot = s.keeperX;
+      // Freeze the keeper at the instant of the shot, plus a small random
+      // anticipation nudge (tier-scaled) so it cannot be perfectly memorised.
+      const anticipate = s.keeperDiff.anticipate || 0;
+      s.keeperXAtShot = s.keeperX + (Math.random() - 0.5) * 2 * anticipate;
       // Decide the outcome now so the dive animation can match it: a save dives
       // onto the ball, a goal stops short.
       s.willSave = isSaved(aim, s.keeperXAtShot, s.keeperDiff);
