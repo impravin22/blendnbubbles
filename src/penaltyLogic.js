@@ -50,17 +50,21 @@ export function getKeeperDifficulty(kick) {
   const k = Math.max(1, kick);
   // `dive` is the horizontal lunge, `diveVert` the vertical stretch toward the
   // shot. Caps keep the corner away from the keeper reachable so it stays fair.
+  // `anticipate` is a small random nudge applied to the keeper's frozen
+  // position at the moment of the shot, so it cannot be perfectly memorised.
+  // Zero on the easy kicks; grows with the tier. Kept well below the open-corner
+  // margin so a well-placed shot still beats it.
   if (k <= 1) {
     // Goal 1: easy. Slow, low, narrow keeper leaves the corners and top bins.
-    return { oscRange: 0.3, oscSpeed: 0.0034, dive: 0.14, diveVert: 0.1, reachX: 0.13, reachY: 0.24, guardY: 0.62 };
+    return { oscRange: 0.3, oscSpeed: 0.0034, dive: 0.14, diveVert: 0.1, reachX: 0.13, reachY: 0.24, guardY: 0.62, anticipate: 0 };
   }
   if (k <= 2) {
     // Goal 2: medium. Quicker and wider; needs a placed shot.
-    return { oscRange: 0.36, oscSpeed: 0.005, dive: 0.2, diveVert: 0.24, reachX: 0.16, reachY: 0.34, guardY: 0.6 };
+    return { oscRange: 0.36, oscSpeed: 0.005, dive: 0.2, diveVert: 0.24, reachX: 0.16, reachY: 0.34, guardY: 0.6, anticipate: 0.015 };
   }
   if (k <= 4) {
     // Goals 3-4: very hard. Fast, wide patrol, long lunge, springs high.
-    return { oscRange: 0.42, oscSpeed: 0.0072, dive: 0.28, diveVert: 0.44, reachX: 0.21, reachY: 0.5, guardY: 0.58 };
+    return { oscRange: 0.42, oscSpeed: 0.0072, dive: 0.28, diveVert: 0.44, reachX: 0.21, reachY: 0.5, guardY: 0.58, anticipate: 0.035 };
   }
   // Goal 5+ (the reward kick): extreme. Ramps with each further kick but stays
   // capped so a well-placed shot to the corner away from the keeper is scoreable.
@@ -73,6 +77,7 @@ export function getKeeperDifficulty(kick) {
     reachX: Math.min(0.24 + over * 0.003, 0.26),
     reachY: Math.min(0.56 + over * 0.005, 0.62),
     guardY: 0.56,
+    anticipate: Math.min(0.04 + over * 0.003, 0.06),
   };
 }
 
@@ -125,9 +130,11 @@ function clampDive(delta, limit) {
 export function dragToAim(dragX, dragY, maxDrag = 220) {
   // Horizontal: map [-maxDrag, +maxDrag] → [0, 1].
   const x = clamp01(0.5 + dragX / (maxDrag * 2));
-  // Vertical: only upward drags aim at the goal. More up = higher (smaller y).
+  // Vertical: only upward drags aim at the goal. The full goal height is
+  // reachable: a tiny up-flick aims low (0.95, near the goal line) and a long
+  // drag aims high (0.03, under the crossbar), so bottom corners are targetable.
   const up = Math.max(0, -dragY);
-  const y = clamp01(0.85 - (up / maxDrag) * 0.8);
+  const y = clamp01(0.95 - (up / maxDrag) * 0.92);
   const power = clamp01(Math.hypot(dragX, dragY) / maxDrag);
   return { x, y, power };
 }

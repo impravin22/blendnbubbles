@@ -53,6 +53,13 @@ describe('getKeeperDifficulty (tiered by kick count)', () => {
     // Far corner must stay open: max horizontal cover < distance across the goal.
     expect(veryHard.dive + veryHard.reachX).toBeLessThan(0.6);
   });
+
+  test('anticipation is zero on the first kick and grows modestly, capped', () => {
+    expect(getKeeperDifficulty(1).anticipate).toBe(0);
+    expect(getKeeperDifficulty(2).anticipate).toBeGreaterThan(0);
+    expect(getKeeperDifficulty(5).anticipate).toBeGreaterThan(getKeeperDifficulty(3).anticipate);
+    expect(getKeeperDifficulty(999).anticipate).toBeLessThanOrEqual(0.06);
+  });
 });
 
 describe('keeperOscX (visible glide)', () => {
@@ -112,6 +119,17 @@ describe('isSaved (lunge from the keeper position)', () => {
     // Keeper pinned to the left, shot to the top-right corner: too far sideways.
     expect(isSaved({ x: 0.88, y: 0.2 }, 0.2, extreme)).toBe(false);
   });
+
+  test('a bottom corner away from the keeper scores (bottom is not a dead zone)', () => {
+    const extreme = getKeeperDifficulty(999);
+    // Keeper pinned left, low shot to the bottom-right corner: not saved.
+    expect(isSaved({ x: 0.9, y: 0.88 }, 0.2, extreme)).toBe(false);
+  });
+
+  test('a bottom corner at the keeper is still saved', () => {
+    const extreme = getKeeperDifficulty(999);
+    expect(isSaved({ x: 0.5, y: 0.88 }, 0.5, extreme)).toBe(true);
+  });
 });
 
 describe('dragToAim', () => {
@@ -134,6 +152,18 @@ describe('dragToAim', () => {
     const aim = dragToAim(9999, -9999, 220);
     expect(aim.x).toBeLessThanOrEqual(1);
     expect(aim.y).toBeGreaterThanOrEqual(0);
+  });
+
+  test('a small up-flick aims near the bottom of the goal (bottom corners reachable)', () => {
+    // Regression: the bottom of the net used to be untargetable (y capped 0.77).
+    const aim = dragToAim(150, -15, 220);
+    expect(aim.y).toBeGreaterThan(0.8); // low in the goal
+    expect(aim.x).toBeGreaterThan(0.7); // toward the right post
+  });
+
+  test('the full goal height is reachable from a long up-drag to a flick', () => {
+    expect(dragToAim(0, -220, 220).y).toBeLessThan(0.06); // top
+    expect(dragToAim(0, -5, 220).y).toBeGreaterThan(0.9); // bottom
   });
 });
 
