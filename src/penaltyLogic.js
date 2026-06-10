@@ -160,17 +160,34 @@ export function applyPowerWobble(aim, power, rng = Math.random) {
  */
 export function getReward(goals) {
   // Thresholds follow the difficulty curve (extreme tier starts on kick 5),
-  // and every prize is doubled: show the screen at the counter to claim.
+  // and every prize is doubled. `prize` is the big "You've got..." line shown
+  // on the claim card; `msg` is the flavour line under it.
   if (goals >= 10) {
-    return { tier: 'PENALTY KING', msg: 'Tumi to legend! Show this at the counter for 2x FREE topping upgrades!' };
+    return {
+      tier: 'PENALTY KING',
+      prize: "You've got 2x FREE topping upgrades!",
+      msg: 'Tumi to legend! Show this at the counter to claim.',
+    };
   }
   if (goals >= 5) {
-    return { tier: 'SPOT-KICK STAR', msg: 'Daarun khela! Show this for 2x 10% OFF on your drinks!' };
+    return {
+      tier: 'SPOT-KICK STAR',
+      prize: "You've got 2x 10% OFF on your next drinks!",
+      msg: 'Daarun khela! Show this at the counter to claim.',
+    };
   }
   if (goals >= 3) {
-    return { tier: 'STRIKER', msg: 'Bhalo khelecho! Show this for 2x surprise treats!' };
+    return {
+      tier: 'STRIKER',
+      prize: "You've got 2x surprise treats!",
+      msg: 'Bhalo khelecho! Show this at the counter to claim.',
+    };
   }
-  return { tier: 'ROOKIE', msg: 'Aar ekbar try koro! Every player gets a smile from us!' };
+  return {
+    tier: 'ROOKIE',
+    prize: null,
+    msg: 'Aar ekbar try koro! Every player gets a smile from us!',
+  };
 }
 
 function clamp01(v) {

@@ -245,6 +245,17 @@
   letter-spacing: 0.06em;
   color: var(--secondary-light);
 }
+.pen-reward-prize {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1.35;
+  margin: 8px 0 0;
+  background: linear-gradient(45deg, #BB8750, #CEAA67);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 .pen-reward-msg {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.85);
