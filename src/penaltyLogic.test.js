@@ -194,9 +194,10 @@ describe('getReward', () => {
     expect(getReward(0).tier).toBe('ROOKIE');
   });
 
-  test('every claimable prize is doubled (x2)', () => {
-    expect(getReward(10).msg).toMatch(/2x/i);
-    expect(getReward(5).msg).toMatch(/2x 10% OFF/i);
-    expect(getReward(3).msg).toMatch(/2x/i);
+  test("every claimable tier has a doubled 'You've got...' prize line", () => {
+    expect(getReward(10).prize).toMatch(/^You've got 2x/);
+    expect(getReward(5).prize).toMatch(/^You've got 2x 10% OFF on your next drinks!$/);
+    expect(getReward(3).prize).toMatch(/^You've got 2x/);
+    expect(getReward(2).prize).toBeNull(); // no prize below 3 goals
   });
 });
