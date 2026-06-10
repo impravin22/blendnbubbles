@@ -183,14 +183,20 @@ describe('applyPowerWobble', () => {
 });
 
 describe('getReward', () => {
-  test('tiers by goal count', () => {
+  test('tiers by goal count, aligned with the 5-goal reward kick', () => {
     expect(getReward(15).tier).toBe('PENALTY KING');
-    expect(getReward(12).tier).toBe('PENALTY KING');
-    expect(getReward(8).tier).toBe('SPOT-KICK STAR');
-    expect(getReward(7).tier).toBe('SPOT-KICK STAR');
+    expect(getReward(10).tier).toBe('PENALTY KING');
+    expect(getReward(9).tier).toBe('SPOT-KICK STAR');
+    expect(getReward(5).tier).toBe('SPOT-KICK STAR');
     expect(getReward(4).tier).toBe('STRIKER');
     expect(getReward(3).tier).toBe('STRIKER');
     expect(getReward(2).tier).toBe('ROOKIE');
     expect(getReward(0).tier).toBe('ROOKIE');
+  });
+
+  test('every claimable prize is doubled (x2)', () => {
+    expect(getReward(10).msg).toMatch(/2x/i);
+    expect(getReward(5).msg).toMatch(/2x 10% OFF/i);
+    expect(getReward(3).msg).toMatch(/2x/i);
   });
 });

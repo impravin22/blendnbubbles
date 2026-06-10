@@ -251,6 +251,29 @@
   margin-top: 6px;
   line-height: 1.45;
 }
+.pen-reward-valid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(206, 170, 103, 0.35);
+}
+.pen-reward-date {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+  background: rgba(206, 170, 103, 0.22);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+.pen-reward-rule {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.6);
+}
 
 .pen-submit-form {
   display: flex;

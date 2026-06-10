@@ -159,14 +159,16 @@ export function applyPowerWobble(aim, power, rng = Math.random) {
  * pattern but scaled to penalty-streak scores.
  */
 export function getReward(goals) {
-  if (goals >= 12) {
-    return { tier: 'PENALTY KING', msg: 'Tumi to legend! Show this at the counter for a FREE topping upgrade!' };
+  // Thresholds follow the difficulty curve (extreme tier starts on kick 5),
+  // and every prize is doubled: show the screen at the counter to claim.
+  if (goals >= 10) {
+    return { tier: 'PENALTY KING', msg: 'Tumi to legend! Show this at the counter for 2x FREE topping upgrades!' };
   }
-  if (goals >= 7) {
-    return { tier: 'SPOT-KICK STAR', msg: 'Daarun khela! Show this for 10% off your next drink!' };
+  if (goals >= 5) {
+    return { tier: 'SPOT-KICK STAR', msg: 'Daarun khela! Show this for 2x 10% OFF on your drinks!' };
   }
   if (goals >= 3) {
-    return { tier: 'STRIKER', msg: 'Bhalo khelecho! Show this for a surprise treat!' };
+    return { tier: 'STRIKER', msg: 'Bhalo khelecho! Show this for 2x surprise treats!' };
   }
   return { tier: 'ROOKIE', msg: 'Aar ekbar try koro! Every player gets a smile from us!' };
 }

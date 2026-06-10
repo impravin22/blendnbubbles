@@ -170,6 +170,12 @@ function GameOverScreen({
         <div className="pen-reward-card">
           <div className="pen-reward-tier">{reward.tier}</div>
           <p className="pen-reward-msg">{reward.msg}</p>
+          <div className="pen-reward-valid">
+            <span className="pen-reward-date">
+              {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </span>
+            <span className="pen-reward-rule">Valid today only &middot; show this screen at the counter</span>
+          </div>
         </div>
 
         {!submitted ? (
