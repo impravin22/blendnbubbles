@@ -182,22 +182,23 @@ describe('applyPowerWobble', () => {
   });
 });
 
-describe('getReward', () => {
-  test('tiers by goal count, aligned with the 5-goal reward kick', () => {
-    expect(getReward(15).tier).toBe('PENALTY KING');
-    expect(getReward(10).tier).toBe('PENALTY KING');
-    expect(getReward(9).tier).toBe('SPOT-KICK STAR');
-    expect(getReward(5).tier).toBe('SPOT-KICK STAR');
-    expect(getReward(4).tier).toBe('STRIKER');
-    expect(getReward(3).tier).toBe('STRIKER');
-    expect(getReward(2).tier).toBe('ROOKIE');
-    expect(getReward(0).tier).toBe('ROOKIE');
+describe('getReward (3% off per goal, capped)', () => {
+  test('two goals earn 6% off the next drink', () => {
+    expect(getReward(2).prize).toBe("You've got 6% off on your next drink!");
   });
 
-  test("every claimable tier has a doubled 'You've got...' prize line", () => {
-    expect(getReward(10).prize).toMatch(/^You've got 2x/);
-    expect(getReward(5).prize).toMatch(/^You've got 2x 10% OFF on your next drinks!$/);
-    expect(getReward(3).prize).toMatch(/^You've got 2x/);
-    expect(getReward(2).prize).toBeNull(); // no prize below 3 goals
+  test('scales linearly: 1 goal 3%, 5 goals 15%', () => {
+    expect(getReward(1).prize).toBe("You've got 3% off on your next drink!");
+    expect(getReward(5).prize).toBe("You've got 15% off on your next drink!");
+  });
+
+  test('caps at 30% from 10 goals up', () => {
+    expect(getReward(10).prize).toBe("You've got 30% off on your next drink!");
+    expect(getReward(40).prize).toBe("You've got 30% off on your next drink!");
+  });
+
+  test('zero goals earns encouragement only, no prize', () => {
+    expect(getReward(0).prize).toBeNull();
+    expect(getReward(0).msg).toMatch(/Aar ekbar try koro/);
   });
 });
