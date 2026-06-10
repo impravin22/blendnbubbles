@@ -1,4 +1,13 @@
 /* General styles */
+html,
+body {
+  /* The reveal-left / reveal-right animations start translated 30px off-axis;
+     clip that horizontal spill so narrow phones never get a sideways scroll.
+     `hidden` is the fallback where `clip` is unsupported. */
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 .App {
   font-family: 'Poppins', sans-serif;
   color: var(--text);
@@ -1725,7 +1734,7 @@ section h2::after {
   animation: spinModalPop 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Claim ticket pill — shown inside the result card and the modal */
+/* Claim ticket pill: shown inside the result card and the modal */
 .spin-ticket {
   display: inline-flex;
   flex-direction: column;
