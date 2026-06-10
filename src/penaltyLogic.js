@@ -158,13 +158,14 @@ export function applyPowerWobble(aim, power, rng = Math.random) {
  * Reward tiers shown on game over, mirroring Boba Catcher's staff-show
  * pattern but scaled to penalty-streak scores.
  */
-// Discount per goal, and the ceiling it cannot exceed (reached at 10 goals).
-export const DISCOUNT_PER_GOAL = 3;
+// Discount per goal (the "2x goals" offer agreed with the creators), and the
+// ceiling it cannot exceed (reached at 15 goals).
+export const DISCOUNT_PER_GOAL = 2;
 export const MAX_DISCOUNT_PCT = 30;
 
 /**
- * Single reward rule: every goal is worth 3% off the next drink (2 goals =
- * 6% off), capped at 30%. No tiers. Zero goals earns encouragement only.
+ * Single reward rule: every goal is worth 2% off the next drink (5 goals =
+ * 10% off), capped at 30%. No tiers. Zero goals earns encouragement only.
  */
 export function getReward(goals) {
   if (goals <= 0) {

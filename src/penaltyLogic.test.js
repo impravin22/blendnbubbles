@@ -182,18 +182,18 @@ describe('applyPowerWobble', () => {
   });
 });
 
-describe('getReward (3% off per goal, capped)', () => {
-  test('two goals earn 6% off the next drink', () => {
-    expect(getReward(2).prize).toBe("You've got 6% off on your next drink!");
+describe('getReward (2% off per goal, capped)', () => {
+  test('five goals earn 10% off the next drink (the creator-aligned offer)', () => {
+    expect(getReward(5).prize).toBe("You've got 10% off on your next drink!");
   });
 
-  test('scales linearly: 1 goal 3%, 5 goals 15%', () => {
-    expect(getReward(1).prize).toBe("You've got 3% off on your next drink!");
-    expect(getReward(5).prize).toBe("You've got 15% off on your next drink!");
+  test('scales linearly: 1 goal 2%, 2 goals 4%', () => {
+    expect(getReward(1).prize).toBe("You've got 2% off on your next drink!");
+    expect(getReward(2).prize).toBe("You've got 4% off on your next drink!");
   });
 
-  test('caps at 30% from 10 goals up', () => {
-    expect(getReward(10).prize).toBe("You've got 30% off on your next drink!");
+  test('caps at 30% from 15 goals up', () => {
+    expect(getReward(15).prize).toBe("You've got 30% off on your next drink!");
     expect(getReward(40).prize).toBe("You've got 30% off on your next drink!");
   });
 
