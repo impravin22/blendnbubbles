@@ -621,6 +621,19 @@ body {
   margin: 8px 0 0;
 }
 
+/* Drink photo on top of each menu card. A fixed crop window keeps every card
+   the same height (the files are 600x750; we show a 4:3 slice, centre-weighted
+   toward the top where the drink sits). */
+.menu-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: center 22%;
+  background: #f3efe7;
+}
+
 /* ===== Hot / Iced two-price menu layout ===== */
 .category-head {
   display: flex;
