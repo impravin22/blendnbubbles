@@ -225,7 +225,7 @@ function Homepage() {
           <div className="row">
             <div className="col-md-6 mb-4 mb-md-0 reveal-left">
               <div className="rounded about-image">
-                <img src="/authentic_bubble_tea_with_logo.png" alt="BlendNBubbles Authentic Bubble Tea" className="img-fluid rounded" />
+                <img src="/authentic_bubble_tea_with_logo.webp" alt="BlendNBubbles Authentic Bubble Tea" className="img-fluid rounded" width="1080" height="1350" loading="eager" fetchpriority="high" />
               </div>
             </div>
             <div className="col-md-6 reveal-right">
