@@ -11,6 +11,12 @@ function priceText(value) {
   return value != null ? `₹${value}` : '-';
 }
 
+// Drink photos live at /menu-photos/<slug>.webp, named by this slug rule
+// (matches the conversion script that produced them from the Zomato shoot).
+function photoSlug(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 function Menu() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [displayedCategory, setDisplayedCategory] = useState('all');
@@ -164,6 +170,17 @@ function Menu() {
                 <div className="menu-items">
                   {cat.items.map((item) => (
                     <div className="menu-item" key={item.name}>
+                      {cat.type === 'temp' && (
+                        <img
+                          className="menu-photo"
+                          src={`/menu-photos/${photoSlug(item.name)}.webp`}
+                          alt={item.name}
+                          width="600"
+                          height="750"
+                          loading="lazy"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      )}
                       <div className="menu-item-content">
                         <h4>{item.name}</h4>
                         {item.desc && <p className="menu-desc">{item.desc}</p>}
