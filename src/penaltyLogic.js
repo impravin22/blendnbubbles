@@ -154,10 +154,6 @@ export function applyPowerWobble(aim, power, rng = Math.random) {
   };
 }
 
-/**
- * Reward tiers shown on game over, mirroring Boba Catcher's staff-show
- * pattern but scaled to penalty-streak scores.
- */
 // Discount per goal (the "2x goals" offer agreed with the creators), and the
 // ceiling it cannot exceed (reached at 15 goals).
 export const DISCOUNT_PER_GOAL = 2;
