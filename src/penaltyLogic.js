@@ -158,35 +158,22 @@ export function applyPowerWobble(aim, power, rng = Math.random) {
  * Reward tiers shown on game over, mirroring Boba Catcher's staff-show
  * pattern but scaled to penalty-streak scores.
  */
+// Discount per goal, and the ceiling it cannot exceed (reached at 10 goals).
+export const DISCOUNT_PER_GOAL = 3;
+export const MAX_DISCOUNT_PCT = 30;
+
+/**
+ * Single reward rule: every goal is worth 3% off the next drink (2 goals =
+ * 6% off), capped at 30%. No tiers. Zero goals earns encouragement only.
+ */
 export function getReward(goals) {
-  // Thresholds follow the difficulty curve (extreme tier starts on kick 5),
-  // and every prize is doubled. `prize` is the big "You've got..." line shown
-  // on the claim card; `msg` is the flavour line under it.
-  if (goals >= 10) {
-    return {
-      tier: 'PENALTY KING',
-      prize: "You've got 2x FREE topping upgrades!",
-      msg: 'Tumi to legend! Show this at the counter to claim.',
-    };
+  if (goals <= 0) {
+    return { prize: null, msg: 'Aar ekbar try koro! Every player gets a smile from us!' };
   }
-  if (goals >= 5) {
-    return {
-      tier: 'SPOT-KICK STAR',
-      prize: "You've got 2x 10% OFF on your next drinks!",
-      msg: 'Daarun khela! Show this at the counter to claim.',
-    };
-  }
-  if (goals >= 3) {
-    return {
-      tier: 'STRIKER',
-      prize: "You've got 2x surprise treats!",
-      msg: 'Bhalo khelecho! Show this at the counter to claim.',
-    };
-  }
+  const pct = Math.min(goals * DISCOUNT_PER_GOAL, MAX_DISCOUNT_PCT);
   return {
-    tier: 'ROOKIE',
-    prize: null,
-    msg: 'Aar ekbar try koro! Every player gets a smile from us!',
+    prize: `You've got ${pct}% off on your next drink!`,
+    msg: 'Daarun khela! Show this at the counter to claim.',
   };
 }
 

@@ -168,7 +168,6 @@ function GameOverScreen({
         </div>
 
         <div className="pen-reward-card">
-          <div className="pen-reward-tier">{reward.tier}</div>
           {reward.prize && <p className="pen-reward-prize">{reward.prize}</p>}
           <p className="pen-reward-msg">{reward.msg}</p>
           <div className="pen-reward-valid">
