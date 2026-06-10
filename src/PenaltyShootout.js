@@ -245,7 +245,7 @@ function LeaderboardScreen({ leaderboard, playerScore, loading, onRestart }) {
 
         <div className="pen-gameover-actions">
           <button className="pen-restart-btn" onClick={onRestart}>Play Again</button>
-          <Link to="/menu" className="pen-order-link-btn">Order Now</Link>
+          <a className="pen-order-link-btn" href="https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore/order" target="_blank" rel="noopener noreferrer">Order Now</a>
         </div>
 
         <p className="pen-gameover-footer">BlendNBubbles &middot; Barrackpore, Kolkata</p>
