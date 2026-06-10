@@ -1,4 +1,13 @@
 /* General styles */
+html,
+body {
+  /* The reveal-left / reveal-right animations start translated 30px off-axis;
+     clip that horizontal spill so narrow phones never get a sideways scroll.
+     `hidden` is the fallback where `clip` is unsupported. */
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 .App {
   font-family: 'Poppins', sans-serif;
   color: var(--text);
