@@ -100,6 +100,14 @@ SPECS: tuple[QRSpec, ...] = (
         subheader="Score big. Sip better.",
         footer="blendnbubbles.com/play/football",
     ),
+    QRSpec(
+        slug="zomato",
+        url="https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore/order",
+        header="ZOMATO",
+        subheader="12% OFF online orders",
+        footer="Order on Zomato",
+        logo_path=ASSETS_DIR / "zomato.png",
+    ),
 )
 
 
