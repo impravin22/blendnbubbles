@@ -611,7 +611,8 @@ body {
   font-family: 'Fraunces', serif;
   font-size: 1.2rem;
   font-weight: 600;
-  color: var(--secondary);
+  /* Caramel rather than gold: gold on white fails WCAG AA contrast. */
+  color: #8a5a2e;
 }
 
 .menu-desc {
@@ -658,8 +659,8 @@ body {
   padding: 4px 10px;
   border-radius: 999px;
 }
-.temp-chip-hot { background: #e8763a; }
-.temp-chip-cold { background: #3a9be8; }
+.temp-chip-hot { background: #b54708; }
+.temp-chip-cold { background: #1565ad; }
 
 .price-pair {
   display: flex;
@@ -675,8 +676,8 @@ body {
   justify-content: flex-end;
 }
 .price-temp { font-size: 0.95rem; line-height: 1; }
-.price-hot { color: #c25e26; }
-.price-cold { color: #2a7cc0; }
+.price-hot { color: #a34a13; }
+.price-cold { color: #1565ad; }
 
 /* Screen-reader-only label for the hot / iced prices */
 .sr-only {
@@ -748,8 +749,9 @@ body {
 
 .option-item.recommended {
   background: rgba(187, 135, 80, 0.1);
-  color: var(--secondary);
-  font-weight: 500;
+  /* Caramel rather than gold: gold on cream fails WCAG AA contrast. */
+  color: #8a5a2e;
+  font-weight: 600;
   border: 1px solid rgba(187, 135, 80, 0.3);
 }
 
@@ -1070,7 +1072,10 @@ html {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
+/* Card titles are h3 for heading order; keep the former h5 size. */
 .card-title {
+  font-size: 1.25rem;
+
   color: var(--primary);
   font-family: 'Fraunces', serif;
   font-weight: 600;
@@ -1902,4 +1907,9 @@ section h2::after {
 .prize-disclosure-list strong {
   color: var(--primary);
   margin-right: 0.4rem;
+}
+
+/* Contact column headings are h3 for heading order; keep the former h4 size. */
+#contact h3 {
+  font-size: 1.35rem;
 }

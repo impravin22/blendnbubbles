@@ -187,6 +187,8 @@ function Homepage() {
         </div>
       </nav>
 
+      <main>
+
       {/* Hero Section */}
       <header className="hero" id="home">
         <div className="hero-content">
@@ -254,7 +256,7 @@ function Homepage() {
             <div className="col-md-4 mb-4 reveal reveal-delay-1">
               <div className="card h-100">
                 <div className="card-body">
-                  <h5 className="card-title">Taiwan Signature Milk Tea <span className="menu-tag">Signature</span></h5>
+                  <h3 className="card-title">Taiwan Signature Milk Tea <span className="menu-tag">Signature</span></h3>
                   <p className="card-text">Authentic Taiwanese signature milk tea.</p>
                   <p className="card-text"><small className="text-muted">₹165</small></p>
                 </div>
@@ -263,7 +265,7 @@ function Homepage() {
             <div className="col-md-4 mb-4 reveal reveal-delay-2">
               <div className="card h-100">
                 <div className="card-body">
-                  <h5 className="card-title">Passion Fruit Green Tea <span className="menu-tag">Signature</span></h5>
+                  <h3 className="card-title">Passion Fruit Green Tea <span className="menu-tag">Signature</span></h3>
                   <p className="card-text">Zesty passion fruit blended with green tea.</p>
                   <p className="card-text"><small className="text-muted">₹160</small></p>
                 </div>
@@ -272,7 +274,7 @@ function Homepage() {
             <div className="col-md-4 mb-4 reveal reveal-delay-3">
               <div className="card h-100">
                 <div className="card-body">
-                  <h5 className="card-title">Mango Smoothie <span className="menu-tag">Popular</span></h5>
+                  <h3 className="card-title">Mango Smoothie <span className="menu-tag">Popular</span></h3>
                   <p className="card-text">Creamy mango smoothie.</p>
                   <p className="card-text"><small className="text-muted">₹160</small></p>
                 </div>
@@ -291,20 +293,20 @@ function Homepage() {
           <h2 className="text-center mb-4 reveal">Visit Us</h2>
           <div className="row">
             <div className="col-md-6 mb-4 mb-md-0 reveal-left">
-              <h4>Location</h4>
+              <h3>Location</h3>
               <p>Senjuti Apt. Shop No -6, 68/16, Feeder Road, Barrackpore, Kolkata</p>
               <p>PIN: 700120</p>
-              <h4>Hours</h4>
+              <h3>Hours</h3>
               <p>Tuesday - Sunday: 12pm - 10pm</p>
               <p>Monday: 4pm - 10pm</p>
-              <h4>Contact</h4>
+              <h3>Contact</h3>
               <p>Phone: +91 9330697501</p>
               <p>Email: blendnbubbles@yahoo.com</p>
             </div>
             <div className="col-md-6 reveal-right">
               <div className="card">
                 <div className="card-body">
-                  <h5 className="card-title">Send us a message</h5>
+                  <h3 className="card-title">Send us a message</h3>
                   <form>
                     <div className="mb-3">
                       <input type="text" className="form-control" placeholder="Your Name" />
@@ -323,6 +325,8 @@ function Homepage() {
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* Footer */}
       <footer className="bg-dark text-white py-4">

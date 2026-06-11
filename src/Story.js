@@ -101,6 +101,8 @@ function Story() {
         </div>
       </nav>
 
+      <main>
+
       {/* Story Content */}
       <section className="story-section" id="story-content">
         <div className="container">
@@ -151,6 +153,8 @@ function Story() {
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* Footer */}
       <footer className="bg-dark text-white py-4">

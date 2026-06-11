@@ -86,6 +86,8 @@ function Offers() {
         </div>
       </nav>
 
+      <main>
+
       {/* Hero */}
       <header className="hero" id="offers-hero">
         <div className="hero-content">
@@ -152,6 +154,8 @@ function Offers() {
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* Footer */}
       <footer className="bg-dark text-white py-4">
