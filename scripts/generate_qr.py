@@ -8,9 +8,9 @@
 """Generate branded BlendNBubbles QR codes for every customer-facing channel.
 
 Each spec produces three PNG variants in `public/`:
-  {slug}-qr.png          — 800x1000 web/share copy
-  {slug}-qr-print.png    — 2400x3000 @300dpi for fridge magnets / leaflets
-  {slug}-qr-bare.png     — 720x720 QR + logo only, for ad-hoc reuse
+  {slug}-qr.png          : 800x1000 web/share copy
+  {slug}-qr-print.png    : 2400x3000 @300dpi for fridge magnets / leaflets
+  {slug}-qr-bare.png     : 720x720 QR + logo only, for ad-hoc reuse
 
 Run with:
   cd /Users/kumarpr/Desktop/Projects/blendnbubbles
@@ -92,6 +92,13 @@ SPECS: tuple[QRSpec, ...] = (
         subheader="Find us on Maps",
         footer="Leave a review on Google",
         logo_path=ASSETS_DIR / "google.png",
+    ),
+    QRSpec(
+        slug="game",
+        url="https://blendnbubbles.com/play/football",
+        header="PLAY & WIN",
+        subheader="Score big. Sip better.",
+        footer="blendnbubbles.com/play/football",
     ),
 )
 
