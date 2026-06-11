@@ -182,23 +182,29 @@ describe('applyPowerWobble', () => {
   });
 });
 
-describe('getReward (2% off per goal, capped)', () => {
-  test('five goals earn 10% off the next drink (the creator-aligned offer)', () => {
-    expect(getReward(5).prize).toBe("You've got 10% off on your next drink!");
+describe('getReward (Rs 2 off per goal, capped)', () => {
+  test('ten goals earn Rs 20 off the next drink (the poster offer)', () => {
+    expect(getReward(10).prize).toBe("You've got ₹20 off on your next drink!");
   });
 
-  test('scales linearly: 1 goal 2%, 2 goals 4%', () => {
-    expect(getReward(1).prize).toBe("You've got 2% off on your next drink!");
-    expect(getReward(2).prize).toBe("You've got 4% off on your next drink!");
+  test('scales linearly: 1 goal Rs 2, 5 goals Rs 10', () => {
+    expect(getReward(1).prize).toBe("You've got ₹2 off on your next drink!");
+    expect(getReward(5).prize).toBe("You've got ₹10 off on your next drink!");
   });
 
-  test('caps at 30% from 15 goals up', () => {
-    expect(getReward(15).prize).toBe("You've got 30% off on your next drink!");
-    expect(getReward(40).prize).toBe("You've got 30% off on your next drink!");
+  test('caps at Rs 30 from 15 goals up', () => {
+    expect(getReward(15).prize).toBe("You've got ₹30 off on your next drink!");
+    expect(getReward(40).prize).toBe("You've got ₹30 off on your next drink!");
+  });
+
+  test('flavour line scales with the score', () => {
+    expect(getReward(2).msg).toMatch(/^Bhalo khelecho!/);
+    expect(getReward(5).msg).toMatch(/^Daarun khelle!/);
+    expect(getReward(10).msg).toMatch(/^Legend toh bhai!/);
   });
 
   test('zero goals earns encouragement only, no prize', () => {
     expect(getReward(0).prize).toBeNull();
-    expect(getReward(0).msg).toMatch(/Aar ekbar try koro/);
+    expect(getReward(0).msg).toMatch(/Aaro ekbar hok/);
   });
 });
