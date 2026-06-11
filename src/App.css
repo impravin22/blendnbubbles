@@ -9,7 +9,7 @@ body {
 }
 
 .App {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   color: var(--text);
 }
 
@@ -573,7 +573,7 @@ body {
 }
 
 .menu-tag {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 0.7rem;
   background: var(--gold-gradient);
   color: white;
@@ -650,7 +650,7 @@ body {
   margin-bottom: 30px;
 }
 .temp-chip {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1624,7 +1624,7 @@ section h2::after {
 
 .offer-tag {
   display: inline-block;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -1692,7 +1692,7 @@ section h2::after {
 
 .spin-cta {
   min-width: 220px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -1709,7 +1709,7 @@ section h2::after {
 }
 
 .spin-result-eyebrow {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -1717,7 +1717,7 @@ section h2::after {
 }
 
 .spin-result-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   color: var(--primary);
   font-size: 1.35rem;
@@ -1772,7 +1772,7 @@ section h2::after {
 }
 
 .inapp-banner-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   font-size: 0.95rem;
   color: var(--primary);
@@ -1813,7 +1813,7 @@ section h2::after {
 }
 
 .spin-ticket-label {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -1848,7 +1848,7 @@ section h2::after {
 .prize-disclosure-summary {
   list-style: none;
   cursor: pointer;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 600;
   font-size: 0.9rem;
   letter-spacing: 0.02em;

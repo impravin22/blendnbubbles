@@ -470,11 +470,11 @@ function PenaltyShootout() {
       ctx.textAlign = 'center';
       const maxW = w * 0.9;
       let fontSize = 40;
-      ctx.font = `900 ${fontSize}px Poppins, sans-serif`;
+      ctx.font = `900 ${fontSize}px "Open Sans", sans-serif`;
       const measured = ctx.measureText(s.flashWord).width;
       if (measured > maxW) {
         fontSize = Math.max(16, Math.floor((fontSize * maxW) / measured));
-        ctx.font = `900 ${fontSize}px Poppins, sans-serif`;
+        ctx.font = `900 ${fontSize}px "Open Sans", sans-serif`;
       }
       ctx.fillStyle = s.lastResult === 'goal' ? '#CEAA67' : '#e74c3c';
       ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -1176,7 +1176,7 @@ function drawKeeper(ctx, x, y, lean) {
   ctx.fill();
   // number 1
   ctx.fillStyle = TRIM;
-  ctx.font = '900 14px Poppins, sans-serif';
+  ctx.font = '900 14px "Open Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('1', 0, 6);
 
@@ -1237,7 +1237,7 @@ function drawStriker(ctx, x, y, team) {
   ctx.fillRect(10, -13, 6, 3);
   // number 26
   ctx.fillStyle = NUM;
-  ctx.font = '900 11px Poppins, sans-serif';
+  ctx.font = '900 11px "Open Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('26', 0, 4);
 

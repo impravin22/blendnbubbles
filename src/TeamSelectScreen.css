@@ -20,7 +20,7 @@
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.75);
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 15px;
   font-weight: 600;
   padding: 4px 0;
@@ -29,7 +29,7 @@
 .ts-back:hover { color: var(--secondary-light); }
 
 .ts-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 900;
   font-size: 30px;
   line-height: 1.05;
@@ -81,7 +81,7 @@
 }
 .ts-flag { font-size: 30px; line-height: 1; }
 .ts-name {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   font-size: 14px;
   color: #fff;
@@ -100,7 +100,7 @@
 .ts-others-btn {
   width: 100%;
   margin-top: 16px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   font-size: 15px;
   color: var(--secondary-light);
@@ -123,7 +123,7 @@
   background: transparent;
   border: none;
   color: var(--secondary-light);
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
@@ -135,7 +135,7 @@
 .ts-search {
   width: 100%;
   box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 15px;
   padding: 12px 15px;
   border-radius: 12px;
@@ -170,7 +170,7 @@
 .ts-chip-flag { font-size: 22px; line-height: 1; }
 .ts-chip-name { flex: 1; font-weight: 600; font-size: 15px; color: #fff; }
 .ts-chip-code {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 800;
   font-size: 12px;
   letter-spacing: 0.05em;
@@ -194,7 +194,7 @@
   border-top: 1px solid rgba(206, 170, 103, 0.25);
 }
 .ts-kickoff-team {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   font-size: 15px;
   color: #fff;
@@ -205,7 +205,7 @@
 .ts-kickoff-hint { font-size: 13px; color: rgba(255, 255, 255, 0.6); }
 .ts-kickoff-btn {
   flex-shrink: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   font-size: 15px;
   letter-spacing: 0.02em;

@@ -36,7 +36,7 @@
   left: 0;
   right: 0;
   text-align: center;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
@@ -82,7 +82,7 @@
   margin-bottom: 14px;
 }
 .pen-game-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 900;
   font-size: 36px;
   line-height: 1;
@@ -127,7 +127,7 @@
 .pen-start-btn,
 .pen-restart-btn {
   margin-top: 20px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   font-size: 16px;
   letter-spacing: 0.03em;
@@ -187,7 +187,7 @@
   color: var(--secondary-light);
 }
 .pen-hud-value {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 900;
   font-size: 20px;
   color: #fff;
@@ -206,14 +206,14 @@
   margin-bottom: 12px;
 }
 .pen-gameover-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 800;
   font-size: 26px;
   color: #fff;
 }
 .pen-score-display { margin: 6px 0 4px; }
 .pen-final-score {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 900;
   font-size: 96px;
   line-height: 1;
@@ -239,7 +239,7 @@
   max-width: 320px;
 }
 .pen-reward-prize {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 800;
   font-size: 19px;
   line-height: 1.35;
@@ -265,7 +265,7 @@
   border-top: 1px dashed rgba(206, 170, 103, 0.35);
 }
 .pen-reward-date {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 800;
   font-size: 13px;
   color: #fff;
@@ -293,7 +293,7 @@
   color: rgba(255, 255, 255, 0.85);
 }
 .pen-input {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: 15px;
   padding: 13px 16px;
   border-radius: 12px;
@@ -327,7 +327,7 @@
 
 /* ===== Leaderboard ===== */
 .pen-lb-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 900;
   font-size: 26px;
   color: #fff;
@@ -369,7 +369,7 @@
 .pen-order-link-btn {
   display: inline-flex;
   align-items: center;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   font-size: 15px;
   padding: 14px 28px;
@@ -384,7 +384,7 @@
 .pen-season-badge {
   display: inline-block;
   margin-top: 10px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 800;
   font-size: 10px;
   letter-spacing: 0.22em;
@@ -402,7 +402,7 @@
   gap: 8px;
 }
 .pen-sb-badge {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 900;
   font-size: 13px;
   color: #012a2a;
@@ -412,7 +412,7 @@
   letter-spacing: 0.02em;
 }
 .pen-sb-team {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.06em;
@@ -421,7 +421,7 @@
 .pen-sb-team-keeper { color: rgba(255, 255, 255, 0.7); }
 .pen-sb-flag { font-size: 15px; }
 .pen-sb-score {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 900;
   font-size: 22px;
   line-height: 1;
@@ -438,7 +438,7 @@
   gap: 2px;
 }
 .pen-sb-pen {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-weight: 800;
   font-size: 13px;
   color: #fff;
