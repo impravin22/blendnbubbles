@@ -19,7 +19,7 @@ const BRAND_AMBER = '#C89B4A';
 
 // Apps Script web-app URL that appends each spin result to a Google Sheet.
 // Configure via REACT_APP_SPIN_WEBHOOK_URL in `.env.production` (or `.env`).
-// If unset, the wheel still works locally — staff just cannot cross-check
+// If unset, the wheel still works locally; staff just cannot cross-check
 // against a sheet. See setup steps at the bottom of this file.
 const WEBHOOK_URL = process.env.REACT_APP_SPIN_WEBHOOK_URL || '';
 
@@ -32,7 +32,7 @@ function generateTicket() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  // Fallback v4-ish — not cryptographically strong, but fine for a claim ID.
+  // Fallback v4-ish: not cryptographically strong, but fine for a claim ID.
   const hex = '0123456789abcdef';
   let out = '';
   for (let i = 0; i < 36; i += 1) {
@@ -50,7 +50,7 @@ function generateTicket() {
 }
 
 /**
- * Short, customer-friendly version of the ticket — first 8 hex chars,
+ * Short, customer-friendly version of the ticket: first 8 hex chars,
  * upper-cased, dash-separated for readability (e.g. "A1B2-C3D4").
  * Staff can still look up the full UUID in the Sheet if they need to.
  */
@@ -118,7 +118,7 @@ function reportSpin(payload) {
       credentials: 'omit',
     }).catch(() => undefined);
   } catch (err) {
-    // Ignore — wheel result is already on screen.
+    // Ignore: wheel result is already on screen.
   }
 }
 
@@ -164,7 +164,7 @@ async function computeFingerprint() {
 /**
  * Detect in-app browsers that have their own storage context
  * (Instagram, Facebook, Line, WeChat, Twitter). These can re-spin in
- * Safari because storage and fingerprint differ — the page surfaces a
+ * Safari because storage and fingerprint differ; the page surfaces a
  * banner asking customers to open the link in their real browser.
  */
 function detectInAppBrowser() {
@@ -276,7 +276,7 @@ function savePrize(prizeIndex, ticket) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (err) {
-    // Storage full / disabled — staff can still verify in-store.
+    // Storage full / disabled: staff can still verify in-store.
   }
   return payload;
 }
@@ -490,7 +490,7 @@ function SpinWheel() {
           innerBorderWidth={2}
           radiusLineColor="#FFFFFF"
           radiusLineWidth={2}
-          fontFamily="Poppins, sans-serif"
+          fontFamily="Open Sans"
           fontSize={14}
           fontWeight={700}
           textDistance={62}
@@ -622,7 +622,7 @@ function SpinWheel() {
  *    works locally but no row is written.
  *
  * Staff verifies a customer by asking for the short ticket on screen
- * (e.g. "A1B2-C3D4") and finding the row in the Sheet — the short code
+ * (e.g. "A1B2-C3D4") and finding the row in the Sheet; the short code
  * is the first 8 hex chars of the UUID.
  */
 

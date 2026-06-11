@@ -447,7 +447,7 @@ function BobaCatcher() {
 
     // Cup label
     ctx.fillStyle = '#CEAA67';
-    ctx.font = 'bold 8px Poppins, sans-serif';
+    ctx.font = 'bold 8px "Open Sans", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('B&B', 0, cup.height / 2 + 4);
 
@@ -621,11 +621,11 @@ function BobaCatcher() {
       const cssW = ctx.canvas.width / dpr;
       const maxW = cssW * 0.9;
       let size = p.size;
-      ctx.font = `bold ${size}px Poppins, sans-serif`;
+      ctx.font = `bold ${size}px "Open Sans", sans-serif`;
       let measured = ctx.measureText(p.text).width;
       if (measured > maxW) {
         size = Math.max(9, (size * maxW) / measured);
-        ctx.font = `bold ${size}px Poppins, sans-serif`;
+        ctx.font = `bold ${size}px "Open Sans", sans-serif`;
         measured = ctx.measureText(p.text).width;
       }
       ctx.textAlign = 'center';
