@@ -15,16 +15,16 @@
 
 // Bengali / Hindi goal exclamations, matching Boba Catcher's flavour.
 export const GOAL_WORDS = [
+  'Bohot badhiya!',
+  'Ek number!',
+  'Goli ke tarah!!',
+  'Fatafati boss!!',
+  'Zabardast shot!!!!',
   'Daarun goal!',
-  'Gooooal!',
   'Top bins, bhai!',
   'Jhakkas shot!',
-  'Khelechho!',
   'Asadharon!',
-  // Repeated so it comes up more often than the other shouts.
-  'Bahot acha kiye dost!',
-  'Bahot acha kiye dost!',
-  'Bahot acha kiye dost!',
+  'Gooooal!',
   'Back of the net!',
 ];
 
@@ -156,21 +156,25 @@ export function applyPowerWobble(aim, power, rng = Math.random) {
 
 // Discount per goal (the "2x goals" offer agreed with the creators), and the
 // ceiling it cannot exceed (reached at 15 goals).
-export const DISCOUNT_PER_GOAL = 2;
-export const MAX_DISCOUNT_PCT = 30;
+// Rupees off per goal (the poster offer: 1 goal = Rs 2 off, 10 goals = Rs 20
+// off), and the ceiling it cannot exceed (reached at 15 goals).
+export const RUPEES_PER_GOAL = 2;
+export const MAX_DISCOUNT_RS = 30;
 
 /**
- * Single reward rule: every goal is worth 2% off the next drink (5 goals =
- * 10% off), capped at 30%. No tiers. Zero goals earns encouragement only.
+ * Single reward rule: every goal is worth Rs 2 off the next drink (10 goals =
+ * Rs 20 off), capped at Rs 30. No tiers. Zero goals earns encouragement only.
+ * The flavour line scales with the score.
  */
 export function getReward(goals) {
   if (goals <= 0) {
-    return { prize: null, msg: 'Aar ekbar try koro! Every player gets a smile from us!' };
+    return { prize: null, msg: 'Aaro ekbar hok! Every player gets a smile from us!' };
   }
-  const pct = Math.min(goals * DISCOUNT_PER_GOAL, MAX_DISCOUNT_PCT);
+  const rs = Math.min(goals * RUPEES_PER_GOAL, MAX_DISCOUNT_RS);
+  const praise = goals >= 10 ? 'Legend toh bhai!' : goals >= 5 ? 'Daarun khelle!' : 'Bhalo khelecho!';
   return {
-    prize: `You've got ${pct}% off on your next drink!`,
-    msg: 'Daarun khela! Show this at the counter to claim.',
+    prize: `You've got ₹${rs} off on your next drink!`,
+    msg: `${praise} Show this at the counter to claim.`,
   };
 }
 
