@@ -30,7 +30,7 @@ body {
 
 .navbar-brand {
   color: var(--primary) !important;
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -137,11 +137,11 @@ body {
   font-weight: 700;
   color: white;
   margin-bottom: 20px;
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
 }
 
 .hero-subtitle {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.8rem;
   color: var(--secondary-light);
   margin-bottom: 15px;
@@ -392,7 +392,7 @@ body {
 }
 
 .story-quote blockquote {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.4rem;
   font-style: italic;
   color: var(--primary);
@@ -404,7 +404,7 @@ body {
 .story-quote blockquote::before,
 .story-quote blockquote::after {
   content: '"';
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 3rem;
   color: var(--secondary);
   position: absolute;
@@ -447,7 +447,7 @@ body {
 }
 
 .section-title {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 3rem;
   font-weight: 700;
   color: var(--primary);
@@ -500,7 +500,7 @@ body {
 }
 
 .category-title {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 2rem;
   color: var(--primary);
   margin-bottom: 30px;
@@ -562,7 +562,7 @@ body {
 }
 
 .menu-item-content h4 {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.4rem;
   color: var(--primary);
   margin-bottom: 10px;
@@ -608,7 +608,7 @@ body {
 }
 
 .price {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--secondary);
@@ -715,7 +715,7 @@ body {
 }
 
 .customization-options h3 {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.8rem;
   color: var(--primary);
   margin-bottom: 25px;
@@ -1072,7 +1072,7 @@ html {
 
 .card-title {
   color: var(--primary);
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-weight: 600;
 }
 
@@ -1133,7 +1133,7 @@ footer a:hover {
 }
 
 section h2 {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   color: var(--primary);
   margin-bottom: 2rem;
   position: relative;

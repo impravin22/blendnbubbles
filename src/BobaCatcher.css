@@ -76,7 +76,7 @@
 }
 
 .boba-game-title {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 2.6rem;
   font-weight: 700;
   color: #ffffff;
@@ -229,7 +229,7 @@
 }
 
 .boba-hud-value {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--secondary-light);
@@ -241,7 +241,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1rem;
   font-weight: 700;
   color: #FFD700;
@@ -265,7 +265,7 @@
 
 /* ===== Game Over Screen ===== */
 .boba-new-high {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.1rem;
   color: #FFD700;
   animation: boba-bounce 0.6s ease-in-out infinite alternate;
@@ -278,7 +278,7 @@
 }
 
 .boba-gameover-title {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 2rem;
   font-weight: 700;
   color: #ffffff;
@@ -290,7 +290,7 @@
 }
 
 .boba-final-score {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 4.5rem;
   font-weight: 700;
   color: var(--secondary-light);
@@ -317,7 +317,7 @@
 }
 
 .boba-reward-tier {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.3rem;
   font-weight: 700;
   color: var(--secondary-light);
@@ -462,7 +462,7 @@
 }
 
 .boba-lb-title {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.8rem;
   font-weight: 700;
   color: #ffffff;
@@ -521,7 +521,7 @@
 }
 
 .boba-lb-score {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Fraunces', serif;
   font-size: 1rem;
   font-weight: 700;
   color: var(--secondary-light);
