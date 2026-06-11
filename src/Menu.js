@@ -107,7 +107,7 @@ function Menu() {
             <img src="/logo.svg" alt="BlendNBubbles Logo" height="50" />
             <span className="ms-2">BlendNBubbles</span>
           </Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <button className="navbar-toggler" type="button" aria-label="Toggle navigation" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span className="navbar-toggler-icon"></span>
           </button>
           <div className="collapse navbar-collapse" id="navbarNav">
@@ -134,6 +134,8 @@ function Menu() {
           </div>
         </div>
       </nav>
+
+      <main>
 
       {/* Full Menu Section */}
       <section className="menu-section py-5" id="full-menu">
@@ -237,6 +239,8 @@ function Menu() {
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* Footer */}
       <footer className="bg-dark text-white py-4">
