@@ -214,9 +214,10 @@ describe('getReward (Rs 2 off per goal, capped)', () => {
     expect(getReward(5).prize).toBe("You've got ₹10 off on your next drink!");
   });
 
-  test('caps at Rs 30 from 15 goals up', () => {
-    expect(getReward(15).prize).toBe("You've got ₹30 off on your next drink!");
-    expect(getReward(40).prize).toBe("You've got ₹30 off on your next drink!");
+  test('caps at Rs 50 from 25 goals up', () => {
+    expect(getReward(24).prize).toBe("You've got ₹48 off on your next drink!");
+    expect(getReward(25).prize).toBe("You've got ₹50 off on your next drink!");
+    expect(getReward(40).prize).toBe("You've got ₹50 off on your next drink!");
   });
 
   test('flavour line scales with the score', () => {

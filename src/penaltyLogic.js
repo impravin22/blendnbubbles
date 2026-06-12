@@ -163,16 +163,14 @@ export function applyPowerWobble(aim, power, rng = Math.random) {
   };
 }
 
-// Discount per goal (the "2x goals" offer agreed with the creators), and the
-// ceiling it cannot exceed (reached at 15 goals).
 // Rupees off per goal (the poster offer: 1 goal = Rs 2 off, 10 goals = Rs 20
-// off), and the ceiling it cannot exceed (reached at 15 goals).
+// off), and the ceiling it cannot exceed (reached at 25 goals).
 export const RUPEES_PER_GOAL = 2;
-export const MAX_DISCOUNT_RS = 30;
+export const MAX_DISCOUNT_RS = 50;
 
 /**
  * Single reward rule: every goal is worth Rs 2 off the next drink (10 goals =
- * Rs 20 off), capped at Rs 30. No tiers. Zero goals earns encouragement only.
+ * Rs 20 off), capped at Rs 50. No tiers. Zero goals earns encouragement only.
  * The flavour line scales with the score.
  */
 export function getReward(goals) {
