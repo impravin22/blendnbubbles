@@ -146,6 +146,13 @@
 .pen-restart-btn:active { transform: scale(0.98); }
 .pen-start-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
 
+.pen-tries-left {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary-light);
+}
+
 .pen-loc-msg {
   margin-top: 14px;
   font-size: 13px;

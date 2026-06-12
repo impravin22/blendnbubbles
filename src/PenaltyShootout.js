@@ -12,6 +12,7 @@ import {
   getReward,
 } from './penaltyLogic';
 import TeamSelectScreen from './TeamSelectScreen';
+import { DAILY_LIMIT, triesLeft, recordPlay } from './playLimit';
 import { getTeamByCode, numberColourFor } from './teams';
 import './PenaltyShootout.css';
 
@@ -46,7 +47,7 @@ const SHOT_FLIGHT_MS = 520;
 const RESULT_HOLD_GOAL_MS = 850;
 
 // ─── Start Screen ────────────────────────────────────────────
-function StartScreen({ onStart, highScore }) {
+function StartScreen({ onStart, highScore, plays }) {
   const [locStatus, setLocStatus] = useState('idle');
   const [locMsg, setLocMsg] = useState('');
   const handleStart = () => {
@@ -106,9 +107,15 @@ function StartScreen({ onStart, highScore }) {
 
         {highScore > 0 && <p className="pen-high-score">Best run: {highScore} goals</p>}
 
-        <button className="pen-start-btn" onClick={handleStart} disabled={locStatus === 'checking'}>
-          {locStatus === 'checking' ? 'Checking location...' : 'Take the First Penalty'}
+        <button className="pen-start-btn" onClick={handleStart} disabled={locStatus === 'checking' || plays <= 0}>
+          {locStatus === 'checking' ? 'Checking location...' : plays <= 0 ? 'Out of tries for today' : 'Take the First Penalty'}
         </button>
+
+        <p className="pen-tries-left" role="status">
+          {plays > 0
+            ? `Tries today: ${plays}/${DAILY_LIMIT}`
+            : `Aaj ka khel khatam! ${DAILY_LIMIT} tries a day. Aaro kal hok!`}
+        </p>
 
         {locMsg && <p className="pen-loc-msg">{locMsg}</p>}
 
@@ -284,6 +291,7 @@ function PenaltyShootout() {
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('bobaPlayerName') || '');
   const [playerPhone, setPlayerPhone] = useState(() => localStorage.getItem('bobaPlayerPhone') || '');
   const [team, setTeam] = useState(() => getTeamByCode(localStorage.getItem('penaltyTeam')) || BNB_TEAM);
+  const [plays, setPlays] = useState(() => triesLeft());
 
   useEffect(() => {
     const prevTitle = document.title;
@@ -636,7 +644,15 @@ function PenaltyShootout() {
   // ─── Start ─────────────────────────────────────────────────
   // `kit` is the nation chosen on the team-select screen; falls back to the
   // current team (used by "Play Again", which reuses the last selection).
+  // Each device gets DAILY_LIMIT games per day; a game is counted the moment
+  // it actually starts.
   const startGame = useCallback((kit) => {
+    if (triesLeft() <= 0) {
+      setPlays(0);
+      setScreen('start');
+      return;
+    }
+    setPlays(recordPlay());
     const activeKit = kit || team;
     setScreen('playing');
     setStreak(0);
@@ -750,7 +766,7 @@ function PenaltyShootout() {
 
   return (
     <div className="pen-game-container">
-      {screen === 'start' && <StartScreen onStart={() => setScreen('teamselect')} highScore={highScore} />}
+      {screen === 'start' && <StartScreen onStart={() => setScreen('teamselect')} highScore={highScore} plays={plays} />}
       {screen === 'teamselect' && (
         <TeamSelectScreen
           onPick={handlePickTeam}
