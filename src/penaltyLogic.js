@@ -54,20 +54,28 @@ export function getKeeperDifficulty(kick) {
   // position at the moment of the shot, so it cannot be perfectly memorised.
   // Zero on the easy kicks; grows with the tier. Kept well below the open-corner
   // margin so a well-placed shot still beats it.
+  //
+  // `readBias` is the streak ceiling: from kick 11 the keeper increasingly
+  // pre-jumps toward wherever the shot is actually placed (it has "scouted"
+  // the shooter), closing the far-corner exploit that let patient players run
+  // 100-goal streaks. It scales the open gap down by (1 - readBias), so runs
+  // get probabilistically hard from the mid-teens and effectively wall out in
+  // the low twenties, in line with the reward cap at 15 goals.
   if (k <= 1) {
     // Goal 1: easy. Slow, low, narrow keeper leaves the corners and top bins.
-    return { oscRange: 0.3, oscSpeed: 0.0034, dive: 0.14, diveVert: 0.1, reachX: 0.13, reachY: 0.24, guardY: 0.62, anticipate: 0 };
+    return { oscRange: 0.3, oscSpeed: 0.0034, dive: 0.14, diveVert: 0.1, reachX: 0.13, reachY: 0.24, guardY: 0.62, anticipate: 0, readBias: 0 };
   }
   if (k <= 2) {
     // Goal 2: medium. Quicker and wider; needs a placed shot.
-    return { oscRange: 0.36, oscSpeed: 0.005, dive: 0.2, diveVert: 0.24, reachX: 0.16, reachY: 0.34, guardY: 0.6, anticipate: 0.015 };
+    return { oscRange: 0.36, oscSpeed: 0.005, dive: 0.2, diveVert: 0.24, reachX: 0.16, reachY: 0.34, guardY: 0.6, anticipate: 0.015, readBias: 0 };
   }
   if (k <= 4) {
     // Goals 3-4: very hard. Fast, wide patrol, long lunge, springs high.
-    return { oscRange: 0.42, oscSpeed: 0.0072, dive: 0.28, diveVert: 0.44, reachX: 0.21, reachY: 0.5, guardY: 0.58, anticipate: 0.035 };
+    return { oscRange: 0.42, oscSpeed: 0.0072, dive: 0.28, diveVert: 0.44, reachX: 0.21, reachY: 0.5, guardY: 0.58, anticipate: 0.035, readBias: 0 };
   }
   // Goal 5+ (the reward kick): extreme. Ramps with each further kick but stays
-  // capped so a well-placed shot to the corner away from the keeper is scoreable.
+  // capped so a well-placed shot to the corner away from the keeper is scoreable
+  // until the read bias starts closing the gap past kick 10.
   const over = k - 5;
   return {
     oscRange: 0.46,
@@ -78,6 +86,7 @@ export function getKeeperDifficulty(kick) {
     reachY: Math.min(0.56 + over * 0.005, 0.62),
     guardY: 0.56,
     anticipate: Math.min(0.04 + over * 0.003, 0.06),
+    readBias: Math.min(Math.max(0, k - 10) * 0.045, 0.55),
   };
 }
 
