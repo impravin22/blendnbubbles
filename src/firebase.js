@@ -27,7 +27,25 @@ function getWeekKey() {
 // missing the field is treated as a Boba Catcher score at read time.
 const DEFAULT_GAME = 'bobacatcher';
 
+// Per-game score ceilings. Real penalty play tops out at 18 (the keeper's
+// read bias walls runs there), so 40 leaves honest headroom while rejecting
+// spoofed submissions. Boba Catcher legitimately scores far higher.
+export const SCORE_CEILINGS = { football: 40, bobacatcher: 1000 };
+
+/**
+ * Whether a score is plausible for the given game: a non-negative integer at
+ * or below the game's ceiling. Used to refuse spoofed leaderboard writes.
+ */
+export function isPlausibleScore(score, game = DEFAULT_GAME) {
+  if (!Number.isInteger(score) || score < 0) return false;
+  const ceiling = SCORE_CEILINGS[game];
+  return ceiling != null ? score <= ceiling : true;
+}
+
 export async function submitScore(name, phone, score, game = DEFAULT_GAME, team = null) {
+  if (!isPlausibleScore(score, game)) {
+    throw new Error(`Implausible score ${score} for ${game}; not submitting.`);
+  }
   const doc = {
     name: name.trim(),
     phone: phone.trim(),
