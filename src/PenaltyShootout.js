@@ -699,8 +699,13 @@ function PenaltyShootout() {
       s.shotAim = aim;
       // Freeze the keeper at the instant of the shot, plus a small random
       // anticipation nudge (tier-scaled) so it cannot be perfectly memorised.
+      // Past 10 goals readBias also pulls the keeper toward the actual shot,
+      // closing the far-corner exploit and capping marathon streaks.
       const anticipate = s.keeperDiff.anticipate || 0;
-      s.keeperXAtShot = s.keeperX + (Math.random() - 0.5) * 2 * anticipate;
+      const readBias = s.keeperDiff.readBias || 0;
+      s.keeperXAtShot = s.keeperX
+        + readBias * (aim.x - s.keeperX)
+        + (Math.random() - 0.5) * 2 * anticipate;
       // Decide the outcome now so the dive animation can match it: a save dives
       // onto the ball, a goal stops short.
       s.willSave = isSaved(aim, s.keeperXAtShot, s.keeperDiff);

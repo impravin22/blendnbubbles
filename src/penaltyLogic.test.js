@@ -60,6 +60,28 @@ describe('getKeeperDifficulty (tiered by kick count)', () => {
     expect(getKeeperDifficulty(5).anticipate).toBeGreaterThan(getKeeperDifficulty(3).anticipate);
     expect(getKeeperDifficulty(999).anticipate).toBeLessThanOrEqual(0.06);
   });
+
+  test('read bias is zero through kick 10, then ramps and caps at 0.55', () => {
+    expect(getKeeperDifficulty(1).readBias).toBe(0);
+    expect(getKeeperDifficulty(10).readBias).toBe(0);
+    expect(getKeeperDifficulty(11).readBias).toBeCloseTo(0.045, 5);
+    expect(getKeeperDifficulty(15).readBias).toBeCloseTo(0.225, 5);
+    expect(getKeeperDifficulty(999).readBias).toBe(0.55);
+  });
+
+  test('read bias walls out the far-corner exploit by the low twenties', () => {
+    // Keeper pinned to the left post (0.04), perfect far-corner shot at 0.95.
+    const aim = { x: 0.95, y: 0.62 };
+    const keeperX = 0.04;
+    const biased = (k) => {
+      const d = getKeeperDifficulty(k);
+      // Same formula the component applies at the shot (no random noise here).
+      const atShot = keeperX + d.readBias * (aim.x - keeperX);
+      return isSaved(aim, atShot, d);
+    };
+    expect(biased(12)).toBe(false); // still scoreable in the early teens
+    expect(biased(25)).toBe(true); // marathon streaks get eaten
+  });
 });
 
 describe('keeperOscX (visible glide)', () => {
