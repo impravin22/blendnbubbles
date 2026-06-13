@@ -28,6 +28,27 @@ function Story() {
     navigate('/#contact');
   };
 
+  // Scroll reveal
+  useEffect(() => {
+    const els = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+    if (els.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } }),
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  });
+
+  // Per-route SEO: set page title and meta description
+  useEffect(() => {
+    document.title = 'Our Story - BlendNBubbles | From Taiwan to Kolkata';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', 'Discover how BlendNBubbles was born — three Indian students in Taiwan fell in love with bubble tea and brought authentic Taiwanese boba to Kolkata, India. Read our journey.');
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', 'https://blendnbubbles.com/story');
+  }, []);
+
   // Add Bootstrap JS for mobile navbar
   useEffect(() => {
     // Add Bootstrap JS for mobile navbar toggle
@@ -49,21 +70,19 @@ function Story() {
       {/* Navigation */}
       <Navbar scrolled={scrolled} />
 
+      <main>
+
       {/* Story Content */}
       <section className="story-section" id="story-content">
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-lg-10">
-              <div className="section-header text-center">
+              <div className="section-header text-center reveal">
                 <h1 className="section-title">Our Story</h1>
-                <p className="section-subtitle">How Blend N Bubbles Came To Be</p>
+                <p className="section-subtitle">How We Brought Authentic Bubble Tea from Taiwan to Kolkata</p>
               </div>
-              
-              <div className="story-content">
-                {/* <div className="story-image mb-5">
-                  <img src="/images/story/founders-taiwan.jpg" alt="BlendNBubbles founders in Taiwan" className="img-fluid rounded" />
-                </div> */}
-                
+
+              <div className="story-content reveal reveal-delay-1">
                 <div className="story-text">
                   <h2 className="mb-4">The Journey of Three Dreams and One Cup</h2>
                   
@@ -104,10 +123,12 @@ function Story() {
         </div>
       </section>
 
+      </main>
+
       {/* Footer */}
       <footer className="bg-dark text-white py-4">
         <div className="container text-center">
-          <p>© 2025 BlendNBubbles. All rights reserved.</p>
+          <p>© 2025-2026 BlendNBubbles. All rights reserved.</p>
           <p>Premium Bubble Tea in Kolkata, India</p>
           <div className="social-links mt-3">
             <a href="https://www.facebook.com/share/168pyB8Bbb/?mibextid=wwXIfr" className="text-white me-3" target="_blank" rel="noopener noreferrer">

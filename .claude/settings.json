@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open -R /Users/kumarpr/Desktop/Projects/blendnbubbles/public/logo512.png)"
+    ]
+  }
+}

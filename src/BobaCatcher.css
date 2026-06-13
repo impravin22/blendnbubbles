@@ -1,0 +1,560 @@
+/* ===== Boba Catcher Game Styles ===== */
+
+/* Fullscreen container - isolates game from rest of app */
+.boba-game-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  height: 100vh; /* fallback for older browsers */
+  background-color: var(--background);
+  z-index: 9999;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@supports (height: 100dvh) {
+  .boba-game-container { height: 100dvh; }
+}
+
+/* Canvas */
+.boba-canvas {
+  display: block;
+  width: 100%;
+  height: calc(100dvh - 60px);
+  height: calc(100vh - 60px); /* fallback */
+  touch-action: none;
+}
+
+@supports (height: 100dvh) {
+  .boba-canvas { height: calc(100dvh - 60px); }
+}
+
+/* ===== Shared Screen Layout ===== */
+.boba-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.boba-start-screen {
+  background: linear-gradient(135deg, #003333 0%, #004d4d 50%, #003333 100%);
+}
+
+.boba-gameover-screen {
+  background: linear-gradient(135deg, #003333 0%, #004444 100%);
+}
+
+.boba-start-content,
+.boba-gameover-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+}
+
+/* ===== Start Screen ===== */
+.boba-game-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 12px rgba(187, 135, 80, 0.4));
+}
+
+.boba-game-title {
+  font-family: 'Fraunces', serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+  letter-spacing: 0.02em;
+}
+
+.boba-game-subtitle {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1rem;
+  color: var(--secondary-light);
+  margin: 0 0 28px 0;
+}
+
+/* Instructions grid */
+.boba-instructions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.boba-instruction-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.82rem;
+}
+
+.boba-item-preview {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.boba-pearl { background: #3D2B1F; }
+.boba-tapioca { background: var(--secondary); }
+.boba-golden { background: linear-gradient(135deg, #FFD700, #FFA500); }
+.boba-ice { background: #AAD4E6; border-radius: 4px !important; }
+
+.boba-how-to {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 8px 0;
+}
+
+.boba-high-score {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.9rem;
+  color: var(--secondary-light);
+  margin: 0 0 20px 0;
+  font-weight: 500;
+}
+
+/* Buttons */
+.boba-start-btn,
+.boba-restart-btn {
+  background: var(--gold-gradient);
+  color: #ffffff;
+  border: none;
+  border-radius: 30px;
+  padding: 14px 44px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(187, 135, 80, 0.4);
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.boba-start-btn:active,
+.boba-restart-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 10px rgba(187, 135, 80, 0.3);
+}
+
+.boba-loc-msg {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.85rem;
+  color: #CEAA67;
+  background: rgba(206, 170, 103, 0.1);
+  border: 1px solid rgba(206, 170, 103, 0.3);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 12px 0 0 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.boba-tagline {
+  font-family: 'Open Sans', sans-serif;
+  font-style: italic;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 24px 0 12px 0;
+}
+
+.boba-menu-link,
+.boba-order-link {
+  display: inline-block;
+  color: var(--secondary-light);
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.85rem;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(206, 170, 103, 0.4);
+  padding-bottom: 2px;
+  margin-top: 8px;
+  transition: color 0.3s ease;
+}
+
+.boba-menu-link:hover,
+.boba-order-link:hover {
+  color: #ffffff;
+}
+
+/* ===== HUD ===== */
+.boba-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  padding: 0 20px;
+  background: var(--primary);
+  color: #ffffff;
+  font-family: 'Open Sans', sans-serif;
+  position: relative;
+  z-index: 10;
+}
+
+.boba-hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.boba-hud-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.boba-hud-value {
+  font-family: 'Fraunces', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--secondary-light);
+  line-height: 1.2;
+}
+
+.boba-hud-combo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Fraunces', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #FFD700;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.boba-hud-combo.active {
+  opacity: 1;
+}
+
+.boba-timer-urgent {
+  color: #FF6B6B !important;
+  animation: boba-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes boba-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.15); }
+}
+
+/* ===== Game Over Screen ===== */
+.boba-new-high {
+  font-family: 'Fraunces', serif;
+  font-size: 1.1rem;
+  color: #FFD700;
+  animation: boba-bounce 0.6s ease-in-out infinite alternate;
+  margin-bottom: 4px;
+}
+
+@keyframes boba-bounce {
+  from { transform: translateY(0) scale(1); }
+  to { transform: translateY(-4px) scale(1.05); }
+}
+
+.boba-gameover-title {
+  font-family: 'Fraunces', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 16px 0;
+}
+
+.boba-score-display {
+  margin-bottom: 8px;
+}
+
+.boba-final-score {
+  font-family: 'Fraunces', serif;
+  font-size: 4.5rem;
+  font-weight: 700;
+  color: var(--secondary-light);
+  line-height: 1;
+}
+
+.boba-score-label {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.boba-reward-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(187, 135, 80, 0.25);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin: 16px 0 24px 0;
+  width: 100%;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.boba-reward-tier {
+  font-family: 'Fraunces', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--secondary-light);
+  margin-bottom: 8px;
+}
+
+.boba-reward-msg {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.boba-gameover-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.boba-order-link-btn {
+  background: transparent;
+  color: var(--secondary-light);
+  border: 2px solid var(--secondary);
+  border-radius: 30px;
+  padding: 12px 32px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.boba-order-link-btn:active {
+  transform: scale(0.96);
+}
+
+.boba-gameover-footer {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 24px;
+}
+
+/* ===== Submit Form ===== */
+.boba-submit-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.boba-form-title {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--secondary-light);
+  margin: 0 0 4px 0;
+}
+
+.boba-input {
+  width: 100%;
+  max-width: 280px;
+  padding: 12px 16px;
+  border: 2px solid rgba(187, 135, 80, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.boba-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.boba-input:focus {
+  border-color: var(--secondary-light);
+}
+
+.boba-skip-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 8px 16px;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.boba-skip-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.boba-submit-error {
+  color: #FF6B6B;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.boba-submit-success {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1rem;
+  color: #34D399;
+  margin-top: 16px;
+  font-weight: 500;
+}
+
+.boba-check-icon {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.boba-start-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Leaderboard Screen ===== */
+.boba-leaderboard-screen {
+  background: linear-gradient(135deg, #003333 0%, #004444 100%);
+}
+
+.boba-leaderboard-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 380px;
+  width: 100%;
+}
+
+.boba-lb-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+}
+
+.boba-lb-subtitle {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.9rem;
+  color: var(--secondary-light);
+  margin: 0 0 20px 0;
+}
+
+.boba-lb-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.boba-lb-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease;
+}
+
+.boba-lb-highlight {
+  background: rgba(187, 135, 80, 0.2) !important;
+  border-color: rgba(187, 135, 80, 0.4) !important;
+}
+
+.boba-lb-rank {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  min-width: 36px;
+  text-align: left;
+}
+
+.boba-lb-name {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #ffffff;
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boba-lb-score {
+  font-family: 'Fraunces', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--secondary-light);
+  margin-left: 12px;
+}
+
+.boba-lb-loading,
+.boba-lb-empty {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 40px 0;
+}
+
+/* ===== Safe Area (notched phones) ===== */
+@supports (padding: env(safe-area-inset-top)) {
+  .boba-hud {
+    padding-top: env(safe-area-inset-top);
+    height: calc(60px + env(safe-area-inset-top));
+  }
+  .boba-canvas {
+    height: calc(100vh - 60px - env(safe-area-inset-top));
+  }
+}
+
+/* ===== Small screen adjustments ===== */
+@media (max-height: 600px) {
+  .boba-game-title { font-size: 2rem; }
+  .boba-game-subtitle { margin-bottom: 16px; }
+  .boba-instructions { gap: 6px; margin-bottom: 16px; }
+  .boba-final-score { font-size: 3.5rem; }
+  .boba-reward-card { padding: 14px 18px; margin: 12px 0 16px 0; }
+  .boba-lb-title { font-size: 1.4rem; }
+  .boba-lb-row { padding: 8px 12px; }
+  .boba-input { padding: 10px 14px; }
+}

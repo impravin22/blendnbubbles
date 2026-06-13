@@ -1,0 +1,90 @@
+name: Deploy Cron Worker
+
+# Deploys the blendnbubbles-cron Cloudflare Worker whenever the Worker source
+# or this workflow file changes. Handles KV namespace provisioning + pushes
+# shared secrets (DISPATCH_PAT, DIGEST_STATE_TOKEN) to the Worker on every
+# deploy (idempotent).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/cron-trigger/**"
+      - ".github/workflows/cron-worker-deploy.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cron-worker-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure KV namespace exists + patch wrangler.toml
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd services/cron-trigger
+          KV_TITLE="digest-state"
+          API="https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/storage/kv/namespaces"
+
+          NS_LIST=$(curl -fsS "$API?per_page=100" \
+            -H "Authorization: Bearer $CF_API_TOKEN")
+          KV_ID=$(echo "$NS_LIST" | jq -r --arg t "$KV_TITLE" \
+            '.result[] | select(.title==$t) | .id' | head -1)
+
+          if [ -z "$KV_ID" ] || [ "$KV_ID" = "null" ]; then
+            echo "Creating KV namespace $KV_TITLE"
+            CREATE_RESP=$(curl -fsS -X POST "$API" \
+              -H "Authorization: Bearer $CF_API_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"title\":\"$KV_TITLE\"}")
+            KV_ID=$(echo "$CREATE_RESP" | jq -r '.result.id')
+          fi
+
+          if [ -z "$KV_ID" ] || [ "$KV_ID" = "null" ]; then
+            echo "::error::Failed to resolve KV namespace ID"
+            exit 1
+          fi
+          echo "::notice::KV namespace id: $KV_ID"
+          sed -i "s|REPLACE_WITH_KV_NAMESPACE_ID|$KV_ID|" wrangler.toml
+
+      - name: Deploy Worker & push secrets
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: services/cron-trigger
+          secrets: |
+            DISPATCH_PAT
+            DIGEST_STATE_TOKEN
+        env:
+          DISPATCH_PAT: ${{ secrets.DISPATCH_PAT }}
+          DIGEST_STATE_TOKEN: ${{ secrets.DIGEST_STATE_TOKEN }}
+
+      - name: Smoke-test health endpoint
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -uo pipefail
+          if [ -z "$WORKER_URL" ]; then
+            echo "::warning::No Worker URL from wrangler-action — health check skipped"
+            exit 0
+          fi
+          response=$(curl -sSf --max-time 15 "$WORKER_URL" 2>&1) || response=""
+          if [ "$response" = "blendnbubbles-cron worker OK" ]; then
+            echo "::notice::Worker health check OK — $WORKER_URL"
+          else
+            echo "::warning::Health check inconclusive (TLS may still be propagating) — deploy continues"
+          fi

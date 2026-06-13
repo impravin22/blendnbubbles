@@ -1,0 +1,459 @@
+/* ===== Penalty Shootout Game Styles ===== */
+
+.pen-game-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  height: 100vh;
+  background: #012a2a;
+  z-index: 9999;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+@supports (height: 100dvh) {
+  .pen-game-container { height: 100dvh; }
+}
+
+.pen-canvas {
+  display: block;
+  width: 100%;
+  height: calc(100dvh - 60px);
+  height: calc(100vh - 60px);
+  touch-action: none;
+}
+@supports (height: 100dvh) {
+  .pen-canvas { height: calc(100dvh - 60px); }
+}
+
+.pen-swipe-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+}
+
+/* ===== Shared screen layout ===== */
+.pen-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* flex-start + auto margins on the content keep it centred when it fits but
+     let it scroll from the top when it is taller than the screen. */
+  justify-content: flex-start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 22px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(206, 170, 103, 0.28), transparent 55%),
+    linear-gradient(160deg, #012a2a, #004444 60%, #0a5252);
+}
+
+.pen-start-content,
+.pen-gameover-content,
+.pen-leaderboard-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+  margin-block: auto; /* vertical centring that still allows scrolling */
+}
+
+/* ===== Start ===== */
+.pen-game-logo {
+  width: 84px;
+  height: 84px;
+  filter: drop-shadow(0 10px 24px rgba(187, 135, 80, 0.4));
+  margin-bottom: 14px;
+}
+.pen-game-title {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 900;
+  font-size: 36px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  background: linear-gradient(45deg, #BB8750, #CEAA67);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.pen-game-subtitle {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.82);
+  margin-top: 8px;
+}
+.pen-howto {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 22px 0 6px;
+  width: 100%;
+  max-width: 300px;
+}
+.pen-howto-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(206, 170, 103, 0.25);
+  border-radius: 12px;
+  padding: 11px 14px;
+  text-align: left;
+}
+.pen-howto-ic { font-size: 22px; }
+.pen-high-score {
+  font-weight: 700;
+  color: var(--secondary-light);
+  margin-top: 14px;
+}
+
+.pen-start-btn,
+.pen-restart-btn {
+  margin-top: 20px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: linear-gradient(45deg, #BB8750, #CEAA67);
+  border: none;
+  border-radius: 999px;
+  padding: 15px 38px;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(187, 135, 80, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.pen-start-btn:hover,
+.pen-restart-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(187, 135, 80, 0.5); }
+.pen-start-btn:active,
+.pen-restart-btn:active { transform: scale(0.98); }
+.pen-start-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+.pen-tries-left {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary-light);
+}
+
+.pen-loc-msg {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #ffd2a8;
+  max-width: 280px;
+  line-height: 1.5;
+}
+.pen-tagline {
+  margin-top: 18px;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--secondary-light);
+}
+.pen-menu-link {
+  margin-top: 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: underline;
+}
+
+/* ===== HUD ===== */
+.pen-hud {
+  position: relative;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  background: rgba(1, 30, 30, 0.85);
+  z-index: 2;
+}
+.pen-hud-item { display: flex; flex-direction: column; }
+.pen-hud-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--secondary-light);
+}
+.pen-hud-value {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  color: #fff;
+  line-height: 1.1;
+}
+.pen-hud-item:last-child { align-items: flex-end; }
+
+/* ===== Game over ===== */
+.pen-new-high {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #012a2a;
+  background: linear-gradient(45deg, #BB8750, #CEAA67);
+  padding: 6px 16px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+.pen-gameover-title {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 800;
+  font-size: 26px;
+  color: #fff;
+}
+.pen-score-display { margin: 6px 0 4px; }
+.pen-final-score {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 900;
+  font-size: 96px;
+  line-height: 1;
+  background: linear-gradient(45deg, #BB8750, #CEAA67);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.pen-score-label {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--secondary-light);
+  font-weight: 700;
+}
+.pen-reward-card {
+  margin: 16px 0 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1.5px solid rgba(206, 170, 103, 0.4);
+  border-radius: 16px;
+  padding: 14px 18px;
+  width: 100%;
+  max-width: 320px;
+}
+.pen-reward-prize {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 800;
+  font-size: 19px;
+  line-height: 1.35;
+  margin: 0;
+  background: linear-gradient(45deg, #BB8750, #CEAA67);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.pen-reward-msg {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 6px;
+  line-height: 1.45;
+}
+.pen-reward-valid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(206, 170, 103, 0.35);
+}
+.pen-reward-date {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+  background: rgba(206, 170, 103, 0.22);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+.pen-reward-rule {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pen-submit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 14px;
+}
+.pen-form-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.pen-input {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 15px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(206, 170, 103, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.pen-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+.pen-input:focus { outline: none; border-color: var(--secondary-light); }
+.pen-skip-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 2px;
+}
+.pen-submit-error { color: #ff8a65; font-size: 13px; }
+.pen-submit-success {
+  margin-top: 16px;
+  font-weight: 700;
+  color: #2ecc71;
+}
+.pen-check-icon { font-size: 18px; }
+.pen-gameover-footer {
+  margin-top: 20px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== Leaderboard ===== */
+.pen-lb-title {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 900;
+  font-size: 26px;
+  color: #fff;
+}
+.pen-lb-subtitle {
+  font-size: 14px;
+  color: var(--secondary-light);
+  margin: 4px 0 14px;
+}
+.pen-lb-loading,
+.pen-lb-empty {
+  color: rgba(255, 255, 255, 0.7);
+  padding: 24px 0;
+}
+.pen-lb-list { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 8px; }
+.pen-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.pen-lb-row:first-child { background: linear-gradient(45deg, #BB8750, #CEAA67); }
+.pen-lb-highlight { background: rgba(206, 170, 103, 0.18); border-color: var(--secondary); }
+.pen-lb-rank { font-weight: 900; font-size: 18px; width: 32px; text-align: center; }
+.pen-lb-flag { font-size: 20px; line-height: 1; }
+.pen-lb-name { flex: 1; text-align: left; font-weight: 600; font-size: 15px; color: #fff; }
+.pen-lb-score { font-weight: 900; font-size: 15px; color: #fff; }
+
+.pen-gameover-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.pen-order-link-btn {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  border: 2px solid rgba(206, 170, 103, 0.6);
+  color: var(--secondary-light);
+  text-decoration: none;
+}
+.pen-order-link-btn:hover { background: rgba(206, 170, 103, 0.12); }
+
+/* ===== Season badge (start screen) ===== */
+.pen-season-badge {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #012a2a;
+  background: linear-gradient(45deg, #BB8750, #CEAA67);
+  padding: 5px 14px;
+  border-radius: 999px;
+}
+
+/* ===== Broadcast scorebug (HUD) ===== */
+.pen-scorebug {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pen-sb-badge {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 900;
+  font-size: 13px;
+  color: #012a2a;
+  background: linear-gradient(45deg, #BB8750, #CEAA67);
+  border-radius: 6px;
+  padding: 3px 7px;
+  letter-spacing: 0.02em;
+}
+.pen-sb-team {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: #fff;
+}
+.pen-sb-team-keeper { color: rgba(255, 255, 255, 0.7); }
+.pen-sb-flag { font-size: 15px; }
+.pen-sb-score {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--secondary-light);
+  min-width: 18px;
+  text-align: center;
+}
+.pen-sb-score-keeper { color: rgba(255, 255, 255, 0.85); }
+.pen-sb-sep { color: rgba(255, 255, 255, 0.45); font-weight: 700; }
+.pen-scorebug-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.pen-sb-pen {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+}
+.pen-sb-season {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--secondary-light);
+}

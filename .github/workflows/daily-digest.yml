@@ -1,0 +1,71 @@
+name: Daily Digest
+
+on:
+  # Schedule removed — Cloudflare Worker cron fires workflow_dispatch at
+  # 01:00 UTC (09:00 TPE) and 13:00 UTC (21:00 TPE) with exact timing.
+  workflow_dispatch:
+    inputs:
+      lookback_hours:
+        description: "Hours of Gmail history to scan (default 12 matches 9am/9pm cadence)"
+        required: false
+        default: "12"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/daily-digest/**"
+      - ".github/workflows/daily-digest.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Only run tests on direct pushes — cron workflow_dispatch just sends the
+    # digest and doesn't need to re-run the test suite every 12 hours.
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: scripts/daily-digest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: scripts/daily-digest/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  send-digest:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: scripts/daily-digest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: scripts/daily-digest/package-lock.json
+      - run: npm ci --omit=dev
+      - name: Send digest
+        env:
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Untrusted input passed via env (not interpolated into run:).
+          # config.js validates it as a positive finite number.
+          DIGEST_LOOKBACK_HOURS: ${{ github.event.inputs.lookback_hours }}
+          # Seen-review dedupe store (Cloudflare Worker KV). Absence of either
+          # value disables dedupe — the digest runs normally and every review
+          # surfaces on every run.
+          DIGEST_STATE_URL: ${{ secrets.DIGEST_STATE_URL }}
+          DIGEST_STATE_TOKEN: ${{ secrets.DIGEST_STATE_TOKEN }}
+        run: npm start

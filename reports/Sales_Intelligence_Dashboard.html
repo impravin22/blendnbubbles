@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blend N Bubbles - Sales Intelligence Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #6C5CE7; --primary-light: #a29bfe; --accent: #00cec9;
+    --success: #00b894; --warning: #fdcb6e; --danger: #e17055;
+    --dark: #2d3436; --darker: #1e272e; --card: #ffffff;
+    --bg: #f0f3f8; --text: #2d3436; --text-light: #636e72;
+    --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+  
+  .header {
+    background: linear-gradient(135deg, var(--primary), #0984e3);
+    color: white; padding: 28px 40px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 30px rgba(108,92,231,0.3);
+  }
+  .header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .header p { opacity: 0.85; font-size: 14px; margin-top: 4px; }
+  
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+  
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi-card {
+    background: var(--card); border-radius: 16px; padding: 22px 24px;
+    box-shadow: var(--shadow); border-left: 4px solid var(--primary);
+    transition: transform 0.2s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); }
+  .kpi-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); font-weight: 600; }
+  .kpi-card .value { font-size: 28px; font-weight: 800; margin: 6px 0 2px; color: var(--dark); }
+  .kpi-card .sub { font-size: 12px; color: var(--text-light); }
+  .kpi-card:nth-child(2) { border-left-color: var(--success); }
+  .kpi-card:nth-child(3) { border-left-color: var(--accent); }
+  .kpi-card:nth-child(4) { border-left-color: var(--warning); }
+  .kpi-card:nth-child(5) { border-left-color: var(--danger); }
+  
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  
+  .card {
+    background: var(--card); border-radius: 16px; padding: 24px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+  .card h3 .icon { font-size: 20px; }
+  .full-width { grid-column: 1 / -1; }
+  
+  .chart-container { position: relative; width: 100%; }
+  .chart-container canvas { width: 100% !important; }
+  
+  .insight-box {
+    background: linear-gradient(135deg, #dfe6e9, #f0f3f8); border-radius: 12px;
+    padding: 16px 20px; margin-top: 12px; font-size: 13px; line-height: 1.6;
+    border-left: 3px solid var(--primary);
+  }
+  .insight-box strong { color: var(--primary); }
+  
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: #f8f9fa; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; border-bottom: 2px solid #eee; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+  tr:hover td { background: #f8f9ff; }
+  
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-star { background: #ffeaa7; color: #d63031; }
+  .badge-strong { background: #dfe6e9; color: #0984e3; }
+  .badge-mid { background: #e0f7e9; color: #00b894; }
+  .badge-low { background: #ffeef0; color: #e17055; }
+  
+  .growth-pos { color: var(--success); font-weight: 700; }
+  .growth-neg { color: var(--danger); font-weight: 700; }
+  
+  .section-title {
+    font-size: 20px; font-weight: 800; margin: 32px 0 16px; color: var(--dark);
+    padding-bottom: 8px; border-bottom: 3px solid var(--primary);
+    display: inline-block;
+  }
+  
+  .tab-container { margin-bottom: 16px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 8px 18px; border: none; background: #eee; border-radius: 8px;
+    cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--primary); color: white; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  
+  .footer { text-align: center; padding: 24px; color: var(--text-light); font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Blend N Bubbles — Sales Intelligence Dashboard</h1>
+  <p>Barrackpore Branch &nbsp;|&nbsp; Oct 2025 – Feb 2026 &nbsp;|&nbsp; ML-Powered Analysis</p>
+</div>
+
+<div class="container">
+
+<!-- KPI ROW -->
+<div class="kpi-row" id="kpiRow"></div>
+
+<!-- REVENUE & QTY TREND -->
+<div class="section-title">Revenue & Sales Trends</div>
+<div class="grid-2">
+  <div class="card">
+    <h3><span class="icon">📈</span> Monthly Revenue Trend + Forecast</h3>
+    <div class="chart-container"><canvas id="revenueTrend" height="260"></canvas></div>
+    <div class="insight-box" id="revenueInsight"></div>
+  </div>
+  <div class="card">
+    <h3><span class="icon">📊</span> Month-over-Month Growth</h3>
+    <div class="chart-container"><canvas id="growthChart" height="260"></canvas></div>
+    <div class="insight-box" id="growthInsight"></div>
+  </div>
+</div>
+
+<!-- TOP PRODUCTS -->
+<div class="section-title">Best Selling Products</div>
+<div class="grid-2">
+  <div class="card">
+    <h3><span class="icon">🏆</span> Top 10 Products by Revenue (All Time)</h3>
+    <div class="chart-container"><canvas id="topRevenueChart" height="300"></canvas></div>
+  </div>
+  <div class="card">
+    <h3><span class="icon">🔥</span> Top Sellers Each Month</h3>
+    <div class="tab-container">
+      <div class="tabs" id="monthTabs"></div>
+      <div id="monthTabContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY ANALYSIS -->
+<div class="section-title">Category Performance</div>
+<div class="grid-2">
+  <div class="card">
+    <h3><span class="icon">🧩</span> Revenue by Category (All Months)</h3>
+    <div class="chart-container"><canvas id="categoryPie" height="300"></canvas></div>
+  </div>
+  <div class="card">
+    <h3><span class="icon">📉</span> Category Trend Over Time</h3>
+    <div class="chart-container"><canvas id="categoryTrend" height="300"></canvas></div>
+  </div>
+</div>
+
+<!-- ML CLUSTERING -->
+<div class="section-title">ML Product Segmentation (K-Means Clustering)</div>
+<div class="grid-2">
+  <div class="card">
+    <h3><span class="icon">🤖</span> Product Clusters: Avg Qty vs Avg Revenue</h3>
+    <div class="chart-container"><canvas id="clusterChart" height="320"></canvas></div>
+    <div class="insight-box">
+      Products are clustered using <strong>K-Means (k=4)</strong> based on average monthly quantity and revenue. 
+      This identifies which products are your stars, strong performers, mid-range staples, and niche items.
+    </div>
+  </div>
+  <div class="card">
+    <h3><span class="icon">📋</span> Cluster Breakdown</h3>
+    <table id="clusterTable">
+      <thead><tr><th>Product</th><th>Cluster</th><th>Avg Qty/Mo</th><th>Avg Rev/Mo</th><th>Months</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PRICE ANALYSIS -->
+<div class="section-title">Pricing & Value Analysis</div>
+<div class="grid-2">
+  <div class="card">
+    <h3><span class="icon">💎</span> Highest Avg Unit Price Items</h3>
+    <div class="chart-container"><canvas id="priceChart" height="280"></canvas></div>
+  </div>
+  <div class="card">
+    <h3><span class="icon">🎯</span> Key Insights & Recommendations</h3>
+    <div id="recommendations" style="font-size:14px; line-height:1.8;"></div>
+  </div>
+</div>
+
+<div class="footer">
+  Generated on Feb 18, 2026 &nbsp;|&nbsp; Blend N Bubbles Sales Intelligence &nbsp;|&nbsp; ML algorithms: K-Means Clustering, Linear Regression
+  <br>* Feb 2026 data covers Feb 1–17 only. Forecasts are projections scaled to full months.
+</div>
+
+</div>
+
+<script>
+const D = {"monthly_overview": [{"month": "2025-10", "total_qty": 426.0, "total_revenue": 70797.98, "unique_items": 56, "avg_price": 166.192441314554}, {"month": "2025-11", "total_qty": 286.0, "total_revenue": 45120.0, "unique_items": 37, "avg_price": 157.76223776223776}, {"month": "2025-12", "total_qty": 469.0, "total_revenue": 65803.7, "unique_items": 40, "avg_price": 140.30639658848614}, {"month": "2026-01", "total_qty": 795.0, "total_revenue": 112855.77, "unique_items": 45, "avg_price": 141.9569433962264}, {"month": "2026-02", "total_qty": 350.0, "total_revenue": 52373.14, "unique_items": 44, "avg_price": 149.63754285714285}], "months_sorted": ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02"], "top_by_month": {"2025-12": [{"item": "Hot Cocoa Cloud", "qty": 78.0, "revenue": 13302.18}, {"item": "Caramel Boba Coffee", "qty": 43.0, "revenue": 7020.6}, {"item": "Biscoff Blaze Latte", "qty": 31.0, "revenue": 4427.48}, {"item": "Assam Garden Brew", "qty": 27.0, "revenue": 2288.52}, {"item": "Taiwan Classic Boba", "qty": 27.0, "revenue": 4841.64}], "2025-11": [{"item": "Cafe Mocha", "qty": 37.0, "revenue": 6117.17}, {"item": "Taiwan Classic Boba", "qty": 37.0, "revenue": 6952.1}, {"item": "Matcha Milk Tea", "qty": 20.0, "revenue": 3450.4}, {"item": "Caramel Boba Coffee", "qty": 18.0, "revenue": 2828.52}, {"item": "Choco Ice Swirl", "qty": 17.0, "revenue": 2914.31}], "2025-10": [{"item": "Choco Cold Brew", "qty": 74.0, "revenue": 12133.0}, {"item": "Choco Lush Boba", "qty": 39.0, "revenue": 6761.96}, {"item": "Matcha Milk Mix", "qty": 35.0, "revenue": 6023.91}, {"item": "Taiwan Signature Boba", "qty": 25.0, "revenue": 4319.11}, {"item": "Strawberry Snow", "qty": 20.0, "revenue": 3466.69}], "2026-01": [{"item": "Hot Cocoa Cloud", "qty": 134.0, "revenue": 22844.32}, {"item": "Caramel Boba Coffee", "qty": 79.0, "revenue": 12788.62}, {"item": "Classic Boba Brew", "qty": 61.0, "revenue": 4036.89}, {"item": "Choco Ice Swirl", "qty": 44.0, "revenue": 7731.49}, {"item": "Cafe Mocha", "qty": 38.0, "revenue": 6403.36}], "2026-02": [{"item": "Caramel Boba Coffee", "qty": 41.0, "revenue": 6567.27}, {"item": "Taiwan Classic Boba", "qty": 25.0, "revenue": 4266.54}, {"item": "Hot Cocoa Cloud", "qty": 24.0, "revenue": 4091.52}, {"item": "Choco Ice Swirl", "qty": 22.0, "revenue": 3771.46}, {"item": "Cafe Mocha", "qty": 20.0, "revenue": 3449.06}]}, "category_monthly": [{"month": "2025-10", "category": "Add-Ons", "qty": 10.0, "revenue": 381.0}, {"month": "2025-10", "category": "COMBO-CF", "qty": 15.0, "revenue": 3595.24}, {"month": "2025-10", "category": "COMBO-PP", "qty": 12.0, "revenue": 2790.51}, {"month": "2025-10", "category": "Classic N Natural", "qty": 4.0, "revenue": 830.0}, {"month": "2025-10", "category": "Coffee", "qty": 27.0, "revenue": 4581.62}, {"month": "2025-10", "category": "DRINK-P", "qty": 282.0, "revenue": 44428.44}, {"month": "2025-10", "category": "FRIES", "qty": 4.0, "revenue": 481.90999999999997}, {"month": "2025-10", "category": "Fruit Tea Fusions", "qty": 20.0, "revenue": 4077.37}, {"month": "2025-10", "category": "Goodies", "qty": 3.0, "revenue": 228.57}, {"month": "2025-10", "category": "Milk Tea", "qty": 31.0, "revenue": 6600.5}, {"month": "2025-10", "category": "Smoothies", "qty": 14.0, "revenue": 2383.7799999999997}, {"month": "2025-10", "category": "Soda", "qty": 4.0, "revenue": 419.04}, {"month": "2025-11", "category": "Classic N Natural", "qty": 2.0, "revenue": 200.0}, {"month": "2025-11", "category": "Coffee", "qty": 61.0, "revenue": 9993.31}, {"month": "2025-11", "category": "DRINK-P", "qty": 2.0, "revenue": 338.1}, {"month": "2025-11", "category": "FRIES", "qty": 21.0, "revenue": 2465.7}, {"month": "2025-11", "category": "Fruit Tea Fusions", "qty": 29.0, "revenue": 4157.19}, {"month": "2025-11", "category": "Goodies", "qty": 7.0, "revenue": 533.33}, {"month": "2025-11", "category": "Halloween", "qty": 13.0, "revenue": 2176.16}, {"month": "2025-11", "category": "Milk Tea", "qty": 79.0, "revenue": 14375.82}, {"month": "2025-11", "category": "Smoothies", "qty": 52.0, "revenue": 8774.71}, {"month": "2025-11", "category": "Soda", "qty": 20.0, "revenue": 2105.6800000000003}, {"month": "2025-12", "category": "Authentic Brews", "qty": 34.0, "revenue": 3910.3599999999997}, {"month": "2025-12", "category": "BnB Signatures", "qty": 130.0, "revenue": 19928.72}, {"month": "2025-12", "category": "Classic N Natural", "qty": 3.0, "revenue": 271.44}, {"month": "2025-12", "category": "Coffee", "qty": 68.0, "revenue": 10815.86}, {"month": "2025-12", "category": "Fries", "qty": 14.0, "revenue": 1612.3500000000001}, {"month": "2025-12", "category": "Fruit Tea Fusions", "qty": 11.0, "revenue": 1635.98}, {"month": "2025-12", "category": "Goodies", "qty": 3.0, "revenue": 228.57}, {"month": "2025-12", "category": "Milk Tea", "qty": 55.0, "revenue": 9704.42}, {"month": "2025-12", "category": "Smoothies", "qty": 51.0, "revenue": 8391.86}, {"month": "2025-12", "category": "Soda", "qty": 24.0, "revenue": 2519.48}, {"month": "2025-12", "category": "Traditional Brews", "qty": 76.0, "revenue": 6784.66}, {"month": "2026-01", "category": "Authentic Brews", "qty": 52.0, "revenue": 5978.87}, {"month": "2026-01", "category": "BnB Signatures", "qty": 226.0, "revenue": 34008.979999999996}, {"month": "2026-01", "category": "Classic N Natural", "qty": 5.0, "revenue": 618.09}, {"month": "2026-01", "category": "Coffee", "qty": 117.0, "revenue": 19191.98}, {"month": "2026-01", "category": "Fries", "qty": 19.0, "revenue": 2210.45}, {"month": "2026-01", "category": "Fruit Tea Fusions", "qty": 56.0, "revenue": 8410.06}, {"month": "2026-01", "category": "Goodies", "qty": 1.0, "revenue": 76.19}, {"month": "2026-01", "category": "Milk Tea", "qty": 74.0, "revenue": 12941.57}, {"month": "2026-01", "category": "Smoothies", "qty": 104.0, "revenue": 17212.27}, {"month": "2026-01", "category": "Soda", "qty": 34.0, "revenue": 3561.84}, {"month": "2026-01", "category": "Traditional Brews", "qty": 107.0, "revenue": 8645.47}, {"month": "2026-02", "category": "Authentic Brews", "qty": 13.0, "revenue": 1473.29}, {"month": "2026-02", "category": "BnB Signatures", "qty": 50.0, "revenue": 7381.0}, {"month": "2026-02", "category": "Classic N Natural", "qty": 3.0, "revenue": 361.9}, {"month": "2026-02", "category": "Coffee", "qty": 61.0, "revenue": 10016.33}, {"month": "2026-02", "category": "Fries", "qty": 10.0, "revenue": 1171.42}, {"month": "2026-02", "category": "Fruit Tea Fusions", "qty": 32.0, "revenue": 4843.84}, {"month": "2026-02", "category": "Goodies", "qty": 2.0, "revenue": 152.38}, {"month": "2026-02", "category": "Milk Tea", "qty": 41.0, "revenue": 7088.91}, {"month": "2026-02", "category": "Smoothies", "qty": 68.0, "revenue": 11311.68}, {"month": "2026-02", "category": "Soda", "qty": 23.0, "revenue": 2409.4799999999996}, {"month": "2026-02", "category": "Traditional Brews", "qty": 19.0, "revenue": 1496.15}, {"month": "2026-02", "category": "Valentines Day", "qty": 28.0, "revenue": 4666.76}], "overall_top_items": [{"item": "Hot Cocoa Cloud", "total_qty": 236.0, "total_revenue": 40238.02, "months_present": 3}, {"item": "Caramel Boba Coffee", "total_qty": 201.0, "total_revenue": 32443.770000000004, "months_present": 5}, {"item": "Taiwan Classic Boba", "total_qty": 141.0, "total_revenue": 25925.24, "months_present": 5}, {"item": "Cafe Mocha", "total_qty": 127.0, "total_revenue": 21107.71, "months_present": 5}, {"item": "Choco Ice Swirl", "total_qty": 104.0, "total_revenue": 18075.86, "months_present": 5}, {"item": "Choco Cold Brew", "total_qty": 74.0, "total_revenue": 12133.0, "months_present": 1}, {"item": "Biscoff Blaze Latte", "total_qty": 78.0, "total_revenue": 11158.7, "months_present": 3}, {"item": "Mango Chill Vibe", "total_qty": 58.0, "total_revenue": 8876.14, "months_present": 5}, {"item": "Matcha Rose Milk Tea", "total_qty": 46.0, "total_revenue": 8535.1, "months_present": 5}, {"item": "Matcha Milk Tea", "total_qty": 47.0, "total_revenue": 8453.7, "months_present": 5}, {"item": "Blueberry Blend", "total_qty": 51.0, "total_revenue": 8432.02, "months_present": 5}, {"item": "Choco Lush Boba", "total_qty": 39.0, "total_revenue": 6761.96, "months_present": 1}, {"item": "Caramel Cafe Delight", "total_qty": 54.0, "total_revenue": 6701.099999999999, "months_present": 3}, {"item": "Taiwan Signature Boba", "total_qty": 45.0, "total_revenue": 6667.62, "months_present": 5}, {"item": "Hawaii Bubble Soda", "total_qty": 58.0, "total_revenue": 6081.32, "months_present": 5}], "item_clusters": [{"item": "Assam Boba Tea", "avg_qty": 4.2, "avg_revenue": 646.104, "total_qty": 21.0, "total_revenue": 3230.52, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Assam Garden Brew", "avg_qty": 17.666666666666668, "avg_revenue": 1497.4266666666665, "total_qty": 53.0, "total_revenue": 4492.28, "frequency": 3, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Biscoff Blaze Latte", "avg_qty": 26.0, "avg_revenue": 3719.566666666667, "total_qty": 78.0, "total_revenue": 11158.7, "frequency": 3, "cluster_label": "\ud83d\udcb0 Strong Performers"}, {"item": "Black Currant Smoothie", "avg_qty": 9.0, "avg_revenue": 1542.87, "total_qty": 18.0, "total_revenue": 3085.74, "frequency": 2, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Black Currant Smoothie-pp", "avg_qty": 1.0, "avg_revenue": 242.86, "total_qty": 1.0, "total_revenue": 242.86, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Black Current Cheese", "avg_qty": 2.4, "avg_revenue": 384.856, "total_qty": 12.0, "total_revenue": 1924.28, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Blueberry Blend", "avg_qty": 10.2, "avg_revenue": 1686.404, "total_qty": 51.0, "total_revenue": 8432.02, "frequency": 5, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Blueberry Bubble Tea", "avg_qty": 3.4, "avg_revenue": 526.238, "total_qty": 17.0, "total_revenue": 2631.19, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Boba Key Chain A", "avg_qty": 3.2, "avg_revenue": 243.808, "total_qty": 16.0, "total_revenue": 1219.04, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Cafe Mocha", "avg_qty": 25.4, "avg_revenue": 4221.5419999999995, "total_qty": 127.0, "total_revenue": 21107.71, "frequency": 5, "cluster_label": "\ud83d\udcb0 Strong Performers"}, {"item": "Cafe Mocha (Halloween)", "avg_qty": 2.0, "avg_revenue": 361.9, "total_qty": 2.0, "total_revenue": 361.9, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Caramel Boba Coffee", "avg_qty": 40.2, "avg_revenue": 6488.754000000001, "total_qty": 201.0, "total_revenue": 32443.770000000004, "frequency": 5, "cluster_label": "\ud83d\udcb0 Strong Performers"}, {"item": "Caramel Boba Coffee (Halloween)", "avg_qty": 4.0, "avg_revenue": 685.72, "total_qty": 4.0, "total_revenue": 685.72, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Caramel Cafe Delight", "avg_qty": 18.0, "avg_revenue": 2233.7, "total_qty": 54.0, "total_revenue": 6701.099999999999, "frequency": 3, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Cheese Fries", "avg_qty": 4.8, "avg_revenue": 589.728, "total_qty": 24.0, "total_revenue": 2948.64, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Cheesy Mango Melt", "avg_qty": 5.4, "avg_revenue": 951.9799999999999, "total_qty": 27.0, "total_revenue": 4759.9, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Choco Cold Brew", "avg_qty": 74.0, "avg_revenue": 12133.0, "total_qty": 74.0, "total_revenue": 12133.0, "frequency": 1, "cluster_label": "\u2b50 Star Products"}, {"item": "Choco Cold Brew-cf", "avg_qty": 1.0, "avg_revenue": 233.33, "total_qty": 1.0, "total_revenue": 233.33, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Choco Cold Brew-pp", "avg_qty": 1.0, "avg_revenue": 233.33, "total_qty": 1.0, "total_revenue": 233.33, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Choco Ice Swirl", "avg_qty": 20.8, "avg_revenue": 3615.172, "total_qty": 104.0, "total_revenue": 18075.86, "frequency": 5, "cluster_label": "\ud83d\udcb0 Strong Performers"}, {"item": "Choco Lush Boba", "avg_qty": 39.0, "avg_revenue": 6761.96, "total_qty": 39.0, "total_revenue": 6761.96, "frequency": 1, "cluster_label": "\ud83d\udcb0 Strong Performers"}, {"item": "Choco Lush Boba-cf", "avg_qty": 2.0, "avg_revenue": 504.76, "total_qty": 2.0, "total_revenue": 504.76, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Choco Lush Boba-pp", "avg_qty": 2.0, "avg_revenue": 485.72, "total_qty": 2.0, "total_revenue": 485.72, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Classic Boba Brew", "avg_qty": 30.666666666666668, "avg_revenue": 2024.6333333333332, "total_qty": 92.0, "total_revenue": 6073.9, "frequency": 3, "cluster_label": "\ud83d\udcb0 Strong Performers"}, {"item": "Coconut Jelly", "avg_qty": 6.0, "avg_revenue": 228.6, "total_qty": 6.0, "total_revenue": 228.6, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Fiery Ginger Brew", "avg_qty": 2.3333333333333335, "avg_revenue": 142.22, "total_qty": 7.0, "total_revenue": 426.65999999999997, "frequency": 3, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Ginger Iced Tea", "avg_qty": 2.0, "avg_revenue": 379.76, "total_qty": 4.0, "total_revenue": 759.52, "frequency": 2, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Golden Ginger Latte", "avg_qty": 3.0, "avg_revenue": 254.28000000000003, "total_qty": 6.0, "total_revenue": 508.56000000000006, "frequency": 2, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Halloween Black Currant Cheese", "avg_qty": 1.0, "avg_revenue": 166.67, "total_qty": 1.0, "total_revenue": 166.67, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Halloween Mocha", "avg_qty": 9.0, "avg_revenue": 1495.2, "total_qty": 9.0, "total_revenue": 1495.2, "frequency": 1, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Halloween Signature", "avg_qty": 3.0, "avg_revenue": 514.29, "total_qty": 3.0, "total_revenue": 514.29, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Hawaii Bubble Soda", "avg_qty": 11.6, "avg_revenue": 1216.264, "total_qty": 58.0, "total_revenue": 6081.32, "frequency": 5, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Hawaii Soda", "avg_qty": 12.0, "avg_revenue": 1257.12, "total_qty": 12.0, "total_revenue": 1257.12, "frequency": 1, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Hawaii Soda-cf", "avg_qty": 1.0, "avg_revenue": 204.76, "total_qty": 1.0, "total_revenue": 204.76, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Hawaii Soda-pp", "avg_qty": 2.0, "avg_revenue": 380.96, "total_qty": 2.0, "total_revenue": 380.96, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Hawaiian Matcha", "avg_qty": 4.0, "avg_revenue": 709.5150000000001, "total_qty": 8.0, "total_revenue": 1419.0300000000002, "frequency": 2, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Hawaiian Sunset Bubble", "avg_qty": 5.5, "avg_revenue": 833.9475, "total_qty": 22.0, "total_revenue": 3335.79, "frequency": 4, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Honey Lemon Tea", "avg_qty": 1.25, "avg_revenue": 199.525, "total_qty": 5.0, "total_revenue": 798.1, "frequency": 4, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Hong Kong Silky Boba", "avg_qty": 9.333333333333334, "avg_revenue": 1095.84, "total_qty": 28.0, "total_revenue": 3287.52, "frequency": 3, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Hongkong Rose Milk Tea", "avg_qty": 16.0, "avg_revenue": 2666.72, "total_qty": 16.0, "total_revenue": 2666.72, "frequency": 1, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Hot Cocoa Cloud", "avg_qty": 78.66666666666667, "avg_revenue": 13412.673333333332, "total_qty": 236.0, "total_revenue": 40238.02, "frequency": 3, "cluster_label": "\u2b50 Star Products"}, {"item": "Indus Boba Fusion", "avg_qty": 10.666666666666666, "avg_revenue": 904.1066666666667, "total_qty": 32.0, "total_revenue": 2712.32, "frequency": 3, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Jasmine Green Tea", "avg_qty": 1.3333333333333333, "avg_revenue": 107.93333333333334, "total_qty": 4.0, "total_revenue": 323.8, "frequency": 3, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Jasmine Mango Bubble Tea", "avg_qty": 2.4, "avg_revenue": 386.2, "total_qty": 12.0, "total_revenue": 1931.0, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Lemon Green Tea", "avg_qty": 2.0, "avg_revenue": 200.005, "total_qty": 4.0, "total_revenue": 400.01, "frequency": 2, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Lychee Rose Bubble Tea", "avg_qty": 4.75, "avg_revenue": 663.1175, "total_qty": 19.0, "total_revenue": 2652.47, "frequency": 4, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Lychee Rose Smoothie", "avg_qty": 12.0, "avg_revenue": 2000.04, "total_qty": 12.0, "total_revenue": 2000.04, "frequency": 1, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Mango Chill Vibe", "avg_qty": 11.6, "avg_revenue": 1775.2279999999998, "total_qty": 58.0, "total_revenue": 8876.14, "frequency": 5, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Mango Mellow", "avg_qty": 10.0, "avg_revenue": 1714.3, "total_qty": 10.0, "total_revenue": 1714.3, "frequency": 1, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Mango Mellow-pp", "avg_qty": 3.0, "avg_revenue": 728.58, "total_qty": 3.0, "total_revenue": 728.58, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Matcha Cafe Latte", "avg_qty": 4.666666666666667, "avg_revenue": 493.97, "total_qty": 14.0, "total_revenue": 1481.91, "frequency": 3, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Matcha Milk Mix", "avg_qty": 35.0, "avg_revenue": 6023.91, "total_qty": 35.0, "total_revenue": 6023.91, "frequency": 1, "cluster_label": "\ud83d\udcb0 Strong Performers"}, {"item": "Matcha Milk Mix-cf", "avg_qty": 4.0, "avg_revenue": 1028.57, "total_qty": 4.0, "total_revenue": 1028.57, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Matcha Milk Mix-pp", "avg_qty": 2.0, "avg_revenue": 476.2, "total_qty": 2.0, "total_revenue": 476.2, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Matcha Milk Tea", "avg_qty": 9.4, "avg_revenue": 1690.7400000000002, "total_qty": 47.0, "total_revenue": 8453.7, "frequency": 5, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Matcha Rose Milk Tea", "avg_qty": 9.2, "avg_revenue": 1707.02, "total_qty": 46.0, "total_revenue": 8535.1, "frequency": 5, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Matcha Velvetea Boba", "avg_qty": 12.0, "avg_revenue": 1359.96, "total_qty": 36.0, "total_revenue": 4079.88, "frequency": 3, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Passion Fruit Blast", "avg_qty": 5.6, "avg_revenue": 887.9960000000001, "total_qty": 28.0, "total_revenue": 4439.9800000000005, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Passion Fruit Tea", "avg_qty": 7.0, "avg_revenue": 1033.34, "total_qty": 7.0, "total_revenue": 1033.34, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Passion Fruit Tea-cf", "avg_qty": 1.0, "avg_revenue": 238.1, "total_qty": 1.0, "total_revenue": 238.1, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Peach Bubble Soda", "avg_qty": 7.2, "avg_revenue": 754.272, "total_qty": 36.0, "total_revenue": 3771.36, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Peach Soda", "avg_qty": 17.0, "avg_revenue": 1780.92, "total_qty": 17.0, "total_revenue": 1780.92, "frequency": 1, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Peri Peri Fries", "avg_qty": 8.8, "avg_revenue": 998.6380000000001, "total_qty": 44.0, "total_revenue": 4993.1900000000005, "frequency": 5, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Purple Taro Tea", "avg_qty": 12.0, "avg_revenue": 1483.8433333333332, "total_qty": 36.0, "total_revenue": 4451.53, "frequency": 3, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Raw Mango Bubble Soda", "avg_qty": 5.5, "avg_revenue": 581.42, "total_qty": 11.0, "total_revenue": 1162.84, "frequency": 2, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Raw Mango Mist Pop", "avg_qty": 3.3333333333333335, "avg_revenue": 597.2333333333333, "total_qty": 10.0, "total_revenue": 1791.7, "frequency": 3, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Raw Mango Soda", "avg_qty": 19.0, "avg_revenue": 1990.44, "total_qty": 19.0, "total_revenue": 1990.44, "frequency": 1, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Raw Mango Soda-cf", "avg_qty": 2.0, "avg_revenue": 409.52, "total_qty": 2.0, "total_revenue": 409.52, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Red Grapefruit Tea", "avg_qty": 7.0, "avg_revenue": 1033.34, "total_qty": 7.0, "total_revenue": 1033.34, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Red Grapefruit Tea Pop", "avg_qty": 1.6666666666666667, "avg_revenue": 276.82666666666665, "total_qty": 5.0, "total_revenue": 830.48, "frequency": 3, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Red Grapefruit Tea-cf", "avg_qty": 2.0, "avg_revenue": 476.2, "total_qty": 2.0, "total_revenue": 476.2, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Red Guava Yogurt Tea", "avg_qty": 1.5, "avg_revenue": 221.43, "total_qty": 3.0, "total_revenue": 442.86, "frequency": 2, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Strawberry Chill", "avg_qty": 6.5, "avg_revenue": 1030.935, "total_qty": 26.0, "total_revenue": 4123.74, "frequency": 4, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Strawberry Snow", "avg_qty": 20.0, "avg_revenue": 3466.69, "total_qty": 20.0, "total_revenue": 3466.69, "frequency": 1, "cluster_label": "\ud83d\udcb0 Strong Performers"}, {"item": "Strawberry Snow-cf", "avg_qty": 1.0, "avg_revenue": 252.38, "total_qty": 1.0, "total_revenue": 252.38, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Strawberry Snow-pp", "avg_qty": 1.0, "avg_revenue": 242.86, "total_qty": 1.0, "total_revenue": 242.86, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Strawberry Velvet", "avg_qty": 5.0, "avg_revenue": 913.332, "total_qty": 25.0, "total_revenue": 4566.66, "frequency": 5, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Strawberry Yogurt", "avg_qty": 2.75, "avg_revenue": 470.59, "total_qty": 11.0, "total_revenue": 1882.36, "frequency": 4, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Sweet Peach Bubble Tea", "avg_qty": 6.0, "avg_revenue": 912.485, "total_qty": 24.0, "total_revenue": 3649.94, "frequency": 4, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Taiwan Classic Boba", "avg_qty": 28.2, "avg_revenue": 5185.048000000001, "total_qty": 141.0, "total_revenue": 25925.24, "frequency": 5, "cluster_label": "\ud83d\udcb0 Strong Performers"}, {"item": "Taiwan Signature Boba", "avg_qty": 9.0, "avg_revenue": 1333.524, "total_qty": 45.0, "total_revenue": 6667.62, "frequency": 5, "cluster_label": "\ud83d\udcc8 Mid-Range"}, {"item": "Taiwan Signature Boba-cf", "avg_qty": 1.0, "avg_revenue": 247.62, "total_qty": 1.0, "total_revenue": 247.62, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Tapioca (boba)", "avg_qty": 4.0, "avg_revenue": 152.4, "total_qty": 4.0, "total_revenue": 152.4, "frequency": 1, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}, {"item": "Thai Sunset Milk Tea", "avg_qty": 8.0, "avg_revenue": 906.6400000000001, "total_qty": 16.0, "total_revenue": 1813.2800000000002, "frequency": 2, "cluster_label": "\ud83d\udd3b Niche/Low Volume"}], "forecast": {"historical_months": ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02"], "historical_revenue": [70797.98, 45120.0, 65803.7, 112855.77, 86261.64235294117], "historical_qty": [426.0, 286.0, 469.0, 795.0, 576.4705882352941], "forecast_months": ["2026-03", "2026-04"], "forecast_revenue": [105766.74688235295, 115633.05635294117], "forecast_qty": [753.4764705882353, 834.4705882352941], "r2_revenue": 0.382, "r2_qty": 0.454, "slope_revenue": 9866.31}, "price_analysis": [{"item": "Matcha Milk Mix-cf", "avg_unit_price": 257.1425, "total_revenue": 1028.57, "total_qty": 4.0}, {"item": "Strawberry Snow-cf", "avg_unit_price": 252.38, "total_revenue": 252.38, "total_qty": 1.0}, {"item": "Choco Lush Boba-cf", "avg_unit_price": 252.38, "total_revenue": 504.76, "total_qty": 2.0}, {"item": "Taiwan Signature Boba-cf", "avg_unit_price": 247.62, "total_revenue": 247.62, "total_qty": 1.0}, {"item": "Strawberry Snow-pp", "avg_unit_price": 242.86, "total_revenue": 242.86, "total_qty": 1.0}, {"item": "Black Currant Smoothie-pp", "avg_unit_price": 242.86, "total_revenue": 242.86, "total_qty": 1.0}, {"item": "Mango Mellow-pp", "avg_unit_price": 242.86, "total_revenue": 728.58, "total_qty": 3.0}, {"item": "Choco Lush Boba-pp", "avg_unit_price": 242.86, "total_revenue": 485.72, "total_qty": 2.0}, {"item": "Passion Fruit Tea-cf", "avg_unit_price": 238.1, "total_revenue": 238.1, "total_qty": 1.0}, {"item": "Red Grapefruit Tea-cf", "avg_unit_price": 238.1, "total_revenue": 476.2, "total_qty": 2.0}], "mom_growth": [{"month": "2025-11", "growth_pct": -36.3}, {"month": "2025-12", "growth_pct": 45.8}, {"month": "2026-01", "growth_pct": 71.5}, {"month": "2026-02", "growth_pct": -23.6}], "feb_partial_note": "Feb 2026 data covers Feb 1-17 only. Projections for Feb are scaled to 28 days.", "total_revenue_all": 346950.59, "total_qty_all": 2326, "total_unique_items": 84};
+
+const monthMap = {'2025-10':"Oct '25",'2025-11':"Nov '25",'2025-12':"Dec '25",'2026-01':"Jan '26",'2026-02':"Feb '26*"};
+const mLabels = D.months_sorted.map(m => monthMap[m] || m);
+const fmtINR = v => '₹' + Math.round(v).toLocaleString('en-IN');
+
+// KPIs
+const kpiRow = document.getElementById('kpiRow');
+const totalRev = D.total_revenue_all;
+const totalQty = D.total_qty_all;
+const avgOrderValue = totalRev / totalQty;
+const bestMonth = D.monthly_overview.reduce((a,b) => a.total_revenue > b.total_revenue ? a : b);
+const latestGrowth = D.mom_growth[D.mom_growth.length - 1];
+
+const kpis = [
+  {label:'Total Revenue',value:fmtINR(totalRev),sub:'5 months combined',color:''},
+  {label:'Items Sold',value:totalQty.toLocaleString(),sub:D.total_unique_items+' unique products',color:''},
+  {label:'Avg Item Price',value:fmtINR(avgOrderValue),sub:'Revenue per unit',color:''},
+  {label:'Best Month',value:monthMap[bestMonth.month],sub:fmtINR(bestMonth.total_revenue),color:''},
+  {label:'Revenue Trend',value:fmtINR(D.forecast.slope_revenue)+'/mo',sub:'Linear regression slope',color:''},
+];
+kpis.forEach(k => {
+  kpiRow.innerHTML += '<div class="kpi-card"><div class="label">'+k.label+'</div><div class="value">'+k.value+'</div><div class="sub">'+k.sub+'</div></div>';
+});
+
+// CHART COLORS
+const colors = ['#6C5CE7','#00cec9','#e17055','#00b894','#fdcb6e','#0984e3','#d63031','#636e72','#a29bfe','#fab1a0','#55efc4','#ffeaa7','#74b9ff','#ff7675','#81ecec'];
+
+// 1. Revenue Trend + Forecast
+const revCtx = document.getElementById('revenueTrend').getContext('2d');
+new Chart(revCtx, {
+  type: 'line',
+  data: {
+    labels: [...mLabels, "Mar '26", "Apr '26"],
+    datasets: [{
+      label: 'Actual Revenue',
+      data: [...D.forecast.historical_revenue, null, null],
+      borderColor: '#6C5CE7', backgroundColor: 'rgba(108,92,231,0.1)',
+      fill: true, tension: 0.3, pointRadius: 6, pointBackgroundColor: '#6C5CE7', borderWidth: 3
+    },{
+      label: 'Forecast',
+      data: [...Array(D.forecast.historical_revenue.length-1).fill(null), D.forecast.historical_revenue[D.forecast.historical_revenue.length-1], ...D.forecast.forecast_revenue],
+      borderColor: '#e17055', borderDash: [8,4],
+      pointRadius: 6, pointBackgroundColor: '#e17055', borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtINR(ctx.raw) }},
+      legend: { position: 'bottom' }
+    },
+    scales: { y: { ticks: { callback: v => fmtINR(v) } } }
+  }
+});
+document.getElementById('revenueInsight').innerHTML = 'Revenue shows a <strong>positive upward trend</strong> of '+fmtINR(D.forecast.slope_revenue)+' per month. Jan 2026 was your <strong>strongest month</strong> at '+fmtINR(bestMonth.total_revenue)+'. Forecast projects <strong>'+fmtINR(D.forecast.forecast_revenue[0])+'</strong> for Mar and <strong>'+fmtINR(D.forecast.forecast_revenue[1])+'</strong> for Apr 2026. (R²='+D.forecast.r2_revenue+')';
+
+// 2. MoM Growth
+const growCtx = document.getElementById('growthChart').getContext('2d');
+const growthVals = D.mom_growth.map(g => g.growth_pct);
+const growthColors = growthVals.map(v => v >= 0 ? '#00b894' : '#e17055');
+new Chart(growCtx, {
+  type: 'bar',
+  data: {
+    labels: D.mom_growth.map(g => monthMap[g.month] || g.month),
+    datasets: [{
+      label: 'Growth %', data: growthVals,
+      backgroundColor: growthColors, borderRadius: 8, barThickness: 50
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { tooltip: { callbacks: { label: ctx => ctx.raw + '%' }}, legend:{display:false}},
+    scales: { y: { ticks: { callback: v => v + '%' } } }
+  }
+});
+const avgGrowth = growthVals.reduce((a,b)=>a+b,0)/growthVals.length;
+document.getElementById('growthInsight').innerHTML = 'Average month-over-month growth: <strong>'+avgGrowth.toFixed(1)+'%</strong>. January 2026 saw the biggest jump driven by winter specials (Hot Cocoa Cloud, Biscoff Blaze Latte). November dip was likely seasonal.';
+
+// 3. Top Products by Revenue
+const topCtx = document.getElementById('topRevenueChart').getContext('2d');
+const topItems = D.overall_top_items.slice(0, 10);
+new Chart(topCtx, {
+  type: 'bar',
+  data: {
+    labels: topItems.map(i => i.item.length > 22 ? i.item.slice(0,20)+'..' : i.item),
+    datasets: [{
+      label: 'Revenue (₹)', data: topItems.map(i => i.total_revenue),
+      backgroundColor: colors.slice(0,10), borderRadius: 6
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    plugins: { tooltip: { callbacks: { label: ctx => fmtINR(ctx.raw) + ' | Qty: ' + topItems[ctx.dataIndex].total_qty }}, legend:{display:false}},
+    scales: { x: { ticks: { callback: v => fmtINR(v) } } }
+  }
+});
+
+// 4. Monthly Top Sellers tabs
+const tabsDiv = document.getElementById('monthTabs');
+const tabContent = document.getElementById('monthTabContent');
+D.months_sorted.forEach((m, idx) => {
+  const label = monthMap[m] || m;
+  tabsDiv.innerHTML += '<button class="tab-btn '+(idx===D.months_sorted.length-1?'active':'')+'" onclick="showMonthTab(''+m+'')">'+label+'</button>';
+  
+  let tableHTML = '<div class="tab-content '+(idx===D.months_sorted.length-1?'active':'')+'" id="tab-'+m+'"><table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Revenue</th></tr></thead><tbody>';
+  const items = D.top_by_month[m] || [];
+  items.forEach((item, i) => {
+    tableHTML += '<tr><td>'+(i+1)+'</td><td>'+item.item+'</td><td>'+Math.round(item.qty)+'</td><td>'+fmtINR(item.revenue)+'</td></tr>';
+  });
+  tableHTML += '</tbody></table></div>';
+  tabContent.innerHTML += tableHTML;
+});
+
+function showMonthTab(m) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-'+m).classList.add('active');
+}
+
+// 5. Category Pie
+const catTotals = {};
+D.category_monthly.forEach(c => { catTotals[c.category] = (catTotals[c.category]||0) + c.revenue; });
+const catEntries = Object.entries(catTotals).sort((a,b) => b[1]-a[1]);
+new Chart(document.getElementById('categoryPie').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: catEntries.map(e => e[0]),
+    datasets: [{ data: catEntries.map(e => Math.round(e[1])), backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      tooltip: { callbacks: { label: ctx => ctx.label + ': ' + fmtINR(ctx.raw) + ' (' + Math.round(ctx.raw/D.total_revenue_all*100) + '%)' }},
+      legend: { position: 'right', labels: { font: { size: 11 } } }
+    }
+  }
+});
+
+// 6. Category Trend
+const mainCats = catEntries.slice(0,6).map(e => e[0]);
+const catDatasets = mainCats.map((cat, i) => {
+  const data = D.months_sorted.map(m => {
+    const match = D.category_monthly.find(c => c.month === m && c.category === cat);
+    return match ? Math.round(match.revenue) : 0;
+  });
+  return { label: cat, data, borderColor: colors[i], backgroundColor: colors[i]+'22', fill: false, tension: 0.3, borderWidth: 2 };
+});
+new Chart(document.getElementById('categoryTrend').getContext('2d'), {
+  type: 'line',
+  data: { labels: mLabels, datasets: catDatasets },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtINR(ctx.raw) }}
+    },
+    scales: { y: { ticks: { callback: v => fmtINR(v) } } }
+  }
+});
+
+// 7. Cluster Scatter
+const clusterColors = {'⭐ Star Products':'#d63031','💰 Strong Performers':'#0984e3','📈 Mid-Range':'#00b894','🔻 Niche/Low Volume':'#b2bec3'};
+const clusterDatasets = {};
+D.item_clusters.forEach(item => {
+  const cl = item.cluster_label;
+  if (!clusterDatasets[cl]) clusterDatasets[cl] = { label: cl, data: [], backgroundColor: clusterColors[cl]+'cc', pointRadius: 6, pointHoverRadius: 9 };
+  clusterDatasets[cl].data.push({ x: item.avg_qty, y: item.avg_revenue, label: item.item });
+});
+new Chart(document.getElementById('clusterChart').getContext('2d'), {
+  type: 'scatter',
+  data: { datasets: Object.values(clusterDatasets) },
+  options: {
+    responsive: true,
+    plugins: {
+      tooltip: { callbacks: { label: ctx => ctx.raw.label + ' (Qty:' + ctx.raw.x.toFixed(1) + ', Rev:' + fmtINR(ctx.raw.y) + ')' }},
+      legend: { position: 'bottom' }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Avg Monthly Quantity' } },
+      y: { title: { display: true, text: 'Avg Monthly Revenue (₹)' }, ticks: { callback: v => fmtINR(v) } }
+    }
+  }
+});
+
+// Cluster Table
+const clusterTbody = document.querySelector('#clusterTable tbody');
+const badgeMap = {'⭐ Star Products':'badge-star','💰 Strong Performers':'badge-strong','📈 Mid-Range':'badge-mid','🔻 Niche/Low Volume':'badge-low'};
+D.item_clusters.sort((a,b) => b.avg_revenue - a.avg_revenue).slice(0,20).forEach(item => {
+  clusterTbody.innerHTML += '<tr><td>'+item.item+'</td><td><span class="badge '+badgeMap[item.cluster_label]+'">'+item.cluster_label+'</span></td><td>'+item.avg_qty.toFixed(1)+'</td><td>'+fmtINR(item.avg_revenue)+'</td><td>'+item.frequency+'/5</td></tr>';
+});
+
+// 8. Price Chart
+const priceItems = D.price_analysis;
+new Chart(document.getElementById('priceChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: priceItems.map(i => i.item.length > 22 ? i.item.slice(0,20)+'..' : i.item),
+    datasets: [{
+      label: 'Avg Unit Price (₹)', data: priceItems.map(i => Math.round(i.avg_unit_price)),
+      backgroundColor: '#a29bfe', borderRadius: 6
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    plugins: { tooltip: { callbacks: { label: ctx => fmtINR(ctx.raw) }}, legend:{display:false}},
+    scales: { x: { ticks: { callback: v => fmtINR(v) } } }
+  }
+});
+
+// 9. Recommendations
+const recs = document.getElementById('recommendations');
+const stars = D.item_clusters.filter(i => i.cluster_label === '⭐ Star Products').map(i => i.item);
+const strong = D.item_clusters.filter(i => i.cluster_label === '💰 Strong Performers').sort((a,b)=>b.total_revenue-a.total_revenue).slice(0,5).map(i => i.item);
+const niche = D.item_clusters.filter(i => i.cluster_label === '🔻 Niche/Low Volume');
+
+recs.innerHTML = `
+<div class="insight-box" style="margin-bottom:12px;">
+  <strong>⭐ Star Products to Protect:</strong><br>
+  ${stars.join(', ')} — These are your highest volume & revenue drivers. Keep supply consistent and consider loyalty rewards around these items.
+</div>
+<div class="insight-box" style="margin-bottom:12px;">
+  <strong>💰 Growth Opportunities:</strong><br>
+  ${strong.join(', ')} — Strong performers that could be promoted to star status with targeted marketing or combos.
+</div>
+<div class="insight-box" style="margin-bottom:12px;">
+  <strong>📈 January Surge Analysis:</strong><br>
+  Jan 2026 revenue was <strong>72% higher than Dec</strong>. BnB Signatures (Hot Cocoa Cloud especially) and Coffee drove this. Winter-specific drinks are clear winners — plan seasonal menus accordingly.
+</div>
+<div class="insight-box" style="margin-bottom:12px;">
+  <strong>🔻 Consider Reviewing:</strong><br>
+  ${niche.length} items are in the niche/low-volume cluster. Consider streamlining the menu by removing consistently low-performing items or running promotions to boost their visibility.
+</div>
+<div class="insight-box">
+  <strong>🎯 February Valentine's Success:</strong><br>
+  Valentine's specials (Hongkong Rose Milk Tea, Lychee Rose Smoothie) generated ₹4,667 in just 17 days. Limited-edition seasonal items are a winning strategy.
+</div>
+`;
+</script>
+</body>
+</html>
