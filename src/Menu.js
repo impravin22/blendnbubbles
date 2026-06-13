@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { MENU } from './menuData';
 import './App.css';
 import Navbar from './Navbar';
@@ -67,12 +67,6 @@ function Menu() {
       filterContainer.scrollTo({ left: scrollPosition, behavior: 'smooth' });
     }
     filterMenu(category);
-  };
-
-  // Handle navigation to home page with contact section
-  const handleVisitUsClick = (e) => {
-    e.preventDefault();
-    navigate('/#contact');
   };
 
   // Per-route SEO: set page title and meta description
