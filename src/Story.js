@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './App.css';
+import Navbar from './Navbar';
 
 function Story() {
   const [scrolled, setScrolled] = useState(false);
@@ -46,36 +47,7 @@ function Story() {
   return (
     <div className="Story">
       {/* Navigation */}
-      <nav className={`navbar navbar-expand-lg fixed-top ${scrolled ? 'scrolled' : ''}`}>
-        <div className="container">
-          <Link className="navbar-brand" to="/">
-            <img src="/logo.svg" alt="BlendNBubbles Logo" height="50" />
-            <span className="ms-2">BlendNBubbles</span>
-          </Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav ms-auto">
-              <li className="nav-item">
-                <Link className="nav-link" to="/">Home</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/menu">Menu</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link active" to="/story">Our Story</Link>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" href="/#contact" onClick={handleVisitUsClick}>Visit Us</a>
-              </li>
-              <li className="nav-item ms-lg-2">
-                <a className="nav-link btn-order" href="#order">Order Now</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
+      <Navbar scrolled={scrolled} />
 
       {/* Story Content */}
       <section className="story-section" id="story-content">

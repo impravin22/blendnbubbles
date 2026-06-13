@@ -8,7 +8,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #F9F6F0;
+  background-color: var(--background);
+  color: var(--text);
 }
 
 code {
@@ -25,8 +26,33 @@ code {
   --background: #F9F6F0;
   --text: #333333;
   --light-text: #666666;
+  --card-bg: #ffffff;
+  --navbar-bg: rgba(255, 255, 255, 0.95);
+  --navbar-scrolled-bg: #ffffff;
+  --footer-bg: #212529;
+  --input-bg: #ffffff;
+  --input-border: #ced4da;
   
   /* Gradients */
   --gold-gradient: linear-gradient(45deg, #BB8750, #CEAA67);
   --teal-gradient: linear-gradient(45deg, #003333, #004444);
+}
+
+[data-theme='dark'] {
+  --primary: #4db3b3;
+  --secondary: #d4a773;
+  --secondary-light: #dfc491;
+  --accent: #ffad5c;
+  --background: #121212;
+  --text: #e0e0e0;
+  --light-text: #b0b0b0;
+  --card-bg: #1e1e1e;
+  --navbar-bg: rgba(18, 18, 18, 0.95);
+  --navbar-scrolled-bg: #1e1e1e;
+  --footer-bg: #0a0a0a;
+  --input-bg: #2d2d2d;
+  --input-border: #444444;
+  
+  --gold-gradient: linear-gradient(45deg, #d4a773, #dfc491);
+  --teal-gradient: linear-gradient(45deg, #121212, #1e1e1e);
 }

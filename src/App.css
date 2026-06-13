@@ -7,7 +7,7 @@
 /* Navigation styles */
 .navbar {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  background-color: rgba(255, 255, 255, 0.95) !important;
+  background-color: var(--navbar-bg) !important;
   padding: 15px 0;
   transition: all 0.3s ease;
   z-index: 1000;
@@ -15,7 +15,7 @@
 
 .navbar.scrolled {
   padding: 10px 0;
-  background-color: white !important;
+  background-color: var(--navbar-scrolled-bg) !important;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
 }
 
@@ -345,7 +345,7 @@
 }
 
 .story-content {
-  background-color: white;
+  background-color: var(--card-bg);
   border-radius: 15px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
   padding: 40px;
@@ -465,7 +465,7 @@
 .menu-filter {
   padding: 8px 20px;
   border: none;
-  background: white;
+  background: var(--card-bg);
   color: var(--primary);
   border-radius: 30px;
   font-weight: 500;
@@ -522,7 +522,7 @@
 }
 
 .menu-item {
-  background: white;
+  background: var(--card-bg);
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
@@ -626,7 +626,7 @@
 }
 
 .customization-options {
-  background: white;
+  background: var(--card-bg);
   border-radius: 15px;
   padding: 30px;
   margin-top: 50px;
@@ -774,13 +774,32 @@
               transform 600ms cubic-bezier(0.165, 0.84, 0.44, 1); /* Increased from 400ms to 600ms */
 }
 
-/* Ensure smooth scroll behavior globally */
-html {
-  scroll-behavior: smooth;
+.theme-toggle {
+  background: transparent;
+  border: none;
+  color: var(--primary) !important;
+  cursor: pointer;
+  padding: 8px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50% !important;
+  transition: background-color 0.3s ease;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(187, 135, 80, 0.1) !important;
+  transform: scale(1.1);
+}
+
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Card styles */
 .card {
+  background-color: var(--card-bg);
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
   border: none;
@@ -806,9 +825,11 @@ html {
 
 /* Contact section styles */
 .form-control {
+  background-color: var(--input-bg);
+  color: var(--text);
   border-radius: 8px;
   padding: 10px 15px;
-  border: 1px solid rgba(0, 51, 51, 0.1);
+  border: 1px solid var(--input-border);
 }
 
 .form-control:focus {
@@ -818,7 +839,7 @@ html {
 
 /* Footer styles */
 footer.bg-dark {
-  background: var(--primary) !important;
+  background: var(--footer-bg) !important;
 }
 
 footer a {
@@ -938,7 +959,7 @@ section h2::after {
 
 /* Background color override */
 .bg-light {
-  background-color: white !important;
+  background-color: var(--background) !important;
 }
 
 

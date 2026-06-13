@@ -5,6 +5,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import Menu from './Menu';
 import Story from './Story';
+import Navbar from './Navbar';
+import { ThemeProvider } from './ThemeContext';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -109,36 +111,11 @@ function Homepage() {
   return (
     <div className="App">
       {/* Enhanced Navigation */}
-      <nav className={`navbar navbar-expand-lg fixed-top ${scrolled ? 'scrolled' : ''}`}>
-        <div className="container">
-          <Link className="navbar-brand" to="/">
-            <img src="/logo.svg" alt="BlendNBubbles Logo" height="50" />
-            <span className="ms-2">BlendNBubbles</span>
-          </Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav" ref={navbarCollapseRef}>
-            <ul className="navbar-nav ms-auto">
-              <li className="nav-item">
-                <Link className="nav-link active" to="/">Home</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/menu">Menu</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/story">Our Story</Link>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" href="#contact" onClick={(e) => scrollToSection(e, 'contact')}>Visit Us</a>
-              </li>
-              <li className="nav-item ms-lg-2">
-                <a className="nav-link btn-order" href="#order">Order Now</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
+      <Navbar 
+        scrolled={scrolled} 
+        navbarCollapseRef={navbarCollapseRef} 
+        scrollToSection={scrollToSection} 
+      />
 
       {/* Hero Section with Logo */}
       <header className="hero" id="home">
@@ -311,10 +288,12 @@ function Homepage() {
 
 function App() {
   return (
-    <Router>
-      <ScrollToTop />
-      <AnimatedRoutes />
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <ScrollToTop />
+        <AnimatedRoutes />
+      </Router>
+    </ThemeProvider>
   );
 }
 
