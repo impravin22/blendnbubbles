@@ -57,9 +57,16 @@ function StartScreen({
 
   const isFormValid = playerName.trim() && playerPhone.trim();
 
+  // Honour-system promo: tapping Follow grants the +1 headstart without verifying
+  // the follow happened, and the bonus stays applied for the rest of the session
+  // (intentional - the goal is driving follows, not gating gameplay).
   const handleFollowBonus = () => {
     setHasBonus(true);
-    window.open('https://www.instagram.com/blendnbubbles?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==', '_blank');
+    window.open(
+      'https://www.instagram.com/blendnbubbles?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
+      '_blank',
+      'noopener,noreferrer',
+    );
   };
 
   const handleStart = () => {
@@ -134,6 +141,8 @@ function StartScreen({
             className="pen-input"
             type="text"
             placeholder="Your Name"
+            aria-label="Your name"
+            autoComplete="name"
             value={playerName}
             onChange={(e) => { setPlayerName(e.target.value); localStorage.setItem('bobaPlayerName', e.target.value); }}
             maxLength={20}
@@ -142,6 +151,8 @@ function StartScreen({
             className="pen-input"
             type="tel"
             placeholder="Phone Number"
+            aria-label="Phone number"
+            autoComplete="tel"
             value={playerPhone}
             onChange={(e) => { setPlayerPhone(e.target.value); localStorage.setItem('bobaPlayerPhone', e.target.value); }}
             maxLength={15}
@@ -232,9 +243,8 @@ function GameOverScreen({
             <a 
               href="https://www.instagram.com/blendnbubbles?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
               target="_blank" 
-              rel="noopener noreferrer" 
+              rel="noopener noreferrer"
               className="pen-insta-link"
-              style={{ fontSize: '16px', marginBottom: '4px' }}
             >
               @blendnbubbles
             </a>
@@ -472,7 +482,7 @@ function PenaltyShootout() {
     bgW: 0,
     bgH: 0,
     lastTs: performance.now(),
-  }), [geom]);
+  }), [geom, hasBonus]);
 
   // ─── Drawing ───────────────────────────────────────────────
   const drawScene = useCallback((ctx, s) => {
@@ -763,8 +773,8 @@ function PenaltyShootout() {
     setShotNumber(hasBonus ? 2 : 1);
     setSubmitted(false);
     setSubmitError('');
-    prevStreakRef.current = 0;
-    prevShotRef.current = 1;
+    prevStreakRef.current = hasBonus ? 1 : 0;
+    prevShotRef.current = hasBonus ? 2 : 1;
     requestAnimationFrame(() => {
       setupCanvas();
       const canvas = canvasRef.current;
@@ -774,7 +784,7 @@ function PenaltyShootout() {
       stateRef.current.lastTs = performance.now();
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     });
-  }, [setupCanvas, createState, gameLoop, team]);
+  }, [setupCanvas, createState, gameLoop, team, hasBonus]);
 
   // Chosen on the team-select screen: remember it and kick off immediately.
   const handlePickTeam = useCallback((picked) => {
