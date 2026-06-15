@@ -154,6 +154,7 @@
   transition: all 0.2s ease;
 }
 .pen-insta-bonus-btn:hover { background: rgba(206, 170, 103, 0.25); }
+.pen-insta-bonus-btn:focus-visible { outline: 2px solid #CEAA67; outline-offset: 2px; border-radius: 12px; }
 .pen-bonus-active {
   background: #2ecc71 !important;
   border-color: #2ecc71 !important;
@@ -165,6 +166,15 @@
   margin-top: -8px;
   margin-bottom: 4px;
 }
+.pen-insta-link {
+  color: #CEAA67;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 4px;
+  text-decoration: none;
+}
+.pen-insta-link:hover { text-decoration: underline; }
+.pen-insta-link:focus-visible { outline: 2px solid #CEAA67; outline-offset: 2px; border-radius: 4px; }
 
 .pen-start-btn,
 .pen-restart-btn {
