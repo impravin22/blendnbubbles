@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MENU } from './menuData';
 import './App.css';
+import { useTheme } from './ThemeContext';
 import Navbar from './Navbar';
 
 // Filter options: "All" plus one per menu category, derived from the data.
@@ -24,6 +25,7 @@ function Menu() {
   const [transitioning, setTransitioning] = useState(false);
   const filterContainerRef = useRef(null);
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   // Animated category switching
   const filterMenu = useCallback((category) => {
@@ -94,7 +96,7 @@ function Menu() {
   }, []);
 
   return (
-    <div className="Menu">
+    <div className={`Menu ${theme === 'dark' ? 'dark-mode' : ''}`}>
       {/* Navigation */}
       <Navbar />
 
