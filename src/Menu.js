@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { MENU } from './menuData';
 import './App.css';
 import Navbar from './Navbar';
@@ -23,7 +22,6 @@ function Menu() {
   const [displayedCategory, setDisplayedCategory] = useState('all');
   const [transitioning, setTransitioning] = useState(false);
   const filterContainerRef = useRef(null);
-  const navigate = useNavigate();
 
   // Animated category switching
   const filterMenu = useCallback((category) => {
