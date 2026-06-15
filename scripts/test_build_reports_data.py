@@ -1,7 +1,8 @@
-"""Tests for build-reports-data.py aggregation.
+"""Tests for build-reports-data.py (row-level dashboard schema).
 
 Run with:  pip install pandas pytest  &&  python3 -m pytest scripts/test_build_reports_data.py -v
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -23,7 +24,7 @@ _spec.loader.exec_module(build_reports_data)
 def _row(**overrides: Any) -> dict[str, Any]:
     """One item-level CSV row with sensible defaults, overridable per field."""
     base: dict[str, Any] = {
-        "date": "2026-05-01 14:30:00",
+        "date": "2026-05-04 14:30:00",  # 2026-05-04 is a Monday
         "status": "Success",
         "invoice_no": "INV1",
         "item_name": "Caramel Boba Coffee",
@@ -37,133 +38,198 @@ def _row(**overrides: Any) -> dict[str, Any]:
     return base
 
 
-def test_build_aggregates_success_orders() -> None:
-    frame = pd.DataFrame([
-        _row(invoice_no="INV1", item_quantity=2, item_total=200),
-        _row(invoice_no="INV2", item_quantity=1, item_total=150, item_name="Matcha Latte"),
-    ])
-    out = build_reports_data.build(frame)
-    assert out["summary"]["orders"] == 2
-    assert out["summary"]["items_sold"] == 3
-    assert out["summary"]["revenue"] == 350.0
+def test_build_returns_meta_dims_rows() -> None:
+    out = build_reports_data.build(pd.DataFrame([_row()]))
+    assert set(out) == {"meta", "dims", "rows"}
+    assert set(out["dims"]) == {
+        "hours",
+        "dows",
+        "weeks",
+        "drinks",
+        "categories",
+        "order_types",
+        "payments",
+    }
 
 
-def test_build_excludes_non_success_rows() -> None:
-    frame = pd.DataFrame([
-        _row(invoice_no="INV1", status="Success", item_quantity=1, item_total=100),
-        _row(invoice_no="INV2", status="Cancelled", item_quantity=5, item_total=999),
-    ])
-    out = build_reports_data.build(frame)
-    assert out["summary"]["orders"] == 1
-    assert out["summary"]["items_sold"] == 1
-    assert out["summary"]["revenue"] == 100.0
+def test_meta_headline_totals() -> None:
+    frame = pd.DataFrame(
+        [
+            _row(invoice_no="INV1", item_quantity=2, item_total=200),
+            _row(
+                invoice_no="INV1",
+                item_quantity=1,
+                item_total=100,
+                item_name="Matcha Latte",
+            ),
+            _row(invoice_no="INV2", item_quantity=1, item_total=150),
+        ]
+    )
+    meta = build_reports_data.build(frame)["meta"]
+    assert meta["orders"] == 2  # distinct invoices
+    assert meta["items"] == 4  # 2 + 1 + 1
+    assert meta["revenue"] == 450.0
+
+
+def test_rows_one_per_success_line_item_with_fields() -> None:
+    frame = pd.DataFrame(
+        [
+            _row(
+                date="2026-05-04 20:30:00",
+                item_quantity=2,
+                item_total=250,
+                item_name="Caramel Boba Coffee",
+                category_name="Coffee",
+                order_type="Dine In",
+                payment_type="UPI",
+            ),
+        ]
+    )
+    rows = build_reports_data.build(frame)["rows"]
+    assert len(rows) == 1
+    r = rows[0]
+    assert r["drink"] == "Caramel Boba Coffee"
+    assert r["category"] == "Coffee"
+    assert r["qty"] == 2
+    assert r["revenue"] == 250.0
+    assert r["hour"] == 20
+    assert r["dow"] == 0  # Monday
+    assert r["week"] == "2026-05-04"
+    assert r["order_type"] == "Dine In"
+    assert r["payment"] == "UPI"
+    assert r["inv"] == 0
+
+
+def test_rows_exclude_non_success() -> None:
+    frame = pd.DataFrame(
+        [
+            _row(invoice_no="INV1", status="Success"),
+            _row(invoice_no="INV2", status="Cancelled", item_quantity=9),
+        ]
+    )
+    rows = build_reports_data.build(frame)["rows"]
+    assert len(rows) == 1
+
+
+def test_invoice_ids_are_compact_and_stable() -> None:
+    frame = pd.DataFrame(
+        [
+            _row(invoice_no="ZZZ-9", item_name="A"),
+            _row(invoice_no="ZZZ-9", item_name="B"),  # same invoice
+            _row(invoice_no="AAA-1", item_name="C"),  # different invoice
+        ]
+    )
+    ids = [r["inv"] for r in build_reports_data.build(frame)["rows"]]
+    assert ids[0] == ids[1]  # same invoice -> same id
+    assert ids[2] != ids[0]  # distinct invoice -> distinct id
+    assert set(ids) == {0, 1}  # compact, zero-based
+    assert all(isinstance(i, int) for i in ids)
+
+
+def test_payment_upi_variants_normalised_in_rows() -> None:
+    # The real data labels UPI "Other (Upijio)"; both that and explicit UPI
+    # strings must collapse to one "UPI" bucket.
+    frame = pd.DataFrame(
+        [
+            _row(invoice_no="A", payment_type="UPI - PhonePe"),
+            _row(invoice_no="B", payment_type="Other (Upijio)"),
+            _row(invoice_no="C", payment_type="Cash"),
+        ]
+    )
+    rows = build_reports_data.build(frame)["rows"]
+    payments = {r["payment"] for r in rows}
+    assert payments == {"UPI", "Cash"}
+
+
+def test_dims_ordered_and_fixed_axes() -> None:
+    frame = pd.DataFrame(
+        [
+            _row(invoice_no="INV1", item_name="Low", item_quantity=1),
+            _row(invoice_no="INV2", item_name="High", item_quantity=9),
+        ]
+    )
+    dims = build_reports_data.build(frame)["dims"]
+    assert dims["drinks"][0] == "High"  # ordered by total qty desc
+    assert dims["hours"] == list(range(8, 24))
+    assert dims["dows"] == ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def test_build_raises_when_no_success_rows() -> None:
-    frame = pd.DataFrame([_row(status="Cancelled")])
     with pytest.raises(ValueError, match="No 'Success' rows"):
-        build_reports_data.build(frame)
+        build_reports_data.build(pd.DataFrame([_row(status="Cancelled")]))
 
 
-def test_build_output_has_expected_shape() -> None:
-    out = build_reports_data.build(pd.DataFrame([_row()]))
-    for key in (
-        "meta", "summary", "top_items", "by_category", "by_hour",
-        "by_dow", "by_week", "heatmap", "daily", "order_type", "payment",
-    ):
-        assert key in out, f"missing key: {key}"
-    assert len(out["heatmap"]["rows"]) == 7
-    assert out["heatmap"]["hours"] == list(range(8, 24))
+def test_malformed_numerics_coerced_to_zero() -> None:
+    frame = pd.DataFrame(
+        [
+            _row(invoice_no="INV1", item_quantity="oops", item_total="bad"),
+            _row(invoice_no="INV1", item_quantity=2, item_total=100),
+        ]
+    )
+    meta = build_reports_data.build(frame)["meta"]
+    assert meta["items"] == 2
+    assert meta["revenue"] == 100.0
 
 
-def test_payment_type_upi_is_normalised() -> None:
-    out = build_reports_data.build(pd.DataFrame([_row(payment_type="UPI - GPay")]))
-    assert out["payment"][0]["type"] == "UPI"
+def test_unparseable_dates_dropped() -> None:
+    frame = pd.DataFrame(
+        [
+            _row(date="not-a-date", item_quantity=9),
+            _row(date="2026-05-02 10:00:00", item_quantity=1),
+        ]
+    )
+    assert build_reports_data.build(frame)["meta"]["items"] == 1
 
 
-def test_build_coerces_malformed_numeric_values_to_zero() -> None:
-    # Hostile/garbled CSV cells must coerce to 0, not crash the build.
-    frame = pd.DataFrame([
-        _row(invoice_no="INV1", item_quantity="oops", item_total="bad"),
-        _row(invoice_no="INV1", item_quantity=2, item_total=100),
-    ])
-    out = build_reports_data.build(frame)
-    assert out["summary"]["items_sold"] == 2
-    assert out["summary"]["revenue"] == 100.0
+def test_missing_labels_become_unknown_not_nan() -> None:
+    # A line item with no name/payment must not leak NaN into the JSON.
+    frame = pd.DataFrame(
+        [
+            _row(
+                item_name=float("nan"),
+                category_name=float("nan"),
+                order_type=float("nan"),
+                payment_type=float("nan"),
+            )
+        ]
+    )
+    r = build_reports_data.build(frame)["rows"][0]
+    assert r["drink"] == "Unknown"
+    assert r["category"] == "Unknown"
+    assert r["order_type"] == "Unknown"
+    assert r["payment"] == "Unknown"
 
 
-def test_build_drops_rows_with_unparseable_dates() -> None:
-    frame = pd.DataFrame([
-        _row(date="not-a-date", item_quantity=9, item_total=900),
-        _row(date="2026-05-02 10:00:00", item_quantity=1, item_total=100),
-    ])
-    out = build_reports_data.build(frame)
-    assert out["summary"]["items_sold"] == 1
-    assert out["summary"]["revenue"] == 100.0
+def test_nan_invoice_no_rows_dropped() -> None:
+    # A line with no invoice number can't be attributed to an order; drop it
+    # rather than crash on the integer-id lookup.
+    frame = pd.DataFrame([_row(invoice_no=float("nan")), _row(invoice_no="INV1")])
+    rows = build_reports_data.build(frame)["rows"]
+    assert len(rows) == 1
 
 
-def test_avg_order_value_is_per_invoice_not_per_row() -> None:
-    # AOV must average per invoice basket, not per line-item row.
-    frame = pd.DataFrame([
-        _row(invoice_no="INV1", item_total=100),
-        _row(invoice_no="INV1", item_total=50),    # INV1 basket = 150
-        _row(invoice_no="INV2", item_total=200),    # INV2 basket = 200
-    ])
-    out = build_reports_data.build(frame)
-    # Per-invoice mean (150 + 200) / 2 = 175.0, NOT the row mean 350/3 = 116.67.
-    assert out["summary"]["avg_order_value"] == 175.0
+def test_infinite_numerics_coerced_not_crashing() -> None:
+    # "inf" must not survive into the JSON (json.dump(allow_nan=False) would raise).
+    frame = pd.DataFrame(
+        [
+            _row(invoice_no="INV1", item_total="inf"),
+            _row(invoice_no="INV2", item_total=100),
+        ]
+    )
+    meta = build_reports_data.build(frame)["meta"]
+    assert meta["revenue"] == 100.0  # inf coerced to 0
 
 
-def test_by_week_groups_to_monday_week_start() -> None:
-    # Wed 2026-05-06 and Sun 2026-05-10 share the week starting Mon 2026-05-04.
-    frame = pd.DataFrame([
-        _row(date="2026-05-06 12:00:00", invoice_no="INV1", item_quantity=2),
-        _row(date="2026-05-10 18:00:00", invoice_no="INV2", item_quantity=3),
-        _row(date="2026-05-13 18:00:00", invoice_no="INV3", item_quantity=1),  # next week
-    ])
-    out = build_reports_data.build(frame)
-    weeks = {w["week_start"]: w for w in out["by_week"]}
-    assert weeks["2026-05-04"]["qty"] == 5
-    assert weeks["2026-05-04"]["orders"] == 2
-    assert weeks["2026-05-11"]["qty"] == 1
-
-
-def test_heatmap_cell_counts_match_day_and_hour() -> None:
-    frame = pd.DataFrame([
-        _row(date="2026-05-04 14:00:00", invoice_no="INV1", item_quantity=2),  # Mon 2pm
-        _row(date="2026-05-04 14:30:00", invoice_no="INV2", item_quantity=1),  # Mon 2pm
-        _row(date="2026-05-05 09:00:00", invoice_no="INV3", item_quantity=4),  # Tue 9am
-    ])
-    out = build_reports_data.build(frame)
-    rows = {r["dow"]: r for r in out["heatmap"]["rows"]}
-    assert rows["Mon"]["14"] == 3
-    assert rows["Tue"]["9"] == 4
-    assert rows["Mon"]["9"] == 0
-
-
-def test_payment_swiggy_upi_kept_distinct_from_plain_upi() -> None:
-    frame = pd.DataFrame([
-        _row(invoice_no="INV1", payment_type="UPI - GPay"),
-        _row(invoice_no="INV2", payment_type="Swiggy Pay (UPI)"),
-    ])
-    out = build_reports_data.build(frame)
-    types = {p["type"] for p in out["payment"]}
-    assert "UPI" in types                  # "UPI - GPay" -> UPI
-    assert "Swiggy Pay (UPI)" in types      # not collapsed into UPI
-
-
-def test_payment_upi_variants_merge_into_single_bucket() -> None:
-    # Multiple UPI variants must collapse to ONE "UPI" entry (no duplicate
-    # chart keys, no split donut arc), with all invoices summed.
-    frame = pd.DataFrame([
-        _row(invoice_no="INV1", payment_type="UPI"),
-        _row(invoice_no="INV2", payment_type="UPI - PhonePe"),
-        _row(invoice_no="INV3", payment_type="UPI Collect"),
-    ])
-    out = build_reports_data.build(frame)
-    upi = [p for p in out["payment"] if p["type"] == "UPI"]
-    assert len(upi) == 1
-    assert upi[0]["orders"] == 3
+def test_zero_quantity_lines_dropped() -> None:
+    frame = pd.DataFrame(
+        [
+            _row(invoice_no="INV1", item_quantity=0, item_name="Void"),
+            _row(invoice_no="INV1", item_quantity=2),
+        ]
+    )
+    rows = build_reports_data.build(frame)["rows"]
+    assert len(rows) == 1
+    assert rows[0]["qty"] == 2
 
 
 def test_load_csv_skips_preamble_before_header(tmp_path) -> None:
