@@ -31,3 +31,10 @@ yarn-error.log*
 
 # Google OAuth credentials (downloaded from Google Cloud Console)
 client_secret_*.json
+
+# PetPooja raw exports - raw order data, never commit (build-reports-data.py consumes these)
+scripts/petpooja_exports/
+
+# Python cache (build-reports-data.py + tests)
+__pycache__/
+*.pyc

@@ -8,6 +8,7 @@ import Story from './Story';
 import Offers from './Offers';
 import BobaCatcher from './BobaCatcher';
 import PenaltyShootout from './PenaltyShootout';
+import Reports from './Reports';
 import Navbar from './Navbar';
 import { ThemeProvider } from './ThemeContext';
 
@@ -101,6 +102,7 @@ function AnimatedRoutes() {
             <Route path="/offers" element={<Offers />} />
             <Route path="/play" element={<BobaCatcher />} />
             <Route path="/play/football" element={<PenaltyShootout />} />
+            <Route path="/reports" element={<Reports />} />
           </Routes>
         </div>
       </CSSTransition>
