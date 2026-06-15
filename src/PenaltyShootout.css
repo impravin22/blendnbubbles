@@ -124,6 +124,48 @@
   margin-top: 14px;
 }
 
+.pen-registration-box { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  width: 100%; 
+  max-width: 300px; 
+  margin: 20px 0 0; 
+  padding: 20px; 
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(206, 170, 103, 0.2);
+  border-radius: 16px;
+}
+.pen-insta-cta { 
+  font-weight: 700; 
+  font-size: 15px; 
+  color: #fff; 
+  margin-bottom: 2px; 
+}
+.pen-insta-bonus-btn {
+  background: rgba(206, 170, 103, 0.15);
+  border: 2px solid #CEAA67;
+  color: #CEAA67;
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pen-insta-bonus-btn:hover { background: rgba(206, 170, 103, 0.25); }
+.pen-bonus-active {
+  background: #2ecc71 !important;
+  border-color: #2ecc71 !important;
+  color: #fff !important;
+}
+.pen-insta-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: -8px;
+  margin-bottom: 4px;
+}
+
 .pen-start-btn,
 .pen-restart-btn {
   margin-top: 20px;
