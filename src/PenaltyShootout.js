@@ -47,9 +47,21 @@ const SHOT_FLIGHT_MS = 520;
 const RESULT_HOLD_GOAL_MS = 850;
 
 // ─── Start Screen ────────────────────────────────────────────
-function StartScreen({ onStart, highScore, plays }) {
+function StartScreen({ 
+  onStart, highScore, plays, 
+  playerName, playerPhone, setPlayerName, setPlayerPhone,
+  hasBonus, setHasBonus
+}) {
   const [locStatus, setLocStatus] = useState('idle');
   const [locMsg, setLocMsg] = useState('');
+
+  const isFormValid = playerName.trim() && playerPhone.trim();
+
+  const handleFollowBonus = () => {
+    setHasBonus(true);
+    window.open('https://www.instagram.com/blendnbubbles?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==', '_blank');
+  };
+
   const handleStart = () => {
     if (!GEOFENCE_ENABLED) {
       onStart();
@@ -107,7 +119,36 @@ function StartScreen({ onStart, highScore, plays }) {
 
         {highScore > 0 && <p className="pen-high-score">Best run: {highScore} goals</p>}
 
-        <button className="pen-start-btn" onClick={handleStart} disabled={locStatus === 'checking' || plays <= 0}>
+        <div className="pen-registration-box">
+          <p className="pen-insta-cta">Get a +1 Goal Headstart!</p>
+          <button 
+            type="button"
+            onClick={handleFollowBonus}
+            className={`pen-insta-bonus-btn ${hasBonus ? 'pen-bonus-active' : ''}`}
+          >
+            {hasBonus ? '✅ Bonus Applied!' : 'Follow @blendnbubbles'}
+          </button>
+          <p className="pen-insta-sub">Follow us to unlock your bonus</p>
+          
+          <input
+            className="pen-input"
+            type="text"
+            placeholder="Your Name"
+            value={playerName}
+            onChange={(e) => { setPlayerName(e.target.value); localStorage.setItem('bobaPlayerName', e.target.value); }}
+            maxLength={20}
+          />
+          <input
+            className="pen-input"
+            type="tel"
+            placeholder="Phone Number"
+            value={playerPhone}
+            onChange={(e) => { setPlayerPhone(e.target.value); localStorage.setItem('bobaPlayerPhone', e.target.value); }}
+            maxLength={15}
+          />
+        </div>
+
+        <button className="pen-start-btn" onClick={handleStart} disabled={locStatus === 'checking' || plays <= 0 || !isFormValid}>
           {locStatus === 'checking' ? 'Checking location...' : plays <= 0 ? 'Out of tries for today' : 'Take the First Penalty'}
         </button>
 
@@ -187,7 +228,16 @@ function GameOverScreen({
 
         {!submitted ? (
           <form className="pen-submit-form" onSubmit={handleSubmit}>
-            <p className="pen-form-title">Join the Weekly Leaderboard</p>
+            <p className="pen-form-title">Follow us on Insta & Join the Leaderboard</p>
+            <a 
+              href="https://www.instagram.com/blendnbubbles?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="pen-insta-link"
+              style={{ fontSize: '16px', marginBottom: '4px' }}
+            >
+              @blendnbubbles
+            </a>
             <input
               className="pen-input"
               type="text"
@@ -316,6 +366,7 @@ function PenaltyShootout() {
   const [screen, setScreen] = useState('start');
   const [streak, setStreak] = useState(0);
   const [shotNumber, setShotNumber] = useState(1);
+  const [hasBonus, setHasBonus] = useState(false);
   const [highScore, setHighScore] = useState(() =>
     parseInt(localStorage.getItem('penaltyHighScore') || '0', 10),
   );
@@ -390,8 +441,8 @@ function PenaltyShootout() {
     g: geom(w, h),
     team: kit, // selected nation kit, drives the striker colours + scorebug
     phase: 'aiming', // aiming | shooting | result
-    streak: 0,
-    shotNumber: 1,
+    streak: hasBonus ? 1 : 0,
+    shotNumber: hasBonus ? 2 : 1,
     // drag tracking
     dragging: false,
     dragStart: null,
@@ -708,8 +759,8 @@ function PenaltyShootout() {
     setPlays(recordPlay());
     const activeKit = kit || team;
     setScreen('playing');
-    setStreak(0);
-    setShotNumber(1);
+    setStreak(hasBonus ? 1 : 0);
+    setShotNumber(hasBonus ? 2 : 1);
     setSubmitted(false);
     setSubmitError('');
     prevStreakRef.current = 0;
@@ -819,7 +870,19 @@ function PenaltyShootout() {
 
   return (
     <div className="pen-game-container">
-      {screen === 'start' && <StartScreen onStart={() => setScreen('teamselect')} highScore={highScore} plays={plays} />}
+      {screen === 'start' && (
+        <StartScreen 
+          onStart={() => setScreen('teamselect')} 
+          highScore={highScore} 
+          plays={plays}
+          playerName={playerName}
+          playerPhone={playerPhone}
+          setPlayerName={setPlayerName}
+          setPlayerPhone={setPlayerPhone}
+          hasBonus={hasBonus}
+          setHasBonus={setHasBonus}
+        />
+      )}
       {screen === 'teamselect' && (
         <TeamSelectScreen
           onPick={handlePickTeam}
