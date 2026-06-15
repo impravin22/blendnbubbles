@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { filterRows, kpis, groupSum, groupOrders, topDrinks, heatmapGrid } from './reportsData';
+import { filterRows, kpis, groupSum, groupOrders, topDrinks, heatmapGrid, weeklySeries } from './reportsData';
 import './Reports.css';
 
 // Client-side passcode. This is a deterrent for a static site, NOT strong
@@ -13,6 +13,12 @@ const DATA_URL = '/reports-data.cbf3b17bc7.json';
 const TEAL = '#0d6e6e';
 const GOLD = '#CEAA67';
 const DONUT_COLORS = [GOLD, TEAL, '#9fd6c0', '#BB8750', '#7fb7a6', '#d8bd86'];
+// Line palette for the trend: bright, mutually-distinct hues that each clear
+// 3:1 contrast on the dark card (WCAG 1.4.11) — the donut TEAL (#0d6e6e) is too
+// close to the page background to use as a stroke. Paired with dash patterns so
+// series stay distinguishable without colour (WCAG 1.4.1).
+const TREND_COLORS = ['#CEAA67', '#3fd0c9', '#9fd6c0', '#e0894e', '#c2a3ff'];
+const TREND_DASH = ['', '7 4', '2 4', '9 3 2 3', '1 5'];
 
 // The seven cross-filter dimensions. Each maps to a row field; a tap toggles the
 // value in that dimension's set (OR within a dimension, AND across dimensions).
@@ -147,7 +153,71 @@ function Heatmap({ grid, hours, dows }) {
   );
 }
 
-function FilterBar({ sel, dows, onRemove, onClear }) {
+// Weekly trend line chart. One gold line for the total, or one colour-coded
+// line per selected drink (the multi-drink compare). Display-only for weeks —
+// week filtering stays on the "By week" bars.
+function LineTrend({ series, weekLabels, weekKeys, ariaLabel }) {
+  const W = 600;
+  const H = 210;
+  const PADL = 10;
+  const PADR = 10;
+  const PADT = 18;
+  const PADB = 30;
+  const plotW = W - PADL - PADR;
+  const plotH = H - PADT - PADB;
+  const n = weekLabels.length;
+  const max = Math.max(1, ...series.flatMap((s) => s.values));
+  const x = (i) => PADL + (n > 1 ? (i * plotW) / (n - 1) : plotW / 2);
+  const y = (v) => PADT + plotH - (v / max) * plotH;
+  const single = series.length === 1;
+  return (
+    <div className="rp-trend">
+      {!single && (
+        <div className="rp-trend-legend">
+          {series.map((s) => (
+            <span key={s.key} className="rp-tl"><span className="rp-tl-sw" style={{ background: s.color }} />{s.label}</span>
+          ))}
+        </div>
+      )}
+      <svg viewBox={`0 0 ${W} ${H}`} className="rp-trend-svg" role="img" aria-label={ariaLabel}>
+        <defs>
+          <linearGradient id="rpTrendArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={GOLD} stopOpacity="0.28" />
+            <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[0, 1, 2, 3].map((g) => (
+          <line key={g} className="rp-trend-grid" x1={PADL} y1={PADT + (plotH * g) / 3} x2={W - PADR} y2={PADT + (plotH * g) / 3} />
+        ))}
+        {single && n > 1 && (
+          <path d={`M${series[0].values.map((v, i) => `${x(i)},${y(v)}`).join(' L')} L${x(n - 1)},${PADT + plotH} L${PADL},${PADT + plotH} Z`} fill="url(#rpTrendArea)" />
+        )}
+        {series.map((s) => (
+          <g key={s.key}>
+            <path d={`M${s.values.map((v, i) => `${x(i)},${y(v)}`).join(' L')}`} fill="none" stroke={s.color} strokeWidth="2.5" strokeDasharray={s.dash || undefined} strokeLinejoin="round" />
+            {s.values.map((v, i) => <circle key={`pt-${weekKeys[i]}`} cx={x(i)} cy={y(v)} r="3.2" fill={s.color} />)}
+            {single && s.values.map((v, i) => <text key={`val-${weekKeys[i]}`} className="rp-trend-val" x={x(i)} y={y(v) - 8} textAnchor="middle">{v}</text>)}
+          </g>
+        ))}
+        {weekLabels.map((w, i) => <text key={weekKeys[i]} className="rp-trend-wk" x={x(i)} y={H - 10} textAnchor="middle">{w}</text>)}
+      </svg>
+      {/* Screen-reader data table — the SVG is decorative for AT, the numbers live here. */}
+      <table className="rp-sr">
+        <caption>{ariaLabel}</caption>
+        <thead>
+          <tr><th scope="col">Series</th>{weekLabels.map((w, i) => <th key={weekKeys[i]} scope="col">{w}</th>)}</tr>
+        </thead>
+        <tbody>
+          {series.map((s) => (
+            <tr key={s.key}><th scope="row">{s.label}</th>{s.values.map((v, i) => <td key={weekKeys[i]}>{v}</td>)}</tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function FilterBar({ sel, dows, onRemove, onClear, extraActive }) {
   const chips = [];
   DIMS.forEach((dim) => sel[dim].forEach((v) => chips.push({ dim, val: v })));
   return (
@@ -159,7 +229,8 @@ function FilterBar({ sel, dows, onRemove, onClear }) {
           <span aria-hidden="true"> ✕</span><span className="rp-sr"> — remove filter</span>
         </button>
       ))}
-      <button type="button" className="rp-reset" onClick={onClear} disabled={chips.length === 0}>Reset</button>
+      {/* Reset also clears the trend's compare selection, so enable it whenever either is active. */}
+      <button type="button" className="rp-reset" onClick={onClear} disabled={chips.length === 0 && !extraActive}>Reset</button>
     </div>
   );
 }
@@ -204,6 +275,9 @@ function Reports() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [sel, setSel] = useState(emptySel);
+  // Drinks to compare in the Weekly trend (own selection, independent of the
+  // cross-filter, so picking compare drinks never narrows the Top-sellers list).
+  const [cmp, setCmp] = useState(() => new Set());
 
   useEffect(() => {
     document.title = 'Sales Dashboard - BlendNBubbles';
@@ -233,7 +307,15 @@ function Reports() {
       return { ...prev, [dim]: next };
     });
   }, []);
-  const clear = useCallback(() => setSel(emptySel()), []);
+  const clear = useCallback(() => { setSel(emptySel()); setCmp(new Set()); }, []);
+  const toggleCmp = useCallback((drink) => {
+    setCmp((prev) => {
+      const next = new Set(prev);
+      if (next.has(drink)) next.delete(drink);
+      else if (next.size < 5) next.add(drink); // cap the compare at 5 lines
+      return next;
+    });
+  }, []);
 
   const filtered = useMemo(() => (data ? filterRows(data.rows, sel) : []), [data, sel]);
 
@@ -259,9 +341,19 @@ function Reports() {
       orderType: donutData(groupOrders(filtered, 'order_type')),
       payment: donutData(groupOrders(filtered, 'payment')),
       heat: heatmapGrid(filtered, data.dims.hours),
+      // Trend respects the non-drink filters but uses its own compare selection,
+      // so the lines reflect hour/day/category/etc. while staying independent of
+      // the Top-sellers drink cross-filter.
+      weekTrend: weeklySeries(filterRows(data.rows, { ...sel, drink: new Set() }), data.dims.weeks, [...cmp]).map((s, i) => ({
+        ...s,
+        color: s.key === '__all__' ? GOLD : TREND_COLORS[i % TREND_COLORS.length],
+        dash: s.key === '__all__' ? '' : TREND_DASH[i % TREND_DASH.length],
+      })),
+      weekLabels: data.dims.weeks.map((w) => w.slice(5)),
+      weekKeys: data.dims.weeks,
       peakHour, peakDow,
     };
-  }, [data, filtered]);
+  }, [data, filtered, sel, cmp]);
 
   if (!authed) return <PinGate onPass={() => setAuthed(true)} />;
   if (error) return <div className="rp-page"><div className="rp-state">{error}</div></div>;
@@ -283,7 +375,7 @@ function Reports() {
 
       <div className="rp-note">{meta.note}</div>
 
-      <FilterBar sel={sel} dows={dims.dows} onRemove={toggle} onClear={clear} />
+      <FilterBar sel={sel} dows={dims.dows} onRemove={toggle} onClear={clear} extraActive={cmp.size > 0} />
 
       <span className="rp-sr" aria-live="polite" aria-atomic="true">
         {anyFilter ? `Filtered to ${fmtNum(k.orders)} orders, ${fmtNum(k.items)} items` : ''}
@@ -316,6 +408,33 @@ function Reports() {
         <div className="rp-card">
           <h2 className="rp-card-title">By week</h2>
           <Bars data={derived.week} selectedSet={sel.week} onToggle={(v) => toggle('week', v)} color={GOLD} ariaLabel="Items sold by week" />
+        </div>
+
+        <div className="rp-card rp-card-wide">
+          <h2 className="rp-card-title">Weekly trend</h2>
+          <p className="rp-card-hint">{cmp.size ? `Comparing ${cmp.size} drink${cmp.size > 1 ? 's' : ''} — this chart only (max 5)` : 'Total weekly items — pick drinks to compare (this chart only; Top sellers filters everything)'}</p>
+          <div className="rp-cmp">
+            {dims.drinks.slice(0, 8).map((d) => {
+              const idx = [...cmp].indexOf(d);
+              const on = idx >= 0;
+              return (
+                <button
+                  type="button" key={d}
+                  className={`rp-cmp-chip ${on ? 'on' : ''}`} aria-pressed={on}
+                  style={on ? { '--chip': TREND_COLORS[idx % TREND_COLORS.length] } : undefined}
+                  onClick={() => toggleCmp(d)}
+                >
+                  {on && <span className="rp-cmp-dot" aria-hidden="true" />}{d}
+                </button>
+              );
+            })}
+          </div>
+          <LineTrend
+            series={derived.weekTrend}
+            weekLabels={derived.weekLabels}
+            weekKeys={derived.weekKeys}
+            ariaLabel={cmp.size ? `Weekly trend comparing ${cmp.size} drinks` : 'Weekly trend of total items sold'}
+          />
         </div>
 
         <div className="rp-card rp-card-wide">

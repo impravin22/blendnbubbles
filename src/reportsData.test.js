@@ -1,4 +1,4 @@
-import { filterRows, kpis, groupSum, groupOrders, topDrinks, heatmapGrid } from './reportsData';
+import { filterRows, kpis, groupSum, groupOrders, topDrinks, heatmapGrid, weeklySeries } from './reportsData';
 
 const ROWS = [
   { drink: 'Coffee', category: 'Coffee', qty: 2, revenue: 200, hour: 20, dow: 5, week: '2026-05-04', order_type: 'Dine In', payment: 'UPI', inv: 1 },
@@ -80,5 +80,63 @@ describe('heatmapGrid', () => {
     expect(sat.counts[18]).toBe(0);
     const sun = grid.find((r) => r.dow === 6);
     expect(sun.counts[18]).toBe(1);
+  });
+});
+
+describe('weeklySeries', () => {
+  const WEEKS = ['2026-05-04', '2026-05-11'];
+
+  test('no drinks selected -> single combined "All drinks" series', () => {
+    const series = weeklySeries(ROWS, WEEKS, []);
+    expect(series).toHaveLength(1);
+    expect(series[0].key).toBe('__all__');
+    expect(series[0].label).toBe('All drinks');
+    expect(series[0].values).toEqual([3, 1]); // week04: 2+1, week11: 1
+  });
+
+  test('one series per selected drink, values aligned to weeks', () => {
+    const series = weeklySeries(ROWS, WEEKS, ['Coffee', 'Tea']);
+    expect(series).toHaveLength(2);
+    expect(series[0]).toEqual({ key: 'Coffee', label: 'Coffee', values: [2, 1] });
+    expect(series[1]).toEqual({ key: 'Tea', label: 'Tea', values: [1, 0] }); // Tea: no week11 sale -> 0
+  });
+
+  test('preserves the given drink order', () => {
+    const series = weeklySeries(ROWS, WEEKS, ['Tea', 'Coffee']);
+    expect(series.map((s) => s.key)).toEqual(['Tea', 'Coffee']);
+  });
+
+  test('a week with no sales for a drink yields 0, not undefined', () => {
+    const series = weeklySeries(ROWS, ['2026-05-04', '2026-05-11', '2026-05-18'], ['Tea']);
+    expect(series[0].values).toEqual([1, 0, 0]);
+  });
+
+  test('empty rows yield a zero-filled all-drinks series', () => {
+    expect(weeklySeries([], WEEKS, []).values?.[0]).toBeUndefined();
+    expect(weeklySeries([], WEEKS, [])[0].values).toEqual([0, 0]);
+  });
+
+  test('a compare drink with no matching rows yields an all-zero series', () => {
+    expect(weeklySeries(ROWS, WEEKS, ['Ghost'])[0]).toEqual({ key: 'Ghost', label: 'Ghost', values: [0, 0] });
+  });
+
+  test('de-duplicates the drinks argument (no duplicate-key series)', () => {
+    const series = weeklySeries(ROWS, WEEKS, ['Coffee', 'Coffee']);
+    expect(series).toHaveLength(1);
+    expect(series[0].key).toBe('Coffee');
+  });
+
+  test('the trend path (drink dim cleared) ignores the drink cross-filter but keeps other filters', () => {
+    // Mirrors the production composition: filterRows(rows, {...sel, drink: empty}) -> weeklySeries.
+    const rows = [
+      { drink: 'A', week: '2026-05-04', dow: 5, qty: 2, hour: 20, inv: 1, category: 'x', revenue: 0, order_type: 'd', payment: 'c' },
+      { drink: 'B', week: '2026-05-04', dow: 5, qty: 3, hour: 20, inv: 2, category: 'x', revenue: 0, order_type: 'd', payment: 'c' },
+      { drink: 'A', week: '2026-05-04', dow: 6, qty: 9, hour: 20, inv: 3, category: 'x', revenue: 0, order_type: 'd', payment: 'c' }, // Sun — excluded by the dow filter
+    ];
+    const sel = { dow: new Set([5]), drink: new Set(['A']) };
+    const base = filterRows(rows, { ...sel, drink: new Set() });
+    const series = weeklySeries(base, ['2026-05-04'], ['A', 'B']);
+    // dow filter narrowed A (9 on Sun dropped -> 2); drink filter ignored so B still shows.
+    expect(series.map((s) => s.values[0])).toEqual([2, 3]);
   });
 });
