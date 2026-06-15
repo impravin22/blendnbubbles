@@ -14,8 +14,28 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-function getWeekKey() {
+/**
+ * Week key (e.g. "2026-W24") used to bucket leaderboard rows.
+ *
+ * Args:
+ *   weekOffset: How many whole weeks to look back. 0 (default) is the current
+ *     week, 1 is last week, and so on. The offset shifts the reference date
+ *     back `weekOffset * 7` days before computing the key, so it rolls across
+ *     month and year boundaries the same way the live clock does.
+ *
+ * Returns:
+ *   The `YYYY-Www` key string.
+ *
+ * Note:
+ *   This is a deliberately custom week formula, NOT ISO-8601. The same function
+ *   stamps the `week` field at write time and reads it back here, so it only has
+ *   to be self-consistent. Do not "fix" it to ISO-8601 without migrating the
+ *   existing leaderboard rows: the recomputed keys would stop matching the
+ *   stored ones and historical scores would be orphaned.
+ */
+export function getWeekKey(weekOffset = 0) {
   const now = new Date();
+  now.setDate(now.getDate() - weekOffset * 7);
   const jan1 = new Date(now.getFullYear(), 0, 1);
   const days = Math.floor((now - jan1) / 86400000);
   const week = Math.ceil((days + jan1.getDay() + 1) / 7);
@@ -60,14 +80,25 @@ export async function submitScore(name, phone, score, game = DEFAULT_GAME, team 
   return addDoc(collection(db, 'leaderboard'), doc);
 }
 
-export async function getWeeklyLeaderboard(game = DEFAULT_GAME) {
+/**
+ * Top 10 leaderboard rows for a game in a given week.
+ *
+ * Args:
+ *   game: Which game's board to read. Defaults to Boba Catcher.
+ *   weekOffset: Whole weeks back from now. 0 (default) is the current week,
+ *     1 is last week. Passed through to getWeekKey.
+ *
+ * Returns:
+ *   A promise of up to 10 entries, sorted by score descending.
+ */
+export async function getWeeklyLeaderboard(game = DEFAULT_GAME, weekOffset = 0) {
   // Filter by week server-side, then split by game client-side. The game
   // filter runs in JS (not a Firestore `where`) so legacy documents that
   // predate the `game` field still surface on the Boba Catcher board
   // instead of disappearing.
   const q = query(
     collection(db, 'leaderboard'),
-    where('week', '==', getWeekKey())
+    where('week', '==', getWeekKey(weekOffset))
   );
   const snap = await getDocs(q);
   const entries = snap.docs

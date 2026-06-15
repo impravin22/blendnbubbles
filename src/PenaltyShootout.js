@@ -228,33 +228,67 @@ function GameOverScreen({
   );
 }
 
-function LeaderboardScreen({ leaderboard, playerScore, loading, onRestart }) {
+function LeaderboardScreen({ leaderboard, playerScore, loading, onRestart, weekOffset, onSelectWeek }) {
+  const isLastWeek = weekOffset === 1;
   return (
     <div className="pen-screen pen-leaderboard-screen">
       <div className="pen-leaderboard-content">
-        <h2 className="pen-lb-title">This Week's Top Strikers</h2>
+        <h2 className="pen-lb-title">{isLastWeek ? "Last Week's Top Strikers" : "This Week's Top Strikers"}</h2>
         <p className="pen-lb-subtitle">Your run: {playerScore} goals</p>
 
-        {loading ? (
-          <div className="pen-lb-loading">Loading leaderboard...</div>
-        ) : leaderboard.length === 0 ? (
-          <div className="pen-lb-empty">No goals yet this week. Be the first!</div>
-        ) : (
-          <div className="pen-lb-list">
-            {leaderboard.map((entry, i) => (
-              <div key={entry.id} className={`pen-lb-row ${entry.score === playerScore ? 'pen-lb-highlight' : ''}`}>
-                <span className="pen-lb-rank">
-                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
-                </span>
-                {getTeamByCode(entry.team) && (
-                  <span className="pen-lb-flag" aria-hidden="true">{getTeamByCode(entry.team).flag}</span>
-                )}
-                <span className="pen-lb-name">{entry.name}</span>
-                <span className="pen-lb-score">{entry.score} goals</span>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="pen-lb-tabs" role="tablist" aria-label="Leaderboard week">
+          <button
+            type="button"
+            role="tab"
+            id="pen-lb-tab-this"
+            aria-controls="pen-lb-panel"
+            aria-selected={!isLastWeek}
+            className={`pen-lb-tab ${!isLastWeek ? 'pen-lb-tab-active' : ''}`}
+            onClick={() => onSelectWeek(0)}
+          >
+            This Week
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="pen-lb-tab-last"
+            aria-controls="pen-lb-panel"
+            aria-selected={isLastWeek}
+            className={`pen-lb-tab ${isLastWeek ? 'pen-lb-tab-active' : ''}`}
+            onClick={() => onSelectWeek(1)}
+          >
+            Last Week
+          </button>
+        </div>
+
+        <div
+          className="pen-lb-panel"
+          role="tabpanel"
+          id="pen-lb-panel"
+          tabIndex={0}
+          aria-labelledby={isLastWeek ? 'pen-lb-tab-last' : 'pen-lb-tab-this'}
+        >
+          {loading ? (
+            <div className="pen-lb-loading">Loading leaderboard...</div>
+          ) : leaderboard.length === 0 ? (
+            <div className="pen-lb-empty">{isLastWeek ? 'No goals were logged last week.' : 'No goals yet this week. Be the first!'}</div>
+          ) : (
+            <div className="pen-lb-list">
+              {leaderboard.map((entry, i) => (
+                <div key={entry.id} className={`pen-lb-row ${!isLastWeek && entry.score === playerScore ? 'pen-lb-highlight' : ''}`}>
+                  <span className="pen-lb-rank">
+                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                  </span>
+                  {getTeamByCode(entry.team) && (
+                    <span className="pen-lb-flag" aria-hidden="true">{getTeamByCode(entry.team).flag}</span>
+                  )}
+                  <span className="pen-lb-name">{entry.name}</span>
+                  <span className="pen-lb-score">{entry.score} goals</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="pen-gameover-actions">
           <button className="pen-restart-btn" onClick={onRestart}>Play Again</button>
@@ -276,6 +310,8 @@ function PenaltyShootout() {
   const prevStreakRef = useRef(0);
   const prevShotRef = useRef(1);
   const submitTimeoutRef = useRef(null);
+  // Monotonic token so only the most recent leaderboard fetch may write state.
+  const loadGenRef = useRef(0);
 
   const [screen, setScreen] = useState('start');
   const [streak, setStreak] = useState(0);
@@ -285,6 +321,7 @@ function PenaltyShootout() {
   );
   const [leaderboard, setLeaderboard] = useState([]);
   const [lbLoading, setLbLoading] = useState(false);
+  const [lbWeekOffset, setLbWeekOffset] = useState(0); // 0 = this week, 1 = last week
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -593,16 +630,30 @@ function PenaltyShootout() {
   endGameRef.current = endGame;
 
   // ─── Leaderboard ───────────────────────────────────────────
-  const loadLeaderboard = useCallback(async () => {
+  const loadLeaderboard = useCallback(async (weekOffset = 0) => {
+    // Tag this request; if the user flips tabs mid-flight a newer request bumps
+    // the token, so a slow earlier fetch can no longer write the wrong week's
+    // rows over the board (last-tap-wins, not last-to-settle-wins).
+    const requestId = (loadGenRef.current += 1);
     setLbLoading(true);
     try {
-      setLeaderboard(await getWeeklyLeaderboard(GAME_KEY));
+      const data = await getWeeklyLeaderboard(GAME_KEY, weekOffset);
+      if (requestId === loadGenRef.current) setLeaderboard(data);
     } catch (err) {
       console.error('Failed to load leaderboard:', err);
+      // Clear stale rows so a failed load can't leave the previous week's board
+      // showing under the new heading; the empty-state copy renders instead.
+      if (requestId === loadGenRef.current) setLeaderboard([]);
     } finally {
-      setLbLoading(false);
+      if (requestId === loadGenRef.current) setLbLoading(false);
     }
   }, []);
+
+  // Flip the leaderboard between this week and last week, refetching the board.
+  const handleSelectWeek = useCallback((weekOffset) => {
+    setLbWeekOffset(weekOffset);
+    loadLeaderboard(weekOffset);
+  }, [loadLeaderboard]);
 
   const handleSubmitScore = useCallback(async () => {
     setSubmitting(true);
@@ -626,6 +677,7 @@ function PenaltyShootout() {
           data = data.slice(0, 10);
         }
         setLeaderboard(data);
+        setLbWeekOffset(0); // a fresh submission always lands on this week's board
         setScreen('leaderboard');
       }, 800);
     } catch (err) {
@@ -637,7 +689,8 @@ function PenaltyShootout() {
   }, [playerName, playerPhone, streak, team]);
 
   const handleSkipToLeaderboard = useCallback(async () => {
-    await loadLeaderboard();
+    setLbWeekOffset(0);
+    await loadLeaderboard(0);
     setScreen('leaderboard');
   }, [loadLeaderboard]);
 
@@ -807,6 +860,8 @@ function PenaltyShootout() {
           playerScore={streak}
           loading={lbLoading}
           onRestart={() => setScreen('teamselect')}
+          weekOffset={lbWeekOffset}
+          onSelectWeek={handleSelectWeek}
         />
       )}
     </div>
