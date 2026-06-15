@@ -93,6 +93,22 @@
 .rp-leg strong { color: #ffe9b0; }
 .rp-dot { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
 
+/* weekly trend line chart */
+.rp-trend-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.rp-trend-grid { stroke: rgba(255,255,255,0.06); }
+.rp-trend-val { fill: #fff; font-size: 10px; font-weight: 700; }
+.rp-trend-wk { fill: rgba(255,255,255,0.55); font-size: 10px; }
+.rp-trend-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; }
+.rp-tl { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,0.85); }
+.rp-tl-sw { width: 14px; height: 3px; border-radius: 2px; flex: 0 0 auto; }
+.rp-cmp { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 14px; }
+.rp-cmp-chip { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 6px 12px; cursor: pointer;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.8); font-family: inherit; }
+.rp-cmp-chip:hover { color: #fff; }
+.rp-cmp-chip.on { background: rgba(255,255,255,0.1); color: #fff; border-color: var(--chip, #CEAA67); }
+.rp-cmp-chip:focus-visible { outline: 2px solid #CEAA67; outline-offset: 2px; }
+.rp-cmp-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--chip, #CEAA67); margin-right: 6px; vertical-align: middle; }
+
 .rp-footer { margin-top: 30px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.45); }
 
 /* Gate */

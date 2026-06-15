@@ -85,3 +85,34 @@ export function heatmapGrid(rows, hours) {
   }
   return grid;
 }
+
+/**
+ * Weekly trend series for the line chart.
+ *
+ * @param {Array<Object>} rows - the already cross-filtered rows.
+ * @param {Array<string>} weeks - ordered week keys (the x-axis); values align to it.
+ * @param {Array<string>} drinks - selected drink names. Empty → one combined
+ *   "All drinks" series; otherwise one series per drink (the compare lines),
+ *   in the given order.
+ * @returns {Array<{key:string,label:string,values:number[]}>} one entry per
+ *   line, each `values` array aligned to `weeks` (0 where a week has no sales).
+ *
+ * Note: `weeks` is the canonical axis — rows whose `week` is not in `weeks` are
+ * excluded from every series. `drinks` is de-duplicated so callers can't produce
+ * two series with the same key (which would collide on React keys downstream).
+ */
+export function weeklySeries(rows, weeks, drinks) {
+  const seriesFor = (subset) => {
+    const byWeek = groupSum(subset, 'week', 'qty');
+    return weeks.map((w) => byWeek.get(w) || 0);
+  };
+  const uniqueDrinks = drinks ? [...new Set(drinks)] : [];
+  if (uniqueDrinks.length === 0) {
+    return [{ key: '__all__', label: 'All drinks', values: seriesFor(rows) }];
+  }
+  return uniqueDrinks.map((drink) => ({
+    key: drink,
+    label: drink,
+    values: seriesFor(rows.filter((r) => r.drink === drink)),
+  }));
+}
