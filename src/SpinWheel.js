@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Wheel } from 'react-custom-roulette';
+import { generateUUID } from './uuid';
 
 /**
  * Anniversary spin wheel.
@@ -23,31 +24,7 @@ const BRAND_AMBER = '#C89B4A';
 // against a sheet. See setup steps at the bottom of this file.
 const WEBHOOK_URL = process.env.REACT_APP_SPIN_WEBHOOK_URL || '';
 
-/**
- * Generate a short claim ticket. Uses crypto.randomUUID() when available
- * (all modern browsers since 2022) and falls back to a v4-style string
- * built from Math.random() for very old browsers.
- */
-function generateTicket() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  // Fallback v4-ish: not cryptographically strong, but fine for a claim ID.
-  const hex = '0123456789abcdef';
-  let out = '';
-  for (let i = 0; i < 36; i += 1) {
-    if (i === 8 || i === 13 || i === 18 || i === 23) {
-      out += '-';
-    } else if (i === 14) {
-      out += '4';
-    } else if (i === 19) {
-      out += hex[(Math.random() * 4) | 8];
-    } else {
-      out += hex[(Math.random() * 16) | 0];
-    }
-  }
-  return out;
-}
+// Claim tickets use the shared UUID generator (see uuid.js).
 
 /**
  * Short, customer-friendly version of the ticket: first 8 hex chars,
@@ -349,7 +326,7 @@ function SpinWheel() {
 
   const handleStopSpinning = useCallback(() => {
     setMustSpin(false);
-    const ticket = generateTicket();
+    const ticket = generateUUID();
     const payload = savePrize(prizeIndex, ticket) || {
       ticket,
       prizeIndex,

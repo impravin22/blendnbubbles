@@ -13,6 +13,7 @@ import {
 } from './penaltyLogic';
 import TeamSelectScreen from './TeamSelectScreen';
 import { DAILY_LIMIT, triesLeft, recordPlay } from './playLimit';
+import { getPlayerId } from './playerId';
 import { getTeamByCode, numberColourFor } from './teams';
 import './PenaltyShootout.css';
 
@@ -722,7 +723,8 @@ function PenaltyShootout() {
     try {
       localStorage.setItem('bobaPlayerName', playerName.trim());
       localStorage.setItem('bobaPlayerPhone', playerPhone.trim());
-      await submitScore(playerName, playerPhone, streak, GAME_KEY, team.code);
+      const playerId = getPlayerId();
+      await submitScore(playerName, playerPhone, streak, GAME_KEY, team.code, playerId);
       setSubmitted(true);
       submitTimeoutRef.current = setTimeout(async () => {
         let data = [];

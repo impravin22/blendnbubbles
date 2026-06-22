@@ -24,6 +24,10 @@ service cloud.firestore {
         && request.resource.data.phone.size() <= 20
         && request.resource.data.week is string
         && request.resource.data.week.size() <= 12
+        && (
+          !('playerId' in request.resource.data)
+          || (request.resource.data.playerId is string && request.resource.data.playerId.size() <= 36)
+        )
         && request.resource.data.score is int
         && request.resource.data.score >= 0
         && (

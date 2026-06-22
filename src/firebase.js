@@ -62,7 +62,7 @@ export function isPlausibleScore(score, game = DEFAULT_GAME) {
   return ceiling != null ? score <= ceiling : true;
 }
 
-export async function submitScore(name, phone, score, game = DEFAULT_GAME, team = null) {
+export async function submitScore(name, phone, score, game = DEFAULT_GAME, team = null, playerId = null) {
   if (!isPlausibleScore(score, game)) {
     throw new Error(`Implausible score ${score} for ${game}; not submitting.`);
   }
@@ -77,6 +77,10 @@ export async function submitScore(name, phone, score, game = DEFAULT_GAME, team 
   // Only write the team field when a nation was chosen, so Boba Catcher rows
   // (which have no team) are not given an empty value.
   if (team) doc.team = team;
+  // Stable per-device ID so a player can be counted across submissions even
+  // when they change the phone number. Only written when supplied, so callers
+  // that omit it (e.g. Boba Catcher) leave the field off entirely.
+  if (playerId) doc.playerId = playerId;
   return addDoc(collection(db, 'leaderboard'), doc);
 }
 
