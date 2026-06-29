@@ -1,9 +1,9 @@
 import { filterRows, kpis, groupSum, groupOrders, topDrinks, heatmapGrid, weeklySeries } from './reportsData';
 
 const ROWS = [
-  { drink: 'Coffee', category: 'Coffee', qty: 2, revenue: 200, hour: 20, dow: 5, week: '2026-05-04', order_type: 'Dine In', payment: 'UPI', inv: 1 },
-  { drink: 'Tea', category: 'Milk Tea', qty: 1, revenue: 100, hour: 20, dow: 5, week: '2026-05-04', order_type: 'Pick Up', payment: 'Cash', inv: 1 }, // same invoice as above
-  { drink: 'Coffee', category: 'Coffee', qty: 1, revenue: 100, hour: 18, dow: 6, week: '2026-05-11', order_type: 'Dine In', payment: 'UPI', inv: 2 },
+  { drink: 'Coffee', category: 'Coffee', qty: 2, revenue: 200, hour: 20, dow: 5, week: '2026-05-04', month: '2026-05', order_type: 'Dine In', payment: 'UPI', inv: 1 },
+  { drink: 'Tea', category: 'Milk Tea', qty: 1, revenue: 100, hour: 20, dow: 5, week: '2026-05-04', month: '2026-05', order_type: 'Pick Up', payment: 'Cash', inv: 1 }, // same invoice as above
+  { drink: 'Coffee', category: 'Coffee', qty: 1, revenue: 100, hour: 18, dow: 6, week: '2026-05-11', month: '2026-05', order_type: 'Dine In', payment: 'UPI', inv: 2 },
 ];
 
 describe('filterRows', () => {
@@ -26,6 +26,15 @@ describe('filterRows', () => {
   test('across dimensions is AND (intersection)', () => {
     const result = filterRows(ROWS, { hour: new Set([20]), drink: new Set(['Coffee']) });
     expect(result.map((r) => r.inv)).toEqual([1]);
+  });
+
+  test('narrows to a single month (the dashboard month filter)', () => {
+    const mrows = [
+      { drink: 'A', month: '2026-05', qty: 1, revenue: 0, hour: 20, dow: 5, week: '2026-05-04', category: 'x', order_type: 'd', payment: 'c', inv: 1 },
+      { drink: 'B', month: '2026-06', qty: 1, revenue: 0, hour: 20, dow: 5, week: '2026-06-01', category: 'x', order_type: 'd', payment: 'c', inv: 2 },
+    ];
+    expect(filterRows(mrows, { month: new Set(['2026-06']) }).map((r) => r.inv)).toEqual([2]);
+    expect(filterRows(mrows, { month: new Set() }).length).toBe(2); // "All time"
   });
 });
 

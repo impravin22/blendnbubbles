@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { filterRows, kpis, groupSum, groupOrders, topDrinks, heatmapGrid, weeklySeries } from './reportsData';
 import './Reports.css';
@@ -20,10 +20,11 @@ const DONUT_COLORS = [GOLD, TEAL, '#9fd6c0', '#BB8750', '#7fb7a6', '#d8bd86'];
 const TREND_COLORS = ['#CEAA67', '#3fd0c9', '#9fd6c0', '#e0894e', '#c2a3ff'];
 const TREND_DASH = ['', '7 4', '2 4', '9 3 2 3', '1 5'];
 
-// The seven cross-filter dimensions. Each maps to a row field; a tap toggles the
+// The eight cross-filter dimensions. Each maps to a row field; a tap toggles the
 // value in that dimension's set (OR within a dimension, AND across dimensions).
-const DIMS = ['hour', 'dow', 'week', 'drink', 'category', 'order_type', 'payment'];
-const DIM_LABEL = { hour: 'Hour', dow: 'Day', week: 'Week', drink: 'Drink', category: 'Category', order_type: 'Type', payment: 'Pay' };
+// 'month' is driven by its own pill control rather than the tappable charts.
+const DIMS = ['hour', 'dow', 'week', 'month', 'drink', 'category', 'order_type', 'payment'];
+const DIM_LABEL = { hour: 'Hour', dow: 'Day', week: 'Week', month: 'Month', drink: 'Drink', category: 'Category', order_type: 'Type', payment: 'Pay' };
 
 const emptySel = () => Object.fromEntries(DIMS.map((d) => [d, new Set()]));
 const fmtRs = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
@@ -31,6 +32,14 @@ const fmtNum = (n) => Number(n).toLocaleString('en-IN');
 const hourLabel = (h) => `${h % 12 || 12}${h < 12 ? 'am' : 'pm'}`;
 const hourShort = (h) => `${h % 12 || 12}${h < 12 ? 'a' : 'p'}`;
 const pct = (part, whole) => (whole ? Math.round((part / whole) * 100) : 0);
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// "2026-06" -> "Jun" (or "Jun '26" when the dataset spans more than one year).
+// Falls back to the raw key if the month part is out of range, so a malformed
+// dims.months entry never renders an "undefined" pill.
+const monthLabel = (m, withYear) => {
+  const name = MONTH_NAMES[Number(m.slice(5, 7)) - 1] ?? m;
+  return `${name}${withYear ? ` '${m.slice(2, 4)}` : ''}`;
+};
 
 // ─── Chart primitives (dependency-free, tappable) ────────────
 
@@ -219,7 +228,8 @@ function LineTrend({ series, weekLabels, weekKeys, ariaLabel }) {
 
 function FilterBar({ sel, dows, onRemove, onClear, extraActive }) {
   const chips = [];
-  DIMS.forEach((dim) => sel[dim].forEach((v) => chips.push({ dim, val: v })));
+  // Month has its own pill control above, so it is not shown as a removable chip.
+  DIMS.filter((dim) => dim !== 'month').forEach((dim) => sel[dim].forEach((v) => chips.push({ dim, val: v })));
   return (
     <div className="rp-filterbar">
       {chips.length === 0 && <span className="rp-filter-empty">Tap any bar, drink, or slice to filter &rarr;</span>}
@@ -300,6 +310,18 @@ function Reports() {
     return () => { alive = false; };
   }, [authed]);
 
+  // Open on the latest month ("this month") once data arrives, so the dashboard
+  // leads with the current month. Applied once; the "All time" pill or Reset clears it.
+  const monthDefaulted = useRef(false);
+  useEffect(() => {
+    if (!data || monthDefaulted.current) return;
+    const months = data.dims.months || [];
+    if (months.length === 0) return;
+    monthDefaulted.current = true;
+    const latest = months[months.length - 1];
+    setSel((prev) => (prev.month.size === 0 ? { ...prev, month: new Set([latest]) } : prev));
+  }, [data]);
+
   const toggle = useCallback((dim, value) => {
     setSel((prev) => {
       const next = new Set(prev[dim]);
@@ -308,6 +330,10 @@ function Reports() {
     });
   }, []);
   const clear = useCallback(() => { setSel(emptySel()); setCmp(new Set()); }, []);
+  // Single-select month: pick one month, or pass null for "All time" (clears it).
+  const selectMonth = useCallback((m) => {
+    setSel((prev) => ({ ...prev, month: m ? new Set([m]) : new Set() }));
+  }, []);
   const toggleCmp = useCallback((drink) => {
     setCmp((prev) => {
       const next = new Set(prev);
@@ -362,6 +388,8 @@ function Reports() {
   const { dims, meta } = data;
   const { k } = derived;
   const anyFilter = DIMS.some((d) => sel[d].size > 0);
+  const months = dims.months || [];
+  const multiYear = new Set(months.map((m) => m.slice(0, 4))).size > 1;
 
   return (
     <div className="rp-page">
@@ -375,7 +403,34 @@ function Reports() {
 
       <div className="rp-note">{meta.note}</div>
 
-      <FilterBar sel={sel} dows={dims.dows} onRemove={toggle} onClear={clear} extraActive={cmp.size > 0} />
+      {months.length > 0 && (
+        <div className="rp-months" role="group" aria-label="Filter by month">
+          <span className="rp-months-label">Month</span>
+          <button
+            type="button"
+            className={`rp-month ${sel.month.size === 0 ? 'on' : ''}`}
+            aria-pressed={sel.month.size === 0}
+            onClick={() => selectMonth(null)}
+          >
+            All time
+          </button>
+          {months.map((m) => {
+            const on = sel.month.has(m);
+            return (
+              <button
+                type="button" key={m}
+                className={`rp-month ${on ? 'on' : ''}`}
+                aria-pressed={on}
+                onClick={() => selectMonth(on ? null : m)}
+              >
+                {monthLabel(m, multiYear)}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <FilterBar sel={sel} dows={dims.dows} onRemove={toggle} onClear={clear} extraActive={cmp.size > 0 || sel.month.size > 0} />
 
       <span className="rp-sr" aria-live="polite" aria-atomic="true">
         {anyFilter ? `Filtered to ${fmtNum(k.orders)} orders, ${fmtNum(k.items)} items` : ''}

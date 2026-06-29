@@ -102,6 +102,10 @@ def build(frame: pd.DataFrame) -> dict[str, Any]:
     success["week_start"] = (
         success["date"] - pd.to_timedelta(success["date"].dt.dayofweek, unit="D")
     ).dt.date.astype(str)
+    # Calendar month bucket (YYYY-MM) so the dashboard can narrow to a single
+    # month. Derived from the real order date, not week_start, so a week that
+    # straddles a month boundary attributes each row to its own month.
+    success["month"] = success["date"].dt.strftime("%Y-%m")
 
     # Map each invoice number to a compact integer id so the client can count
     # distinct orders without the real invoice numbers ever being published.
@@ -116,6 +120,7 @@ def build(frame: pd.DataFrame) -> dict[str, Any]:
             "hour": int(r["hour"]),
             "dow": int(r["dow"]),
             "week": r["week_start"],
+            "month": r["month"],
             "order_type": r["order_type"],
             "payment": _normalise_payment(r["payment_type"]),
             "inv": invoice_ids[r["invoice_no"]],
@@ -148,6 +153,7 @@ def build(frame: pd.DataFrame) -> dict[str, Any]:
             "hours": HOURS,
             "dows": DOW,
             "weeks": sorted(success["week_start"].unique().tolist()),
+            "months": sorted(success["month"].unique().tolist()),
             "drinks": by_qty("item_name"),
             "categories": by_qty("category_name"),
             "order_types": sorted(success["order_type"].dropna().unique().tolist()),
