@@ -75,6 +75,11 @@ describe('topDrinks', () => {
     expect(topDrinks(ROWS, 1).length).toBe(1);
   });
 
+  test('returns every drink (ranked) when no limit is given', () => {
+    // The dashboard relies on this to show all drinks, not just the top N.
+    expect(topDrinks(ROWS).map((d) => d.drink)).toEqual(['Coffee', 'Tea']);
+  });
+
   test('empty rows yield an empty list', () => {
     expect(topDrinks([], 10)).toEqual([]);
   });

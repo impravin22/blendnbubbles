@@ -362,7 +362,7 @@ function Reports() {
       hour: data.dims.hours.map((h) => ({ key: h, label: hourShort(h), aria: hourLabel(h), value: hourQ.get(h) || 0 })),
       dow: data.dims.dows.map((name, i) => ({ key: i, label: name, aria: name, value: dowQ.get(i) || 0 })),
       week: data.dims.weeks.map((w) => ({ key: w, label: w.slice(5), aria: `week of ${w}`, value: weekQ.get(w) || 0 })),
-      drinks: topDrinks(filtered, 10),
+      drinks: topDrinks(filtered), // every drink, ranked by qty — a cap previously hid lower-volume drinks (e.g. fruit teas)
       category: donutData(groupSum(filtered, 'category', 'qty')).slice(0, 8),
       orderType: donutData(groupOrders(filtered, 'order_type')),
       payment: donutData(groupOrders(filtered, 'payment')),
@@ -498,8 +498,8 @@ function Reports() {
         </div>
 
         <div className="rp-card rp-card-wide">
-          <h2 className="rp-card-title">Top sellers</h2>
-          <p className="rp-card-hint">Tap a drink to see when it sells</p>
+          <h2 className="rp-card-title">Drinks sold ({derived.drinks.length})</h2>
+          <p className="rp-card-hint">Every drink, ranked by quantity — tap one to see when it sells. Scroll for the full list.</p>
           <DrinkBars data={derived.drinks} selectedSet={sel.drink} onToggle={(v) => toggle('drink', v)} />
         </div>
 

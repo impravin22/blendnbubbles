@@ -56,7 +56,14 @@ export function groupOrders(rows, key) {
   return out;
 }
 
-/** Drinks ranked by quantity (desc), each with its summed revenue, capped at `limit`. */
+/**
+ * Drinks ranked by quantity (desc), each with its summed revenue.
+ *
+ * @param {Array<Object>} rows - the already cross-filtered rows.
+ * @param {number} [limit] - optional cap on how many drinks to return. Omit it
+ *   to return every drink (the dashboard shows the full list, not just a top N).
+ * @returns {Array<{drink:string,qty:number,revenue:number}>}
+ */
 export function topDrinks(rows, limit) {
   const qty = new Map();
   const rev = new Map();
