@@ -68,8 +68,13 @@
 .rp-bars.rp-dim .rp-barcol:not(.sel) .rp-bar { opacity: 0.3; }
 .rp-barcol:focus-visible { outline: 2px solid #CEAA67; outline-offset: 2px; border-radius: 6px; }
 
-/* top sellers (tappable rows) */
-.rp-drinks { display: flex; flex-direction: column; gap: 6px; }
+/* all drinks (tappable rows) — full ranked list, capped height with its own scroll
+   so 50-100+ drinks stay reachable without the card swallowing the page. */
+.rp-drinks { display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow-y: auto; padding-right: 4px;
+  scrollbar-width: thin; scrollbar-color: rgba(206,170,103,0.45) transparent; }
+.rp-drinks::-webkit-scrollbar { width: 8px; }
+.rp-drinks::-webkit-scrollbar-thumb { background: rgba(206,170,103,0.4); border-radius: 999px; }
+.rp-drinks::-webkit-scrollbar-track { background: transparent; }
 .rp-drow { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; width: 100%;
   background: none; border: 1px solid transparent; border-radius: 8px; padding: 8px 10px; cursor: pointer; text-align: left; color: inherit; font: inherit; }
 .rp-drow:hover { background: rgba(255,255,255,0.04); }
