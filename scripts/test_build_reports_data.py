@@ -45,6 +45,7 @@ def test_build_returns_meta_dims_rows() -> None:
         "hours",
         "dows",
         "weeks",
+        "months",
         "drinks",
         "categories",
         "order_types",
@@ -95,6 +96,7 @@ def test_rows_one_per_success_line_item_with_fields() -> None:
     assert r["hour"] == 20
     assert r["dow"] == 0  # Monday
     assert r["week"] == "2026-05-04"
+    assert r["month"] == "2026-05"
     assert r["order_type"] == "Dine In"
     assert r["payment"] == "UPI"
     assert r["inv"] == 0
@@ -152,6 +154,22 @@ def test_dims_ordered_and_fixed_axes() -> None:
     assert dims["drinks"][0] == "High"  # ordered by total qty desc
     assert dims["hours"] == list(range(8, 24))
     assert dims["dows"] == ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def test_month_dim_sorted_and_rows_bucketed_by_date() -> None:
+    # Each row's month comes from its own order date (not week_start), and the
+    # months axis is the sorted set of distinct YYYY-MM buckets.
+    frame = pd.DataFrame(
+        [
+            _row(invoice_no="A", date="2026-06-02 10:00:00"),  # June
+            _row(invoice_no="B", date="2026-04-30 23:00:00"),  # April
+            _row(invoice_no="C", date="2026-05-26 18:00:00"),  # May
+        ]
+    )
+    out = build_reports_data.build(frame)
+    assert out["dims"]["months"] == ["2026-04", "2026-05", "2026-06"]
+    months_in_rows = {r["month"] for r in out["rows"]}
+    assert months_in_rows == {"2026-04", "2026-05", "2026-06"}
 
 
 def test_build_raises_when_no_success_rows() -> None:

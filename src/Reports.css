@@ -31,6 +31,15 @@
 .rp-reset[disabled] { opacity: 0.3; cursor: default; }
 .rp-reset:focus-visible { outline: 2px solid #CEAA67; outline-offset: 2px; }
 
+/* month selector (single-select segmented pills) */
+.rp-months { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; }
+.rp-months-label { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.55); font-weight: 800; margin-right: 2px; }
+.rp-month { font-size: 13px; font-weight: 700; border-radius: 999px; padding: 7px 15px; cursor: pointer; font-family: inherit;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.82); transition: color .15s ease, border-color .15s ease; }
+.rp-month:hover { color: #fff; border-color: #CEAA67; }
+.rp-month.on { background: #CEAA67; border-color: #CEAA67; color: #012020; font-weight: 800; }
+.rp-month:focus-visible { outline: 2px solid #CEAA67; outline-offset: 2px; }
+
 .rp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin: 0 0 14px; }
 .rp-kpi { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
 .rp-kpi-v { font-size: 28px; font-weight: 900; color: #fff; }
@@ -136,5 +145,5 @@
   .rp-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .rp-bar, .rp-dfill, .rp-donut circle, .rp-gate-btn { transition: none; }
+  .rp-bar, .rp-dfill, .rp-donut circle, .rp-gate-btn, .rp-month { transition: none; }
 }
