@@ -3,6 +3,14 @@ main = "src/index.js"
 compatibility_date = "2025-04-01"
 workers_dev = true
 
+# Off deliberately. Preview URLs give every deployed VERSION its own permanent
+# public hostname, carrying the same secrets and the same KV ledger. For a
+# Worker that mints money off, that means a version with a bug in its payout
+# logic stays reachable and exploitable forever after it is fixed on the main
+# route — the fix would not actually retire it. This service is small and has no
+# staging need that would justify that.
+preview_urls = false
+
 # Both of these are public by design and already ship in the site bundle — the
 # Firebase API key is an identifier, not a credential, and the leaderboard it
 # reads is world-readable. The values that ARE secret (VOUCHER_SECRET,

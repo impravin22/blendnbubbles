@@ -60,6 +60,24 @@ their own phone and show the resulting "valid" screen at the counter while the
 voucher stayed unredeemed. **Staff must scan the customer's QR on the staff
 device** — reading a verdict off the customer's screen defeats the control.
 
+## Deployed
+
+`https://blendnbubbles-voucher.impravin22.workers.dev`
+
+Verified live: `/health` 200, a malformed entry id 400s before any Firestore
+call, an unknown id 409s `not-found` (which also proves the Firestore read path
+works), `/redeem` without the staff header 401s, and a preflight from a foreign
+origin still returns `https://blendnbubbles.com`.
+
+To point the site at it, set in the frontend build environment:
+
+```
+REACT_APP_VOUCHER_URL=https://blendnbubbles-voucher.impravin22.workers.dev
+```
+
+Leave it unset and the voucher step is skipped entirely — the game behaves
+exactly as it did before.
+
 ## Deploy
 
 ```bash
