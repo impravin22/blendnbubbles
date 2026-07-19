@@ -214,7 +214,15 @@ describe('getReward (Rs 2 off per goal, capped)', () => {
     expect(getReward(5).prize).toBe("You've got ₹10 off on your next drink!");
   });
 
-  test('caps at Rs 50 from 25 goals up', () => {
+  test('the highest score the game can produce earns Rs 38', () => {
+    // The keeper curve walls out at a 19-goal streak, so this is the real
+    // ceiling on the offer. See the derivation tests in firebase.test.js.
+    expect(getReward(19).prize).toBe("You've got ₹38 off on your next drink!");
+  });
+
+  test('caps at Rs 50 as a backstop if the difficulty is ever softened', () => {
+    // Unreachable at the current difficulty; kept so the cap still holds should
+    // the curve change and let players past 25 goals.
     expect(getReward(24).prize).toBe("You've got ₹48 off on your next drink!");
     expect(getReward(25).prize).toBe("You've got ₹50 off on your next drink!");
     expect(getReward(40).prize).toBe("You've got ₹50 off on your next drink!");
