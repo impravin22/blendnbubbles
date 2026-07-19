@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { HONEST_MAX_STREAK } from './penaltyLogic';
 import {
   getFirestore,
   collection,
@@ -66,16 +67,12 @@ const DEFAULT_GAME = 'bobacatcher';
 // the ceiling at the honest maximum means knowing it buys an attacker nothing a
 // strong honest player could not already have had.
 //
-// 19 is derived from the keeper curve, not estimated. From kick 11 readBias
-// pulls the keeper toward the shot; by kick 20 the widest possible gap
-// (0.588 = far post to opposite corner, best-case anticipate noise) has fallen
-// below dive + reachX (0.590), so kick 20 cannot be scored by anyone. 19 can,
-// so 19 is the ceiling. Do not lower it to 18 — that rejects a legitimate
-// best-ever run.
-//
-// These are duplicated in firestore.rules, which is the enforcing copy — this
-// one is a client-side courtesy check only. Change both together.
-export const SCORE_CEILINGS = { football: 19, bobacatcher: 1000 };
+// The football figure is imported rather than repeated, so the game's own
+// definition of its maximum is the only place it lives on the client — see
+// HONEST_MAX_STREAK in penaltyLogic.js for how the number is derived.
+// firestore.rules carries the enforcing copy and cannot import, so change that
+// one together with this.
+export const SCORE_CEILINGS = { football: HONEST_MAX_STREAK, bobacatcher: 1000 };
 
 /**
  * Whether a score is plausible for the given game: a non-negative integer at

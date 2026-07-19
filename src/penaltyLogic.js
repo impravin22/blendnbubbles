@@ -181,17 +181,36 @@ export function applyPowerWobble(aim, power, rng = Math.random) {
 export const RUPEES_PER_GOAL = 2;
 export const MAX_DISCOUNT_RS = 50;
 
+// The longest streak the keeper curve permits, and the single source of truth
+// for it — firebase.js derives its leaderboard ceiling from this constant, and
+// firebase.test.js re-derives the number from getKeeperDifficulty and fails if
+// the two ever disagree.
+//
+// Kick 20 is unscoreable by anyone: readBias has closed the widest gap a player
+// can open (0.588) below the keeper's dive + reachX (0.590). Kick 19 is
+// scoreable, so 19 it is.
+export const HONEST_MAX_STREAK = 19;
+
 /**
  * Single reward rule: every goal is worth Rs 2 off the next drink (10 goals =
  * Rs 20 off), capped at Rs 50. No tiers. Zero goals earns encouragement only.
  * The flavour line scales with the score.
+ *
+ * The goal count is clamped to HONEST_MAX_STREAK first. This card is rendered
+ * in the browser from a local variable, so without the clamp a tampered streak
+ * prints whatever discount the tamperer likes — which is exactly how a player
+ * walked in with a maximum-discount card the server had never seen. Clamping
+ * does not make the card trustworthy (nothing client-side can), but it caps
+ * what a forgery is worth at what a perfect honest run earns, and the counter
+ * verifies the real amount against a server-issued voucher.
  */
 export function getReward(goals) {
-  if (goals <= 0) {
+  const earned = Math.min(Math.max(0, Math.floor(goals) || 0), HONEST_MAX_STREAK);
+  if (earned <= 0) {
     return { prize: null, msg: 'Aaro ekbar hok! Every player gets a smile from us!' };
   }
-  const rs = Math.min(goals * RUPEES_PER_GOAL, MAX_DISCOUNT_RS);
-  const praise = goals >= 10 ? 'Legend toh bhai!' : goals >= 5 ? 'Daarun khelle!' : 'Bhalo khelecho!';
+  const rs = Math.min(earned * RUPEES_PER_GOAL, MAX_DISCOUNT_RS);
+  const praise = earned >= 10 ? 'Legend toh bhai!' : earned >= 5 ? 'Daarun khelle!' : 'Bhalo khelecho!';
   return {
     prize: `You've got ₹${rs} off on your next drink!`,
     msg: `${praise} Show this at the counter to claim.`,

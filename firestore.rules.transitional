@@ -1,0 +1,102 @@
+rules_version = '2';
+
+// TRANSITIONAL RULES — publish these BEFORE deploying the new site build,
+// then replace them with firestore.rules once traffic has rolled over.
+//
+// WHY THIS FILE EXISTS
+//   The rules and the client changed together, and either one deployed alone
+//   breaks live score submission:
+//
+//     rules first  -> browsers still running the cached old bundle keep sending
+//                     `phone` and a client-generated `createdAt`. The new rules
+//                     reject both, so submitting a score fails until every
+//                     player hard-refreshes.
+//     client first -> the new bundle omits `phone`, but the OLD rules require
+//                     `phone is string`. Also rejected.
+//
+//   So there is no safe two-step. This ruleset is the bridge: it accepts BOTH
+//   document shapes at once, which makes the order of the next two deploys
+//   irrelevant.
+//
+// DEPLOY SEQUENCE
+//   1. Publish THIS file.                        (old clients keep working)
+//   2. Deploy the site build.                    (new clients start writing the new shape)
+//   3. Wait for cached bundles to age out — a day is generous for this traffic.
+//   4. Publish firestore.rules.                  (the new shape becomes mandatory)
+//
+//   Step 4 is what actually closes the PII hole, because until it lands a
+//   tampered client can still write a `phone` field into the public collection.
+//   Do not stop after step 2 and consider the job done.
+//
+//   Publish: Firebase Console -> Firestore Database -> Rules -> paste -> Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isNonEmptyString(value, maxLen) {
+      return value is string && value.size() > 0 && value.size() <= maxLen;
+    }
+
+    function hasValidPlayerId(data) {
+      return !('playerId' in data)
+        || (data.playerId is string && data.playerId.size() <= 36);
+    }
+
+    // Same ceilings as the final ruleset. Tightening the football cap from 40 to
+    // 19 immediately is safe even for old clients: 20+ is unreachable in honest
+    // play, so no real player loses a score. See firebase.test.js, which derives
+    // this number from the keeper curve rather than assuming it.
+    function scoreCeiling(game) {
+      return game == 'football' ? 19 : 1000;
+    }
+
+    match /leaderboard/{entry} {
+      allow read: if true;
+
+      allow create: if
+        request.resource.data.keys().hasAll(['name', 'score', 'game', 'week', 'createdAt'])
+        // TRANSITIONAL: `phone` is tolerated here and forbidden in the final
+        // ruleset. This single word is the whole reason this file exists.
+        && request.resource.data.keys().hasOnly(
+             ['name', 'score', 'game', 'week', 'createdAt', 'team', 'playerId', 'phone'])
+        && (!('phone' in request.resource.data)
+             || (request.resource.data.phone is string
+                 && request.resource.data.phone.size() <= 20))
+        && isNonEmptyString(request.resource.data.name, 40)
+        && isNonEmptyString(request.resource.data.week, 12)
+        // TRANSITIONAL: the old client stamps this itself, the new one uses
+        // serverTimestamp(). Accept either; the final ruleset pins it to
+        // request.time so the audit trail cannot be backdated.
+        && request.resource.data.createdAt is timestamp
+        && hasValidPlayerId(request.resource.data)
+        && (!('team' in request.resource.data)
+             || isNonEmptyString(request.resource.data.team, 8))
+        && request.resource.data.game in ['football', 'bobacatcher']
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= scoreCeiling(request.resource.data.game);
+
+      allow update, delete: if false;
+    }
+
+    // Already enforced at full strength — nothing writes here until the new
+    // build ships, so there is no old shape to accommodate.
+    match /contacts/{entry} {
+      allow read: if false;
+
+      allow create: if
+        request.resource.data.keys().hasAll(['name', 'phone', 'week', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['name', 'phone', 'week', 'createdAt', 'playerId'])
+        && isNonEmptyString(request.resource.data.name, 40)
+        && isNonEmptyString(request.resource.data.phone, 20)
+        && isNonEmptyString(request.resource.data.week, 12)
+        && request.resource.data.createdAt == request.time
+        && hasValidPlayerId(request.resource.data);
+
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
