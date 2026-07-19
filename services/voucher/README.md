@@ -16,8 +16,8 @@ This Worker is the thing that decides the money.
 id, reads that document back from Firestore, and takes the score from the stored
 copy. Two Firestore rules make that trustworthy:
 
-- the score cap rejects anything above what honest play can reach (19 goals), so
-  the most a voucher can ever be worth is ₹38; and
+- the score cap rejects anything above what honest play can reach (19 goals for
+  football), so the most a voucher can ever be worth is ₹38; and
 - `createdAt == request.time` means the write timestamp is the server's, not the
   client's, so the Worker can require the score to be **fresh**.
 
@@ -51,7 +51,7 @@ services/voucher/
 
 | Route | Auth | Purpose |
 | --- | --- | --- |
-| `POST /issue` | none (CORS-locked to the site) | `{ entryId }` → `{ token, rupees, name, score, expiresAt }` |
+| `POST /issue` | none — see below | `{ entryId }` → `{ token, rupees, name, score, expiresAt }` |
 | `POST /redeem` | `x-staff-token` header | `{ token }` → `{ valid, rupees, name, redeemedAt }` |
 | `GET /health` | none | liveness |
 
@@ -94,3 +94,43 @@ The tests run under Node while the code runs under `workers_dev`. Both runtimes
 provide `crypto.subtle`, `btoa`/`atob`, `TextEncoder`, and `Request`/`Response`,
 so the surface used here behaves identically — but anything added later should
 be checked against the Workers runtime, not just against a green `node --test`.
+
+## What `/issue` is not protected by
+
+`/issue` takes no credentials. The CORS header names the site origin, but CORS
+is a browser policy — `curl` ignores it entirely, so it is hygiene here rather
+than an access control.
+
+Two consequences worth stating plainly:
+
+- **Vouchers are mintable in volume.** Firestore rules allow anonymous document
+  creation by design (the site is static and has no login), so a script can
+  fabricate a leaderboard row and mint a voucher for it, repeatedly. The score
+  cap bounds each voucher's value; the per-device daily cap and the person at
+  the counter bound the count.
+- **Someone can mint a stranger's voucher.** The board is world-readable, so a
+  fresh `entryId` is public for the 15 minutes it stays claimable. The thief
+  must still be at the counter to redeem, and the redemption ledger keys on
+  `entryId`, so the two collide on one key and only one drink is ever handed
+  over — the honest player gets `already-redeemed`. That is a support problem,
+  not a money problem, but it is worth knowing before someone reports it.
+
+`playerId` cannot fix either: `getWeeklyLeaderboard` returns whole documents, so
+it is published alongside everything else.
+
+## Reward table
+
+`REWARDS` in `src/voucher.js` is keyed by game and **fails closed** — a game not
+in the table mints nothing.
+
+This is load-bearing, not defensive coding. Both games write to the same
+`leaderboard` collection, but their scores are not in the same units: football
+counts goals and is capped at 19, while Boba Catcher counts points (items worth
+up to 10, combo multiplier to 3x) and is capped at 1000. An earlier revision
+applied one flat rate to whatever score it found, which handed the maximum ₹50
+to any ordinary Boba Catcher run past 25 points — on the default game path, with
+no tampering at all.
+
+Boba Catcher is deliberately absent rather than set to a low rate: its in-store
+reward is a topping upgrade, not money off, so it has no rupee value to express.
+Give it an entry only once someone decides what it is worth.

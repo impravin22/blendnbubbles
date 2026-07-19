@@ -17,29 +17,47 @@ const claim = (over = {}) => ({
   entryId: 'abc123',
   name: 'Pravy',
   score: 7,
+  game: 'football',
+  playerId: null,
   rupees: 14,
   issuedAt: NOW,
   ...over,
 });
 
 describe('discountFor', () => {
-  test('pays Rs 2 per goal', () => {
-    assert.equal(discountFor(1), 2);
-    assert.equal(discountFor(10), 20);
-    assert.equal(discountFor(19), 38);
+  test('pays Rs 2 per goal for football', () => {
+    assert.equal(discountFor(1, 'football'), 2);
+    assert.equal(discountFor(10, 'football'), 20);
+    assert.equal(discountFor(19, 'football'), 38);
+  });
+
+  // Regression. The rate used to be flat and applied to whatever score arrived,
+  // but the two games do not share units: football counts goals (capped at 19),
+  // Boba Catcher counts points (capped at 1000, items worth up to 10 each with a
+  // 3x combo). The flat rate paid the maximum discount for any Boba Catcher run
+  // past 25 points — an ordinary score, on the default game path.
+  test('Boba Catcher mints nothing — its reward is not measured in rupees', () => {
+    assert.equal(discountFor(25, 'bobacatcher'), 0);
+    assert.equal(discountFor(1000, 'bobacatcher'), 0);
+  });
+
+  test('an unknown or missing game mints nothing, never a default rate', () => {
+    assert.equal(discountFor(19, 'roulette'), 0);
+    assert.equal(discountFor(19, undefined), 0);
+    assert.equal(discountFor(19, null), 0);
   });
 
   test('zero goals earns nothing', () => {
-    assert.equal(discountFor(0), 0);
+    assert.equal(discountFor(0, 'football'), 0);
   });
 
   test('caps as a backstop and never pays out for junk input', () => {
-    assert.equal(discountFor(25), 50);
-    assert.equal(discountFor(9999), 50);
-    assert.equal(discountFor(-5), 0);
-    assert.equal(discountFor(3.5), 0);
-    assert.equal(discountFor('10'), 0);
-    assert.equal(discountFor(NaN), 0);
+    assert.equal(discountFor(25, 'football'), 50);
+    assert.equal(discountFor(9999, 'football'), 50);
+    assert.equal(discountFor(-5, 'football'), 0);
+    assert.equal(discountFor(3.5, 'football'), 0);
+    assert.equal(discountFor('10', 'football'), 0);
+    assert.equal(discountFor(NaN, 'football'), 0);
   });
 });
 

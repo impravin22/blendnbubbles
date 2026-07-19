@@ -20,19 +20,38 @@
 
 const ENCODER = new TextEncoder();
 
-export const RUPEES_PER_GOAL = 2;
-// Backstop only; the score cap in firestore.rules binds well below this.
-export const MAX_DISCOUNT_RS = 50;
+// Per-game reward rules. A game absent from this table mints NOTHING.
+//
+// This table must be keyed by game, and the lookup must fail closed, because
+// the games' scores are not in the same units. Football counts goals and is
+// capped at 19 by firestore.rules, so 2 rupees a goal tops out at 38.
+// Boba Catcher counts points — catchable items are worth 1 to 10 each with a
+// combo multiplier up to 3x — and its rules ceiling is 1000. Paying 2 rupees a
+// "goal" there hands the maximum discount to any ordinary run past 25 points,
+// which is a normal score, not a cheat.
+//
+// bobacatcher is deliberately absent rather than set to a small number: its
+// in-store reward is a topping upgrade, not money off, so it has no rupee value
+// to express here. Give it an entry only when someone decides what it is worth.
+export const REWARDS = {
+  football: { rupeesPerPoint: 2, maxRupees: 50 },
+};
+
 // How long after the game a voucher can be minted. Covers walking to the
 // counter and a slow queue, without leaving the board minable.
 export const SCORE_MAX_AGE_MS = 15 * 60 * 1000;
 // How long a minted voucher stays redeemable.
 export const VOUCHER_TTL_MS = 24 * 60 * 60 * 1000;
 
-/** Rupees off for a goal count. Mirrors getReward in src/penaltyLogic.js. */
-export function discountFor(score) {
+/**
+ * Rupees off for a score in a given game. Mirrors getReward in penaltyLogic.js
+ * for football. Unknown or missing game => 0, never a default rate.
+ */
+export function discountFor(score, game) {
+  const rule = REWARDS[game];
+  if (!rule) return 0;
   if (!Number.isInteger(score) || score < 0) return 0;
-  return Math.min(score * RUPEES_PER_GOAL, MAX_DISCOUNT_RS);
+  return Math.min(score * rule.rupeesPerPoint, rule.maxRupees);
 }
 
 function toBase64Url(bytes) {
@@ -66,7 +85,8 @@ async function hmac(message, secret) {
  * so response time reveals how many leading bytes were right and a forger can
  * recover the signature one byte at a time. This always walks both strings.
  */
-function constantTimeEquals(a, b) {
+export function constantTimeEquals(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
@@ -98,10 +118,16 @@ export async function signVoucher(claim, secret) {
  * which part failed beyond what they already control.
  */
 export async function verifyVoucher(token, secret, now = Date.now()) {
-  if (typeof token !== 'string' || !token.includes('.')) {
-    return { ok: false, reason: 'malformed' };
-  }
-  const [payload, signature] = token.split('.');
+  if (typeof token !== 'string') return { ok: false, reason: 'malformed' };
+  // Exactly two segments. A destructuring split would silently discard trailing
+  // segments, so `<token>.anything` would verify as the same claim — unlimited
+  // distinct strings for one voucher. Harmless while the redemption ledger keys
+  // on entryId, but it stops being harmless the moment anything keys on the
+  // token itself (an idempotency key, a scanned-QR cache), and that change
+  // would look perfectly safe to whoever makes it.
+  const parts = token.split('.');
+  if (parts.length !== 2) return { ok: false, reason: 'malformed' };
+  const [payload, signature] = parts;
   if (!payload || !signature) return { ok: false, reason: 'malformed' };
 
   const expected = await hmac(payload, secret);
@@ -118,7 +144,19 @@ export async function verifyVoucher(token, secret, now = Date.now()) {
     return { ok: false, reason: 'malformed' };
   }
 
-  if (!Number.isInteger(claim.issuedAt) || now - claim.issuedAt > VOUCHER_TTL_MS) {
+  // A validly-signed payload can still decode to null, a number, or an array.
+  // Only reachable by someone holding the secret, but the point of this module
+  // is not to trust whatever comes back out of the parser.
+  if (!claim || typeof claim !== 'object' || Array.isArray(claim)) {
+    return { ok: false, reason: 'malformed' };
+  }
+  // Guard both directions, as isClaimable does. A far-future issuedAt would
+  // otherwise give a voucher that never expires. It is server-set and signed,
+  // so reaching this needs a clock fault or a leaked secret — but the asymmetry
+  // would be an odd thing to leave in a file that checks the other timestamp
+  // both ways.
+  const age = now - claim.issuedAt;
+  if (!Number.isInteger(claim.issuedAt) || age > VOUCHER_TTL_MS || age < -60_000) {
     return { ok: false, reason: 'expired' };
   }
   return { ok: true, claim };
