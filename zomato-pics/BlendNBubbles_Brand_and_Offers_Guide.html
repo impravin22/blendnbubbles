@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blend N Bubbles — Brand & Offers Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Core palette (derived from logo, confirm exact values against master vector) */
+    --teal:#1E4D44;        /* PRIMARY — brand green */
+    --teal-700:#15362F;    /* deep shade for text/footers */
+    --teal-300:#5A8C81;    /* tint for muted greens */
+    --gold:#C8A24C;        /* ACCENT — line-art gold */
+    --gold-300:#E4CD93;
+    --cream:#F4ECD9;       /* BASE light */
+    --cream-50:#FBF7EE;    /* page background */
+    --cream-200:#EADFC6;   /* borders / lines */
+    --caramel:#8A5A2E;     /* SECONDARY — boba / brown sugar */
+    --caramel-300:#C49A6C;
+    --ink:#221C15;         /* body text */
+    --muted:#6E6253;       /* secondary text */
+    --tangerine:#E8743B;   /* TACTICAL — offers / urgency only */
+    --white:#FFFFFF;
+    --radius:18px;
+    --shadow:0 10px 30px rgba(34,28,21,.08);
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Open Sans',-apple-system,Segoe UI,Roboto,sans-serif;
+    color:var(--ink);
+    background:var(--cream-50);
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4,.font-display{font-family:'Poppins',sans-serif;line-height:1.15;color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+  section{padding:64px 0;border-bottom:1px solid var(--cream-200)}
+  .eyebrow{font-family:'Poppins',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .lead{font-size:18px;color:var(--muted);max-width:62ch}
+  .sec-title{font-size:30px;font-weight:700;margin:6px 0 10px}
+  .grid{display:grid;gap:20px}
+
+  /* ---------- COVER ---------- */
+  .cover{background:linear-gradient(160deg,var(--teal) 0%,var(--teal-700) 100%);color:var(--cream);padding:72px 0 64px;border:none}
+  .cover .wrap{display:flex;gap:40px;align-items:center;flex-wrap:wrap}
+  .cover h1{color:var(--cream);font-size:54px;font-weight:800;letter-spacing:-.01em}
+  .cover p{color:var(--gold-300);font-size:18px;margin-top:14px;max-width:54ch}
+  .badge-mark{flex:0 0 156px}
+  .badge-mark svg{width:156px;height:156px;display:block}
+  .cover .kpis{margin-top:26px;display:flex;gap:28px;flex-wrap:wrap}
+  .cover .kpis div{font-size:13px;color:rgba(244,236,217,.7)}
+  .cover .kpis b{display:block;font-family:'Poppins';font-weight:700;font-size:20px;color:var(--cream)}
+
+  /* ---------- COLOURS ---------- */
+  .swatches{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:760px){.swatches{grid-template-columns:1fr 1fr}}
+  .swatch{border-radius:var(--radius);overflow:hidden;background:var(--white);box-shadow:var(--shadow);border:1px solid var(--cream-200)}
+  .swatch .chip{height:104px}
+  .swatch .meta{padding:14px 16px}
+  .swatch .nm{font-family:'Poppins';font-weight:600;font-size:15px;color:var(--ink)}
+  .swatch .role{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-family:'Poppins';font-weight:600}
+  .swatch code{font-size:13px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+  .swatch .use{font-size:12.5px;color:var(--muted);margin-top:6px}
+
+  /* ---------- TYPE ---------- */
+  .type-card{background:var(--white);border:1px solid var(--cream-200);border-radius:var(--radius);padding:26px 28px;box-shadow:var(--shadow);margin-bottom:18px}
+  .specimen{border-left:3px solid var(--gold);padding-left:18px;margin:18px 0}
+  .specimen .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'Poppins';font-weight:600;margin-bottom:4px}
+  .scale-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px dashed var(--cream-200);flex-wrap:wrap}
+  .scale-row:last-child{border:none}
+  .scale-row .spec{font-size:13px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;white-space:nowrap}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:760px){.two{grid-template-columns:1fr}}
+  .do,.dont{border-radius:14px;padding:18px 20px;font-size:14.5px}
+  .do{background:#EAF2EE;border:1px solid #CFE3DA}
+  .dont{background:#FBEDE6;border:1px solid #F2D6C7}
+  .do b,.dont b{font-family:'Poppins';display:block;margin-bottom:6px}
+  .do b{color:var(--teal)} .dont b{color:#B4502B}
+
+  /* ---------- COMPONENTS ---------- */
+  .btn{display:inline-block;font-family:'Poppins';font-weight:600;font-size:15px;padding:13px 26px;border-radius:999px;text-decoration:none;border:2px solid transparent;cursor:pointer}
+  .btn-primary{background:var(--teal);color:var(--cream)}
+  .btn-accent{background:var(--tangerine);color:#fff}
+  .btn-ghost{background:transparent;color:var(--teal);border-color:var(--teal)}
+  .row-btns{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .pill{display:inline-block;font-family:'Poppins';font-weight:700;font-size:12px;letter-spacing:.04em;padding:6px 12px;border-radius:999px}
+  .pill-gold{background:var(--gold);color:var(--teal-700)}
+  .pill-tan{background:var(--tangerine);color:#fff}
+  .pill-teal{background:var(--teal);color:var(--cream)}
+
+  /* ---------- OFFER CARDS ---------- */
+  .offers{grid-template-columns:1fr 1fr}
+  @media(max-width:760px){.offers{grid-template-columns:1fr}}
+  .offer{position:relative;background:var(--white);border:1px solid var(--cream-200);border-radius:var(--radius);padding:26px 26px 22px;box-shadow:var(--shadow);overflow:hidden}
+  .offer::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--gold)}
+  .offer.dinein::before{background:var(--caramel)}
+  .offer .flag{position:absolute;top:18px;right:18px}
+  .offer .chan{font-family:'Poppins';font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .offer h3{font-size:23px;font-weight:700;margin:8px 0 6px;max-width:80%}
+  .offer .body{font-size:15px;color:var(--ink)}
+  .offer .price{font-family:'Poppins';font-weight:800;font-size:30px;color:var(--teal);margin:10px 0 2px}
+  .offer .terms{font-size:12.5px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px dashed var(--cream-200)}
+  .combo-list{list-style:none;margin:10px 0 0}
+  .combo-list li{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--cream-200);font-size:14.5px}
+  .combo-list li:last-child{border:none}
+  .combo-list b{font-family:'Poppins';font-weight:700;color:var(--teal)}
+
+  .callout{background:var(--teal);color:var(--cream);border-radius:var(--radius);padding:26px 28px;margin-top:8px}
+  .callout h3{color:var(--gold-300)}
+  .callout p{color:rgba(244,236,217,.92);font-size:15px;margin-top:8px}
+  .formula{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+  @media(max-width:760px){.formula{grid-template-columns:1fr}}
+  .formula .step{background:var(--cream);border:1px solid var(--cream-200);border-radius:14px;padding:16px 18px}
+  .formula .step span{font-family:'Poppins';font-weight:700;color:var(--gold);font-size:13px}
+  .formula .step b{display:block;font-family:'Poppins';color:var(--teal);margin:4px 0}
+  .formula .step p{font-size:13.5px;color:var(--muted)}
+
+  .note{font-size:13px;color:var(--muted);background:#FCF8EF;border:1px dashed var(--cream-200);border-radius:12px;padding:12px 16px;margin-top:18px}
+  footer{background:var(--teal-700);color:rgba(244,236,217,.8);padding:30px 0;text-align:center;font-size:13px}
+  footer b{color:var(--cream);font-family:'Poppins'}
+  .tovlist{columns:2;column-gap:30px}
+  @media(max-width:760px){.tovlist{columns:1}}
+  .tovlist li{margin:0 0 10px 18px;font-size:14.5px}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<header class="cover">
+  <div class="wrap">
+    <div class="badge-mark" aria-hidden="true">
+      <svg viewBox="0 0 156 156" fill="none">
+        <circle cx="78" cy="78" r="74" fill="#15362F" stroke="#C8A24C" stroke-width="3"/>
+        <path d="M54 96 L60 56 L72 56 L78 96 Z" fill="none" stroke="#E4CD93" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="86" y="60" width="18" height="36" rx="3" fill="none" stroke="#E4CD93" stroke-width="2.5"/>
+        <path d="M40 110 H116" stroke="#C8A24C" stroke-width="2"/>
+        <circle cx="58" cy="90" r="2.4" fill="#C8A24C"/><circle cx="66" cy="92" r="2.4" fill="#C8A24C"/><circle cx="95" cy="90" r="2.4" fill="#C8A24C"/>
+        <text x="78" y="128" text-anchor="middle" font-family="Poppins,sans-serif" font-size="13" font-weight="700" fill="#F4ECD9" letter-spacing="1">BNB</text>
+      </svg>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <div class="eyebrow" style="color:var(--gold-300)">Brand &amp; Offers Guide</div>
+      <h1>Blend N Bubbles</h1>
+      <p>One reference for the marketing team: how the brand should look and sound, and ready-to-use copy for every live offer. Built for Zomato creatives, social posts, in-store signage and the menu.</p>
+      <div class="kpis">
+        <div><b>Poppins</b> headlines</div>
+        <div><b>Open Sans</b> body</div>
+        <div><b>Teal · Gold · Cream</b> palette</div>
+        <div><b>4</b> live offers</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- COLOURS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">01 — Colour</div>
+    <h2 class="sec-title">The palette</h2>
+    <p class="lead">Pulled from the logo. Deep teal-green leads, gold accents, cream as the calm base, caramel ties back to the boba. Tangerine is a tactical pop reserved for offers and call-to-actions only.</p>
+    <div class="grid swatches" style="margin-top:26px">
+
+      <div class="swatch"><div class="chip" style="background:#1E4D44"></div><div class="meta">
+        <div class="role">Primary</div><div class="nm">Deep Teal Green</div><code>#1E4D44</code>
+        <div class="use">Backgrounds, headers, logo, headlines. The brand anchor.</div></div></div>
+
+      <div class="swatch"><div class="chip" style="background:#C8A24C"></div><div class="meta">
+        <div class="role">Accent</div><div class="nm">Gold</div><code>#C8A24C</code>
+        <div class="use">Line art, dividers, premium highlights, small flourishes.</div></div></div>
+
+      <div class="swatch"><div class="chip" style="background:#F4ECD9;border-bottom:1px solid #EADFC6"></div><div class="meta">
+        <div class="role">Base</div><div class="nm">Cream</div><code>#F4ECD9</code>
+        <div class="use">Light backgrounds, cards, text on teal. Keeps it warm, not stark white.</div></div></div>
+
+      <div class="swatch"><div class="chip" style="background:#8A5A2E"></div><div class="meta">
+        <div class="role">Secondary</div><div class="nm">Caramel</div><code>#8A5A2E</code>
+        <div class="use">Boba / brown-sugar warmth. Food cards, dine-in combos.</div></div></div>
+
+      <div class="swatch"><div class="chip" style="background:#221C15"></div><div class="meta">
+        <div class="role">Ink</div><div class="nm">Espresso</div><code>#221C15</code>
+        <div class="use">Body text on light backgrounds. Warmer than pure black.</div></div></div>
+
+      <div class="swatch"><div class="chip" style="background:#E8743B"></div><div class="meta">
+        <div class="role">Tactical</div><div class="nm">Tangerine</div><code>#E8743B</code>
+        <div class="use">Offers, sale flags, CTAs only. Use sparingly so it stays loud.</div></div></div>
+
+    </div>
+    <div class="note"><b>Confirm before locking:</b> these hex codes are matched to the logo's look from the available files (which were photos on cups). Pull the exact teal and gold from your master vector logo and overwrite the two values above so the whole system is pixel-true.</div>
+  </div>
+</section>
+
+<!-- TYPOGRAPHY -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">02 — Type</div>
+    <h2 class="sec-title">Typography</h2>
+    <p class="lead">Two free Google Fonts. Poppins for anything that should grab the eye, Open Sans for anything someone has to read.</p>
+
+    <div class="type-card" style="margin-top:26px">
+      <div class="role" style="color:var(--gold);font-family:Poppins;font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase">Headline font</div>
+      <div class="font-display" style="font-size:46px;font-weight:800;margin:6px 0">Poppins</div>
+      <p style="color:var(--muted);max-width:60ch">Rounded, friendly, modern. Use for headlines, prices, offer flags and big numbers. Weights: 600 / 700 / 800. Avoid long paragraphs in Poppins.</p>
+    </div>
+
+    <div class="type-card">
+      <div class="role" style="color:var(--gold);font-family:Poppins;font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase">Body font</div>
+      <div style="font-size:34px;font-weight:600;margin:6px 0;color:var(--ink)">Open Sans</div>
+      <p style="max-width:64ch">Clean and highly legible at small sizes. Use for descriptions, body copy, terms and captions. Weights: 400 (regular) / 600 (semibold) / 700 (bold). This paragraph is Open Sans 400.</p>
+    </div>
+
+    <div class="type-card">
+      <div class="role" style="color:var(--gold);font-family:Poppins;font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase">Type scale</div>
+      <div class="scale-row"><span class="font-display" style="font-size:44px;font-weight:800">Display</span><span class="spec">Poppins 800 · 48–56px</span></div>
+      <div class="scale-row"><span class="font-display" style="font-size:32px;font-weight:700">Heading 1</span><span class="spec">Poppins 700 · 36–40px</span></div>
+      <div class="scale-row"><span class="font-display" style="font-size:24px;font-weight:700">Heading 2</span><span class="spec">Poppins 700 · 26–28px</span></div>
+      <div class="scale-row"><span class="font-display" style="font-size:19px;font-weight:600;color:var(--ink)">Heading 3 / labels</span><span class="spec">Poppins 600 · 18–20px</span></div>
+      <div class="scale-row"><span style="font-size:18px">Body large — the easy read</span><span class="spec">Open Sans 400 · 18px</span></div>
+      <div class="scale-row"><span style="font-size:16px">Body — standard paragraph text</span><span class="spec">Open Sans 400 · 16px</span></div>
+      <div class="scale-row"><span style="font-size:13px;color:var(--muted)">Caption / terms &amp; conditions</span><span class="spec">Open Sans 400 · 12–13px</span></div>
+      <div class="scale-row"><span style="font-family:Poppins;font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Eyebrow / tag</span><span class="spec">Poppins 600 · 12px · UPPERCASE · tracked</span></div>
+    </div>
+
+    <div class="two" style="margin-top:20px">
+      <div class="do"><b>Do</b>Set prices and offer numbers in Poppins bold. Keep body text in Open Sans. Use sentence case for headlines, it feels friendlier than ALL CAPS.</div>
+      <div class="dont"><b>Don't</b>Don't run paragraphs in Poppins, don't mix in a third font, and don't shrink terms below 12px. No drop shadows on text.</div>
+    </div>
+    <div class="note">Load order for any web/email use: <code>fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Open+Sans:wght@400;600;700</code>. For Canva, both fonts are in the free font list, search "Poppins" and "Open Sans".</div>
+  </div>
+</section>
+
+<!-- LOGO -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">03 — Logo</div>
+    <h2 class="sec-title">Using the mark</h2>
+    <p class="lead">The roundel is the hero. Protect it: give it room, keep it teal, and never let an AI tool redraw the wordmark.</p>
+    <div class="two" style="margin-top:24px">
+      <div class="do"><b>Do</b>
+        • Keep clear space around the badge equal to the height of the "B" in the wordmark.<br>
+        • Minimum size 40px tall on screen / 15mm in print so the line art stays readable.<br>
+        • Place on cream, deep teal, or a darkened photo. Use the cream badge version on busy or dark backgrounds.<br>
+        • The wordmark reads <b>FRUIT TEA &amp; BUBBLE TEA</b>. Use the real logo file every time.</div>
+      <div class="dont"><b>Don't</b>
+        • Don't let Midjourney / AI generate or "fix" the logo, it garbles the text (you already caught "PRUIT TEA").<br>
+        • Don't stretch, rotate, recolour or add effects.<br>
+        • Don't place the teal logo on a low-contrast or photo background without the cream badge behind it.<br>
+        • Don't rebuild it in a different font.</div>
+    </div>
+    <div class="note"><b>Asset to add:</b> drop your master logo files (vector SVG/PNG, transparent) into the brand folder and link them here so this guide carries the real mark, not the decorative placeholder on the cover.</div>
+  </div>
+</section>
+
+<!-- PHOTOGRAPHY -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">04 — Imagery</div>
+    <h2 class="sec-title">Photography &amp; imagery</h2>
+    <p class="lead">For a neighbourhood shop, real beats glossy-fake. People trust "that's the actual drink I'll get". Shoot the product; use graphics around it, not instead of it.</p>
+    <div class="two" style="margin-top:24px">
+      <div class="do"><b>Do</b>
+        • Shoot your <b>actual</b> cups in natural daylight, drink as the hero.<br>
+        • Show the boba and the layers, condensation on the cup reads as fresh.<br>
+        • Consistent props and a clean, on-brand backdrop (cream, teal, wood).<br>
+        • Add the football / seasonal energy with <b>graphics</b> over a real photo.</div>
+      <div class="dont"><b>Don't</b>
+        • Don't rely on AI splash renders, the physics give it away (sealed lid but liquid flying, pasted-on lighting).<br>
+        • Don't mix wildly different lighting across a grid.<br>
+        • Don't bury the product behind effects.<br>
+        • Don't post anything where the logo text is unreadable.</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPONENTS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">05 — Components</div>
+    <h2 class="sec-title">Buttons &amp; flags</h2>
+    <p class="lead">Reusable pieces for posts and the listing. Primary action in teal, offers in tangerine, secondary as a teal outline.</p>
+    <div class="row-btns" style="margin:24px 0 18px">
+      <a class="btn btn-primary">Order on Zomato</a>
+      <a class="btn btn-accent">Get 30% off</a>
+      <a class="btn btn-ghost">View menu</a>
+    </div>
+    <div class="row-btns">
+      <span class="pill pill-tan">30% OFF</span>
+      <span class="pill pill-gold">NEW USERS</span>
+      <span class="pill pill-teal">DINE-IN ONLY</span>
+      <span class="pill pill-gold">COMBO ₹329</span>
+    </div>
+  </div>
+</section>
+
+<!-- OFFERS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">06 — Offers</div>
+    <h2 class="sec-title">Live offers — ready-to-use copy</h2>
+    <p class="lead">Headline, description and the fine print for every offer currently running. Copy straight onto creatives, captions and the menu. Keep the terms line, it stops confusion at the counter and in the comments.</p>
+
+    <div class="grid offers" style="margin-top:26px">
+
+      <!-- 30% new user -->
+      <div class="offer">
+        <span class="flag pill pill-tan">NEW USERS</span>
+        <div class="chan">Zomato</div>
+        <h3>Your first sip, 30% off</h3>
+        <div class="body">New to Blend N Bubbles? Take <b>30% off your first order</b> on Zomato. Real boba, made fresh, now an easy yes.</div>
+        <div class="terms">New users only · Up to ₹75 off · Min order ₹159 · Zomato only · Funded by the store</div>
+      </div>
+
+      <!-- 12% all users -->
+      <div class="offer">
+        <span class="flag pill pill-gold">EVERYONE</span>
+        <div class="chan">Zomato</div>
+        <h3>Bring the squad, save 12%</h3>
+        <div class="body">Ordering for the group? Get <b>12% off when your cart crosses ₹300</b>. More cups, better value.</div>
+        <div class="terms">All users · Min order ₹300 · Zomato only · Valid to 31 Dec 2026</div>
+      </div>
+
+      <!-- Boba + Soda combo -->
+      <div class="offer">
+        <span class="flag pill pill-gold">COMBO</span>
+        <div class="chan">Zomato</div>
+        <h3>Boba meets fizz</h3>
+        <div class="body">A signature boba paired with a sparkling soda, sorted into one easy combo.</div>
+        <div class="price">₹329</div>
+        <div class="terms">Four combos to choose from · Zomato · Selected pairings</div>
+      </div>
+
+      <!-- Dine-in combos -->
+      <div class="offer dinein">
+        <span class="flag pill pill-teal">DINE-IN</span>
+        <div class="chan">In-store</div>
+        <h3>Sip + Snack combos</h3>
+        <div class="body">A drink and a munchie, paired and priced to share. From ₹189.</div>
+        <ul class="combo-list">
+          <li><span>Soda + Nachos</span><b>₹189</b></li>
+          <li><span>Soda + Fries</span><b>₹209</b></li>
+          <li><span>Fruit Tea + Nachos</span><b>₹229</b></li>
+          <li><span>Fruit Tea + Sandwich</span><b>₹239</b></li>
+          <li><span>Fruit Tea + Fries</span><b>₹259</b></li>
+        </ul>
+        <div class="terms">Dine-in / in-store only · Not available on delivery apps</div>
+      </div>
+
+    </div>
+
+    <div class="callout">
+      <h3>Seasonal skin: the World Cup is on</h3>
+      <p>The tournament runs through mid-July and Bengal is football-mad. You don't need new offers, just dress the existing ones in match-day energy: "Half-time refuel, 30% off your first order", "Squad goals, 12% off over ₹300". Use the goal-net creative (real cup, fixed logo) and the tangerine flag. One free month of a reason to post.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW TO WRITE AN OFFER -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">07 — Reusable</div>
+    <h2 class="sec-title">How to write any offer</h2>
+    <p class="lead">So future offers sound like the same brand. Three parts, every time: the benefit, the condition, the nudge.</p>
+    <div class="formula">
+      <div class="step"><span>1 · BENEFIT</span><b>Lead with what they get</b><p>Plain and concrete. "30% off", "Free topping", "Combo ₹329". Never bury it.</p></div>
+      <div class="step"><span>2 · CONDITION</span><b>State the catch once</b><p>"on your first order", "over ₹300", "dine-in only". One short clause, no jargon.</p></div>
+      <div class="step"><span>3 · NUDGE</span><b>A warm reason to act</b><p>"made fresh, now an easy yes", "bring the squad". Friendly, never pushy.</p></div>
+    </div>
+    <div class="note">Voice check: would you say it to a regular across the counter? If it sounds like a bank, rewrite it.</div>
+  </div>
+</section>
+
+<!-- TONE -->
+<section style="border-bottom:none">
+  <div class="wrap">
+    <div class="eyebrow">08 — Voice</div>
+    <h2 class="sec-title">Tone of voice</h2>
+    <p class="lead">Young, warm, proudly Taiwanese-inspired. Friendly mate behind the counter, not a corporate flyer.</p>
+    <div class="two" style="margin-top:22px">
+      <div class="do"><b>Sounds like us</b>
+        <ul class="tovlist" style="margin-top:8px">
+          <li>"Real boba, made fresh."</li>
+          <li>"First sip's on us."</li>
+          <li>"Bring the squad."</li>
+          <li>"Brown sugar, the way it should be."</li>
+        </ul></div>
+      <div class="dont"><b>Doesn't sound like us</b>
+        <ul class="tovlist" style="margin-top:8px">
+          <li>"Avail our exciting offer now!"</li>
+          <li>"Best-in-class beverages."</li>
+          <li>"Hurry, limited period only!!!"</li>
+          <li>Three exclamation marks. Ever.</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>Blend N Bubbles</b> — Brand &amp; Offers Guide · Fruit Tea &amp; Bubble Tea, Barrackpore<br>
+    Colours from logo (confirm against master vector) · Poppins + Open Sans · Built for the marketing team
+  </div>
+</footer>
+
+</body>
+</html>

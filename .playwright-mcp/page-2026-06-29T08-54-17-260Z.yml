@@ -1,0 +1,8 @@
+- generic [ref=e6]:
+  - img "BlendNBubbles" [ref=e7]
+  - heading "Sales Dashboard" [level=1] [ref=e8]
+  - paragraph [ref=e9]: Staff only. Enter the access code.
+  - textbox "Access code" [active] [ref=e10]
+  - button "View Dashboard" [ref=e11] [cursor=pointer]
+  - link "← Back to site" [ref=e12] [cursor=pointer]:
+    - /url: /

@@ -1,0 +1,10 @@
+🧋 <b>BNB Online Report — 15 Jul 2026</b>
+
+<b>Total online:</b> 0 orders · ₹0
+• Zomato: 0 orders · ₹0
+• Swiggy: 0 orders · ₹0
+
+<b>Offers (Zomato):</b> ₹0 gross from offers · ₹0 funded by us · menu-to-order 0.0%
+<b>Swiggy funnel:</b> 16 impressions → 3 menu opens → 1 cart → 0 orders
+
+<b>Flags:</b> Zero-order day on both platforms — second in a row (PetPooja shows last orders on 14 Jul). Not an outage: Swiggy online availability 100%, Zomato outlet Online with 2 active offers. This is demand/visibility, not downtime. Swiggy impressions just 16 (vs 7 last Wed) and 1 cart was abandoned at checkout. Zomato menu-to-order 0.0%, all offer metrics -100% vs last Wed. Kitchen prep time still 0.0 min and Swiggy menu score 0. No cancellations, no complaints, no poor ratings.

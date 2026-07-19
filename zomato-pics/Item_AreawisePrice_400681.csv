@@ -1,0 +1,12 @@
+ItemID,CategoryName,ItemName,SapCode,ItemShortCode,ItemShortCode1,ItemDescription,ExposeToOnline,OnlineDisplayName,IsFavorite,ItemBasePrice,ContainerCharge,Dietary,Zomato,Available
+1307382577,Soda,"Island Pineapple Punch",,26SOD01,,,Yes,"Island Pineapple Punch",No,120,0,veg,120,No
+1307382578,Soda,"Spicy Pink Guava Punch",,26SOD02,,,No,"Spicy Pink Guava Punch",No,120,0,veg,120,No
+1307382579,Soda,"Zesty Lemon Twist",,26SOD03,,,No,"Zesty Lemon Twist",No,120,0,veg,120,No
+1307382580,Soda,"Exotic Passion Splash",,26SOD05,,,No,"Exotic Passion Splash",No,120,0,veg,120,No
+1307382581,Soda,"Hawaiian Sunset Fizz",,26SOD07,,,No,"Hawaiian Sunset Fizz",No,120,0,veg,120,No
+1307382582,Soda,"Tangy Kachha Mango Twist",,26SOD08,,,No,"Tangy Kachha Mango Twist",No,120,0,veg,120,No
+1307382583,Soda,"Lychee Blossom Fizz",,26SOD09,,,No,"Lychee Blossom Fizz",No,120,0,veg,120,No
+1307382584,Soda,"Peachy Summer Cooler",,26SOD10,,,No,"Peachy Summer Cooler",No,120,0,veg,120,No
+1307382590,Soda,"Orange Burst Co.",,26SOD04,,,No,"Orange Burst Co.",No,120,0,veg,120,No
+1307382591,Soda,"Kiwi Green Splash",,26SOD06,,,No,"Kiwi Green Splash",No,130,0,veg,120,No
+1307478998,Soda,"Pomelo Passion Twist",,26SOD11,,,No,"Pomelo Passion Twist",No,130,0,veg,130,No

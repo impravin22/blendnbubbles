@@ -1,0 +1,31 @@
+READY-TO-SEND TELEGRAM MESSAGE (Telegram HTML parse mode, <b> tags only)
+Target group: BlendNBubbles Digest (via send_telegram_message, connector "bnb telegram" / bnb-ops-mcp.impravin22.workers.dev)
+------------------------------------------------------------
+🧋 <b>BNB Online Report — 18 Jul 2026</b>
+
+<b>Total online:</b> 0 orders · ₹0
+• Zomato: 0 orders · ₹0
+• Swiggy: 0 orders · ₹0
+
+<b>Offers (Zomato):</b> ₹0 gross from offers · ₹0 funded by us · menu-to-order 0.0%
+<b>Swiggy funnel:</b> 17 impressions → 0 menu opens → 0 carts → 0 orders
+
+<b>Flags:</b> Zero-order day on both platforms, and the 3rd in a row (no online orders 17 to 19 Jul; last online orders were 16 Jul per PetPooja). Swiggy showed 17 impressions but 0 menu opens (listing is being seen, nobody clicked in). Zomato menu-to-order 0% (down 100% vs last Sat) despite 2 active offer campaigns. Zomato status still shows "Online", so worth checking items aren't out of stock / 86'd and that the outlet is actually accepting online orders.
+------------------------------------------------------------
+
+DELIVERY STATUS: NOT SENT.
+Reason: the "bnb telegram" connector (send_telegram_message) was not available in this
+scheduled run. It did not load and could not be found via tool search, the connector
+registry, or the connector list. No other Telegram tool was used (the MarketSmith group
+tool must never be used, and no unsanctioned channel was used to post on your behalf).
+Action needed: reconnect the bnb telegram connector, then this message can be posted as-is.
+
+SOURCES CHECKED (18 Jul 2026, read-only):
+- PetPooja Online Orders (outlet 400681): 0 online orders for 18 Jul. 5-day chart shows
+  activity only on 16 Jul; nothing on 17, 18, 19 Jul.
+- Zomato partner offers (res_id 21955142), Daily tab: gross from offers ₹0, orders from
+  offers 0, discount ₹0, menu-to-order 0.0% (-100% vs prev Sat 11 Jul). 2 active offers.
+  Outlet toggle: Online.
+- Swiggy partner business-metrics (RID 1401296), Yesterday filter: Net Sales ₹0, Delivered
+  Orders 0. Funnel: 17 impressions → 0 menu opens → 0 carts → 0 orders. Ratings 0 rated /
+  0 poor. Complaints 0.

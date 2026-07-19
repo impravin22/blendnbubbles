@@ -1,0 +1,430 @@
+- generic [ref=e13]:
+  - banner [ref=e14]:
+    - generic [ref=e15]:
+      - heading "Sales Dashboard" [level=1] [ref=e16]
+      - paragraph [ref=e17]: "2026-04-15 to 2026-06-28 · PetPooja Order Report: Item Wise (Barrackpore)"
+    - link "BlendNBubbles →" [ref=e18] [cursor=pointer]:
+      - /url: /
+  - generic [ref=e19]: Built from PetPooja exports. Only 'Success' orders are counted.
+  - group "Filter by month" [ref=e20]:
+    - generic [ref=e21]: Month
+    - button "All time" [ref=e22] [cursor=pointer]
+    - button "Apr" [ref=e23] [cursor=pointer]
+    - button "May" [ref=e24] [cursor=pointer]
+    - button "Jun" [pressed] [ref=e25] [cursor=pointer]
+  - generic [ref=e26]:
+    - generic [ref=e27]: Tap any bar, drink, or slice to filter →
+    - button "Reset" [ref=e28] [cursor=pointer]
+  - generic [ref=e29]: Filtered to 393 orders, 671 items
+  - generic [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]: "393"
+      - generic [ref=e33]: Orders
+      - generic [ref=e34]: 54% of all
+    - generic [ref=e35]:
+      - generic [ref=e36]: "671"
+      - generic [ref=e37]: Items sold
+      - generic [ref=e38]: 55% of all
+    - generic [ref=e39]:
+      - generic [ref=e40]: ₹1,12,740
+      - generic [ref=e41]: Net item sales
+    - generic [ref=e42]:
+      - generic [ref=e43]: ₹287
+      - generic [ref=e44]: Avg order value
+  - generic [ref=e45]:
+    - generic [ref=e46]:
+      - text: "Busiest day:"
+      - strong [ref=e47]: Sat
+    - generic [ref=e48]:
+      - text: "Peak hour:"
+      - strong [ref=e49]: 7pm
+    - generic [ref=e50]: Filtered view
+  - generic [ref=e51]:
+    - generic [ref=e52]:
+      - heading "Items sold by hour of day" [level=2] [ref=e53]
+      - paragraph [ref=e54]: Tap an hour to filter every chart
+      - group "Items sold by hour of day" [ref=e55]:
+        - 'button "8am: 0 items" [ref=e56] [cursor=pointer]':
+          - generic [ref=e57]: 8a
+        - 'button "9am: 0 items" [ref=e58] [cursor=pointer]':
+          - generic [ref=e59]: 9a
+        - 'button "10am: 0 items" [ref=e60] [cursor=pointer]':
+          - generic [ref=e61]: 10a
+        - 'button "11am: 0 items" [ref=e62] [cursor=pointer]':
+          - generic [ref=e63]: 11a
+        - 'button "12pm: 6 items" [ref=e64] [cursor=pointer]':
+          - generic [ref=e65]: "6"
+          - generic [ref=e67]: 12p
+        - 'button "1pm: 21 items" [ref=e68] [cursor=pointer]':
+          - generic [ref=e69]: "21"
+          - generic [ref=e71]: 1p
+        - 'button "2pm: 13 items" [ref=e72] [cursor=pointer]':
+          - generic [ref=e73]: "13"
+          - generic [ref=e75]: 2p
+        - 'button "3pm: 27 items" [ref=e76] [cursor=pointer]':
+          - generic [ref=e77]: "27"
+          - generic [ref=e79]: 3p
+        - 'button "4pm: 42 items" [ref=e80] [cursor=pointer]':
+          - generic [ref=e81]: "42"
+          - generic [ref=e83]: 4p
+        - 'button "5pm: 56 items" [ref=e84] [cursor=pointer]':
+          - generic [ref=e85]: "56"
+          - generic [ref=e87]: 5p
+        - 'button "6pm: 109 items" [ref=e88] [cursor=pointer]':
+          - generic [ref=e89]: "109"
+          - generic [ref=e91]: 6p
+        - 'button "7pm: 139 items" [ref=e92] [cursor=pointer]':
+          - generic [ref=e93]: "139"
+          - generic [ref=e95]: 7p
+        - 'button "8pm: 138 items" [ref=e96] [cursor=pointer]':
+          - generic [ref=e97]: "138"
+          - generic [ref=e99]: 8p
+        - 'button "9pm: 88 items" [ref=e100] [cursor=pointer]':
+          - generic [ref=e101]: "88"
+          - generic [ref=e103]: 9p
+        - 'button "10pm: 32 items" [ref=e104] [cursor=pointer]':
+          - generic [ref=e105]: "32"
+          - generic [ref=e107]: 10p
+        - 'button "11pm: 0 items" [ref=e108] [cursor=pointer]':
+          - generic [ref=e109]: 11p
+    - generic [ref=e110]:
+      - heading "By day of week" [level=2] [ref=e111]
+      - group "Items sold by day of week" [ref=e112]:
+        - 'button "Mon: 77 items" [ref=e113] [cursor=pointer]':
+          - generic [ref=e114]: "77"
+          - generic [ref=e116]: Mon
+        - 'button "Tue: 86 items" [ref=e117] [cursor=pointer]':
+          - generic [ref=e118]: "86"
+          - generic [ref=e120]: Tue
+        - 'button "Wed: 73 items" [ref=e121] [cursor=pointer]':
+          - generic [ref=e122]: "73"
+          - generic [ref=e124]: Wed
+        - 'button "Thu: 69 items" [ref=e125] [cursor=pointer]':
+          - generic [ref=e126]: "69"
+          - generic [ref=e128]: Thu
+        - 'button "Fri: 105 items" [ref=e129] [cursor=pointer]':
+          - generic [ref=e130]: "105"
+          - generic [ref=e132]: Fri
+        - 'button "Sat: 164 items" [ref=e133] [cursor=pointer]':
+          - generic [ref=e134]: "164"
+          - generic [ref=e136]: Sat
+        - 'button "Sun: 97 items" [ref=e137] [cursor=pointer]':
+          - generic [ref=e138]: "97"
+          - generic [ref=e140]: Sun
+    - generic [ref=e141]:
+      - heading "By week" [level=2] [ref=e142]
+      - group "Items sold by week" [ref=e143]:
+        - 'button "week of 2026-04-13: 0 items" [ref=e144] [cursor=pointer]':
+          - generic [ref=e145]: 04-13
+        - 'button "week of 2026-04-20: 0 items" [ref=e146] [cursor=pointer]':
+          - generic [ref=e147]: 04-20
+        - 'button "week of 2026-04-27: 0 items" [ref=e148] [cursor=pointer]':
+          - generic [ref=e149]: 04-27
+        - 'button "week of 2026-05-11: 0 items" [ref=e150] [cursor=pointer]':
+          - generic [ref=e151]: 05-11
+        - 'button "week of 2026-05-18: 0 items" [ref=e152] [cursor=pointer]':
+          - generic [ref=e153]: 05-18
+        - 'button "week of 2026-05-25: 0 items" [ref=e154] [cursor=pointer]':
+          - generic [ref=e155]: 05-25
+        - 'button "week of 2026-06-01: 199 items" [ref=e156] [cursor=pointer]':
+          - generic [ref=e157]: "199"
+          - generic [ref=e159]: 06-01
+        - 'button "week of 2026-06-08: 167 items" [ref=e160] [cursor=pointer]':
+          - generic [ref=e161]: "167"
+          - generic [ref=e163]: 06-08
+        - 'button "week of 2026-06-15: 147 items" [ref=e164] [cursor=pointer]':
+          - generic [ref=e165]: "147"
+          - generic [ref=e167]: 06-15
+        - 'button "week of 2026-06-22: 158 items" [ref=e168] [cursor=pointer]':
+          - generic [ref=e169]: "158"
+          - generic [ref=e171]: 06-22
+    - generic [ref=e172]:
+      - heading "Weekly trend" [level=2] [ref=e173]
+      - paragraph [ref=e174]: Total weekly items — pick drinks to compare (this chart only; Top sellers filters everything)
+      - generic [ref=e175]:
+        - button "Caramel Boba Coffee" [ref=e176] [cursor=pointer]
+        - button "Choco Ice Swirl" [ref=e177] [cursor=pointer]
+        - button "Loaded Nachos" [ref=e178] [cursor=pointer]
+        - button "Mango Chill Vibe" [ref=e179] [cursor=pointer]
+        - button "Taiwan Classic Boba (Cold [350ML])" [ref=e180] [cursor=pointer]
+        - button "Cafe Mocha" [ref=e181] [cursor=pointer]
+        - button "Biscoff Boba Coffee (Cold [350ML])" [ref=e182] [cursor=pointer]
+        - button "Caramel Boba Coffee (Cold [350ML])" [ref=e183] [cursor=pointer]
+      - generic [ref=e184]:
+        - img "Weekly trend of total items sold" [ref=e185]:
+          - generic [ref=e187]:
+            - generic [ref=e199]: "0"
+            - generic [ref=e200]: "0"
+            - generic [ref=e201]: "0"
+            - generic [ref=e202]: "0"
+            - generic [ref=e203]: "0"
+            - generic [ref=e204]: "0"
+            - generic [ref=e205]: "199"
+            - generic [ref=e206]: "167"
+            - generic [ref=e207]: "147"
+            - generic [ref=e208]: "158"
+          - generic [ref=e209]: 04-13
+          - generic [ref=e210]: 04-20
+          - generic [ref=e211]: 04-27
+          - generic [ref=e212]: 05-11
+          - generic [ref=e213]: 05-18
+          - generic [ref=e214]: 05-25
+          - generic [ref=e215]: 06-01
+          - generic [ref=e216]: 06-08
+          - generic [ref=e217]: 06-15
+          - generic [ref=e218]: 06-22
+        - table "Weekly trend of total items sold" [ref=e219]:
+          - caption [ref=e220]: Weekly trend of total items sold
+          - rowgroup [ref=e221]:
+            - row "Series 04-13 04-20 04-27 05-11 05-18 05-25 06-01 06-08 06-15 06-22" [ref=e222]:
+              - columnheader "Series" [ref=e223]
+              - columnheader "04-13" [ref=e224]
+              - columnheader "04-20" [ref=e225]
+              - columnheader "04-27" [ref=e226]
+              - columnheader "05-11" [ref=e227]
+              - columnheader "05-18" [ref=e228]
+              - columnheader "05-25" [ref=e229]
+              - columnheader "06-01" [ref=e230]
+              - columnheader "06-08" [ref=e231]
+              - columnheader "06-15" [ref=e232]
+              - columnheader "06-22" [ref=e233]
+          - rowgroup [ref=e234]:
+            - row "All drinks 0 0 0 0 0 0 199 167 147 158" [ref=e235]:
+              - rowheader "All drinks" [ref=e236]
+              - cell "0" [ref=e237]
+              - cell "0" [ref=e238]
+              - cell "0" [ref=e239]
+              - cell "0" [ref=e240]
+              - cell "0" [ref=e241]
+              - cell "0" [ref=e242]
+              - cell "199" [ref=e243]
+              - cell "167" [ref=e244]
+              - cell "147" [ref=e245]
+              - cell "158" [ref=e246]
+    - generic [ref=e247]:
+      - heading "When are we busy? (day × hour)" [level=2] [ref=e248]
+      - img "Day by hour intensity of items sold for the current filter" [ref=e249]:
+        - generic [ref=e251]: 8a
+        - generic [ref=e252]: 9a
+        - generic [ref=e253]: 10a
+        - generic [ref=e254]: 11a
+        - generic [ref=e255]: 12p
+        - generic [ref=e256]: 1p
+        - generic [ref=e257]: 2p
+        - generic [ref=e258]: 3p
+        - generic [ref=e259]: 4p
+        - generic [ref=e260]: 5p
+        - generic [ref=e261]: 6p
+        - generic [ref=e262]: 7p
+        - generic [ref=e263]: 8p
+        - generic [ref=e264]: 9p
+        - generic [ref=e265]: 10p
+        - generic [ref=e266]: 11p
+        - generic [ref=e267]: Mon
+        - 'generic "Mon 8am: 0 items" [ref=e268]'
+        - 'generic "Mon 9am: 0 items" [ref=e269]'
+        - 'generic "Mon 10am: 0 items" [ref=e270]'
+        - 'generic "Mon 11am: 0 items" [ref=e271]'
+        - 'generic "Mon 12pm: 0 items" [ref=e272]'
+        - 'generic "Mon 1pm: 0 items" [ref=e273]'
+        - 'generic "Mon 2pm: 0 items" [ref=e274]'
+        - 'generic "Mon 3pm: 0 items" [ref=e275]'
+        - 'generic "Mon 4pm: 3 items" [ref=e276]': "3"
+        - 'generic "Mon 5pm: 10 items" [ref=e277]': "10"
+        - 'generic "Mon 6pm: 20 items" [ref=e278]': "20"
+        - 'generic "Mon 7pm: 15 items" [ref=e279]': "15"
+        - 'generic "Mon 8pm: 18 items" [ref=e280]': "18"
+        - 'generic "Mon 9pm: 10 items" [ref=e281]': "10"
+        - 'generic "Mon 10pm: 1 items" [ref=e282]': "1"
+        - 'generic "Mon 11pm: 0 items" [ref=e283]'
+        - generic [ref=e284]: Tue
+        - 'generic "Tue 8am: 0 items" [ref=e285]'
+        - 'generic "Tue 9am: 0 items" [ref=e286]'
+        - 'generic "Tue 10am: 0 items" [ref=e287]'
+        - 'generic "Tue 11am: 0 items" [ref=e288]'
+        - 'generic "Tue 12pm: 0 items" [ref=e289]'
+        - 'generic "Tue 1pm: 3 items" [ref=e290]': "3"
+        - 'generic "Tue 2pm: 2 items" [ref=e291]': "2"
+        - 'generic "Tue 3pm: 5 items" [ref=e292]': "5"
+        - 'generic "Tue 4pm: 7 items" [ref=e293]': "7"
+        - 'generic "Tue 5pm: 10 items" [ref=e294]': "10"
+        - 'generic "Tue 6pm: 12 items" [ref=e295]': "12"
+        - 'generic "Tue 7pm: 15 items" [ref=e296]': "15"
+        - 'generic "Tue 8pm: 23 items" [ref=e297]': "23"
+        - 'generic "Tue 9pm: 9 items" [ref=e298]': "9"
+        - 'generic "Tue 10pm: 0 items" [ref=e299]'
+        - 'generic "Tue 11pm: 0 items" [ref=e300]'
+        - generic [ref=e301]: Wed
+        - 'generic "Wed 8am: 0 items" [ref=e302]'
+        - 'generic "Wed 9am: 0 items" [ref=e303]'
+        - 'generic "Wed 10am: 0 items" [ref=e304]'
+        - 'generic "Wed 11am: 0 items" [ref=e305]'
+        - 'generic "Wed 12pm: 2 items" [ref=e306]': "2"
+        - 'generic "Wed 1pm: 0 items" [ref=e307]'
+        - 'generic "Wed 2pm: 2 items" [ref=e308]': "2"
+        - 'generic "Wed 3pm: 4 items" [ref=e309]': "4"
+        - 'generic "Wed 4pm: 7 items" [ref=e310]': "7"
+        - 'generic "Wed 5pm: 2 items" [ref=e311]': "2"
+        - 'generic "Wed 6pm: 13 items" [ref=e312]': "13"
+        - 'generic "Wed 7pm: 15 items" [ref=e313]': "15"
+        - 'generic "Wed 8pm: 12 items" [ref=e314]': "12"
+        - 'generic "Wed 9pm: 9 items" [ref=e315]': "9"
+        - 'generic "Wed 10pm: 7 items" [ref=e316]': "7"
+        - 'generic "Wed 11pm: 0 items" [ref=e317]'
+        - generic [ref=e318]: Thu
+        - 'generic "Thu 8am: 0 items" [ref=e319]'
+        - 'generic "Thu 9am: 0 items" [ref=e320]'
+        - 'generic "Thu 10am: 0 items" [ref=e321]'
+        - 'generic "Thu 11am: 0 items" [ref=e322]'
+        - 'generic "Thu 12pm: 0 items" [ref=e323]'
+        - 'generic "Thu 1pm: 6 items" [ref=e324]': "6"
+        - 'generic "Thu 2pm: 4 items" [ref=e325]': "4"
+        - 'generic "Thu 3pm: 2 items" [ref=e326]': "2"
+        - 'generic "Thu 4pm: 3 items" [ref=e327]': "3"
+        - 'generic "Thu 5pm: 9 items" [ref=e328]': "9"
+        - 'generic "Thu 6pm: 10 items" [ref=e329]': "10"
+        - 'generic "Thu 7pm: 12 items" [ref=e330]': "12"
+        - 'generic "Thu 8pm: 12 items" [ref=e331]': "12"
+        - 'generic "Thu 9pm: 7 items" [ref=e332]': "7"
+        - 'generic "Thu 10pm: 4 items" [ref=e333]': "4"
+        - 'generic "Thu 11pm: 0 items" [ref=e334]'
+        - generic [ref=e335]: Fri
+        - 'generic "Fri 8am: 0 items" [ref=e336]'
+        - 'generic "Fri 9am: 0 items" [ref=e337]'
+        - 'generic "Fri 10am: 0 items" [ref=e338]'
+        - 'generic "Fri 11am: 0 items" [ref=e339]'
+        - 'generic "Fri 12pm: 0 items" [ref=e340]'
+        - 'generic "Fri 1pm: 8 items" [ref=e341]': "8"
+        - 'generic "Fri 2pm: 1 items" [ref=e342]': "1"
+        - 'generic "Fri 3pm: 2 items" [ref=e343]': "2"
+        - 'generic "Fri 4pm: 11 items" [ref=e344]': "11"
+        - 'generic "Fri 5pm: 10 items" [ref=e345]': "10"
+        - 'generic "Fri 6pm: 15 items" [ref=e346]': "15"
+        - 'generic "Fri 7pm: 28 items" [ref=e347]': "28"
+        - 'generic "Fri 8pm: 20 items" [ref=e348]': "20"
+        - 'generic "Fri 9pm: 6 items" [ref=e349]': "6"
+        - 'generic "Fri 10pm: 4 items" [ref=e350]': "4"
+        - 'generic "Fri 11pm: 0 items" [ref=e351]'
+        - generic [ref=e352]: Sat
+        - 'generic "Sat 8am: 0 items" [ref=e353]'
+        - 'generic "Sat 9am: 0 items" [ref=e354]'
+        - 'generic "Sat 10am: 0 items" [ref=e355]'
+        - 'generic "Sat 11am: 0 items" [ref=e356]'
+        - 'generic "Sat 12pm: 0 items" [ref=e357]'
+        - 'generic "Sat 1pm: 4 items" [ref=e358]': "4"
+        - 'generic "Sat 2pm: 2 items" [ref=e359]': "2"
+        - 'generic "Sat 3pm: 9 items" [ref=e360]': "9"
+        - 'generic "Sat 4pm: 7 items" [ref=e361]': "7"
+        - 'generic "Sat 5pm: 11 items" [ref=e362]': "11"
+        - 'generic "Sat 6pm: 25 items" [ref=e363]': "25"
+        - 'generic "Sat 7pm: 34 items" [ref=e364]': "34"
+        - 'generic "Sat 8pm: 36 items" [ref=e365]': "36"
+        - 'generic "Sat 9pm: 28 items" [ref=e366]': "28"
+        - 'generic "Sat 10pm: 8 items" [ref=e367]': "8"
+        - 'generic "Sat 11pm: 0 items" [ref=e368]'
+        - generic [ref=e369]: Sun
+        - 'generic "Sun 8am: 0 items" [ref=e370]'
+        - 'generic "Sun 9am: 0 items" [ref=e371]'
+        - 'generic "Sun 10am: 0 items" [ref=e372]'
+        - 'generic "Sun 11am: 0 items" [ref=e373]'
+        - 'generic "Sun 12pm: 4 items" [ref=e374]': "4"
+        - 'generic "Sun 1pm: 0 items" [ref=e375]'
+        - 'generic "Sun 2pm: 2 items" [ref=e376]': "2"
+        - 'generic "Sun 3pm: 5 items" [ref=e377]': "5"
+        - 'generic "Sun 4pm: 4 items" [ref=e378]': "4"
+        - 'generic "Sun 5pm: 4 items" [ref=e379]': "4"
+        - 'generic "Sun 6pm: 14 items" [ref=e380]': "14"
+        - 'generic "Sun 7pm: 20 items" [ref=e381]': "20"
+        - 'generic "Sun 8pm: 17 items" [ref=e382]': "17"
+        - 'generic "Sun 9pm: 19 items" [ref=e383]': "19"
+        - 'generic "Sun 10pm: 8 items" [ref=e384]': "8"
+        - 'generic "Sun 11pm: 0 items" [ref=e385]'
+    - generic [ref=e386]:
+      - heading "Top sellers" [level=2] [ref=e387]
+      - paragraph [ref=e388]: Tap a drink to see when it sells
+      - generic [ref=e389]:
+        - 'button "Taiwan Classic Boba (Cold [350ML]): 51 items, ₹9,635" [ref=e390] [cursor=pointer]':
+          - generic [ref=e391]: Taiwan Classic Boba (Cold [350ML])
+          - generic [ref=e392]: 51 · ₹9,635
+        - 'button "Biscoff Boba Coffee (Cold [350ML]): 48 items, ₹8,780" [ref=e394] [cursor=pointer]':
+          - generic [ref=e395]: Biscoff Boba Coffee (Cold [350ML])
+          - generic [ref=e396]: 48 · ₹8,780
+        - 'button "Caramel Boba Coffee (Cold [350ML]): 47 items, ₹8,413" [ref=e398] [cursor=pointer]':
+          - generic [ref=e399]: Caramel Boba Coffee (Cold [350ML])
+          - generic [ref=e400]: 47 · ₹8,413
+        - 'button "Cafe Mocha (Cold [350ML]): 44 items, ₹8,385" [ref=e402] [cursor=pointer]':
+          - generic [ref=e403]: Cafe Mocha (Cold [350ML])
+          - generic [ref=e404]: 44 · ₹8,385
+        - 'button "Choco Ice Swirl: 38 items, ₹7,215" [ref=e406] [cursor=pointer]':
+          - generic [ref=e407]: Choco Ice Swirl
+          - generic [ref=e408]: 38 · ₹7,215
+        - 'button "Mango Chill Vibe: 29 items, ₹4,997" [ref=e410] [cursor=pointer]':
+          - generic [ref=e411]: Mango Chill Vibe
+          - generic [ref=e412]: 29 · ₹4,997
+        - 'button "Royal Taro Mist (Cold [350ML]): 28 items, ₹5,198" [ref=e414] [cursor=pointer]':
+          - generic [ref=e415]: Royal Taro Mist (Cold [350ML])
+          - generic [ref=e416]: 28 · ₹5,198
+        - 'button "Loaded Nachos: 27 items, ₹2,403" [ref=e418] [cursor=pointer]':
+          - generic [ref=e419]: Loaded Nachos
+          - generic [ref=e420]: 27 · ₹2,403
+        - 'button "Creamy Vanilla Matcha (Cold [350ML]): 27 items, ₹4,965" [ref=e422] [cursor=pointer]':
+          - generic [ref=e423]: Creamy Vanilla Matcha (Cold [350ML])
+          - generic [ref=e424]: 27 · ₹4,965
+        - 'button "Blueberry Blend: 27 items, ₹5,045" [ref=e426] [cursor=pointer]':
+          - generic [ref=e427]: Blueberry Blend
+          - generic [ref=e428]: 27 · ₹5,045
+    - generic [ref=e430]:
+      - heading "By category" [level=2] [ref=e431]
+      - generic [ref=e432]:
+        - img "Items sold by category" [ref=e433]:
+          - generic [ref=e442]: "656"
+        - generic [ref=e443]:
+          - button "Coffee 26%" [ref=e444] [cursor=pointer]:
+            - text: Coffee
+            - strong [ref=e446]: 26%
+          - button "Milk Tea 19%" [ref=e447] [cursor=pointer]:
+            - text: Milk Tea
+            - strong [ref=e449]: 19%
+          - button "Smoothie 17%" [ref=e450] [cursor=pointer]:
+            - text: Smoothie
+            - strong [ref=e452]: 17%
+          - button "Soda 16%" [ref=e453] [cursor=pointer]:
+            - text: Soda
+            - strong [ref=e455]: 16%
+          - button "Matcha 8%" [ref=e456] [cursor=pointer]:
+            - text: Matcha
+            - strong [ref=e458]: 8%
+          - button "Chocolate 6%" [ref=e459] [cursor=pointer]:
+            - text: Chocolate
+            - strong [ref=e461]: 6%
+          - button "Fruit Tea 5%" [ref=e462] [cursor=pointer]:
+            - text: Fruit Tea
+            - strong [ref=e464]: 5%
+          - button "Munchies 4%" [ref=e465] [cursor=pointer]:
+            - text: Munchies
+            - strong [ref=e467]: 4%
+    - generic [ref=e468]:
+      - heading "Order type" [level=2] [ref=e469]
+      - generic [ref=e470]:
+        - img "Orders by order type" [ref=e471]:
+          - generic [ref=e474]: "393"
+        - generic [ref=e475]:
+          - button "Pick Up 93%" [ref=e476] [cursor=pointer]:
+            - text: Pick Up
+            - strong [ref=e478]: 93%
+          - button "Delivery(Parcel) 7%" [ref=e479] [cursor=pointer]:
+            - text: Delivery(Parcel)
+            - strong [ref=e481]: 7%
+    - generic [ref=e482]:
+      - heading "Payment method" [level=2] [ref=e483]
+      - generic [ref=e484]:
+        - img "Orders by payment method" [ref=e485]:
+          - generic [ref=e488]: "393"
+        - generic [ref=e489]:
+          - button "Cash 93%" [ref=e490] [cursor=pointer]:
+            - text: Cash
+            - strong [ref=e492]: 93%
+          - button "Online 7%" [ref=e493] [cursor=pointer]:
+            - text: Online
+            - strong [ref=e495]: 7%
+  - contentinfo [ref=e496]: Generated 2026-06-29 · BlendNBubbles · Barrackpore, Kolkata

@@ -1,0 +1,19 @@
+name = "blendnbubbles-reports"
+main = "src/index.js"
+compatibility_date = "2025-04-01"
+workers_dev = true
+
+# Off deliberately. Preview URLs give every deployed version its own permanent
+# public hostname carrying the same secret and the same KV data, so a version
+# with a flawed auth check would stay reachable after the main route was fixed.
+preview_urls = false
+
+[vars]
+ALLOWED_ORIGIN = "https://blendnbubbles.com"
+
+# Holds the sales dataset under the key `sales-dataset`. The data lives here
+# rather than in the repo or the build — that is the entire point of this
+# service. Created with `npx wrangler kv namespace create REPORTS`.
+[[kv_namespaces]]
+binding = "REPORTS"
+id = "a502ab72219d4ca2b56adae77cb9c7bc"

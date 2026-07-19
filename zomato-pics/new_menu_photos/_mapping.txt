@@ -1,0 +1,26 @@
+BLEND N BUBBLES - Zomato photo -> 2026 menu name (recipe-verified 31 May 2026)
+Originals kept untouched in parent folder. These are renamed COPIES.
+
+== NAMED COPIES (16) ==
+  cafe-mocha.webp                  -> Cafe Mocha.webp               DEFINITIVE (old recipe == new)
+  caramel-boba-coffee.jpg          -> Caramel Boba Coffee.jpg       DEFINITIVE (old recipe == new)
+  black-current-cheese.webp        -> Blackcurrant Cream Bliss.webp  DEFINITIVE (old recipe == new)
+  strawberry-velvet.webp           -> Strawberry Chill.webp         DEFINITIVE (old recipe == new)
+  blueberry-blend.jpg              -> Blueberry Blend.jpg           STRONG (2026 recipe+name)
+  cheesy-mango-melt.jpg            -> Cheesy Mango Melt.jpg         STRONG (2026 recipe+name)
+  jasmine-mango-bubble-tea.webp    -> Mango Jade Splash.webp        STRONG (2026 recipe+flavour)
+  ginger-iced-tea.webp             -> Orange Ginger Spark.webp      STRONG (2026 recipe+flavour)
+  red-guava-yogurt-tea.webp        -> Taiwan Pink Guava Splash.webp  STRONG (2026 recipe+flavour)
+  assam-boba-tea.webp              -> Assam Garden Brew.webp        STRONG (2026 recipe+flavour)
+  matcha-milk-tea.webp             -> Kyoto Matcha Latte.webp       STRONG (2026 recipe+flavour)
+  matcha-rose-milk-tea.webp        -> Rose Matcha Velvet.webp       STRONG (2026 recipe+flavour)
+  hawaiian-matcha.webp             -> Tropical Matcha.webp          STRONG (2026 recipe+flavour)
+  choco-ice-swirl.jpg              -> Choco Ice Swirl.jpg           NAME ONLY (2026 recipe still empty)
+  taiwan-classic-boba.webp         -> Taiwan Classic Boba.webp      YOUR CALL: name match (recipe == Indian Boba Fusion)
+  passion-fruit-blast.webp         -> Exotic Passion Splash.webp    YOUR CALL: soda look
+
+== SKIPPED (4) ==
+  hawaiian-sunset-bubble.webp         SKIP - old recipe is strawberry cream (dup of Strawberry Chill); you chose skip
+  strawberry-yogurt.webp              SKIP - 2nd strawberry photo; Strawberry Chill already covered
+  sweet-peach-bubble-tea.webp         SKIP - no peach TEA on menu (only Peachy Summer Cooler soda)
+  red-grapefruit-tea-pop.webp         SKIP - red-grapefruit tea not on printed menu (off-menu only)

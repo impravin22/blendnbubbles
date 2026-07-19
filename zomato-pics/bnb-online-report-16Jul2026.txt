@@ -1,0 +1,32 @@
+🧋 <b>BNB Online Report — 16 Jul 2026</b>
+
+<b>Total online:</b> 3 orders · ₹931.75
+• Zomato: 2 orders · ₹790.00
+• Swiggy: 1 order · ₹141.75
+
+<b>Offers (Zomato):</b> ₹0 gross from offers · ₹0 funded by us · menu-to-order 0%
+<b>Swiggy funnel:</b> 18 impressions → 2 menu opens → 1 cart → 1 order
+
+<b>Flags:</b> Zomato "Overall performance" Daily panel reads all zeros despite 2 Zomato orders delivered — but the active "20% off upto ₹50" campaign card shows ₹440 gross / 2 orders / ₹88 discount (cumulative since 7 Jul, "updated till yesterday"). Daily panel is either lagging or no offer applied yesterday; worth an eyeball. Swiggy impressions only 18 (vs 8 last Thu) — very low top-of-funnel. Swiggy kitchen prep time still 0.0 min and menu score 0. No cancellations, no complaints, no rated/poor-rated orders.
+
+---
+NOT SENT TO TELEGRAM — the "bnb telegram" connector is not available in this session.
+Send manually, or reconnect the connector and re-run.
+
+Source data (17 Jul 2026, ~06:39 IST):
+- PetPooja online_dashboard, Last 24 Hrs, Blend N Bubbles [Barrackpore Branch]:
+  * 243183063000364 | Swiggy  | 16-07-2026 20:21 | ₹141.75 | Delivered
+  * 8360440155      | Zomato  | 16-07-2026 18:15 | ₹578.00 | Delivered
+  * 8360429482      | Zomato  | 16-07-2026 16:07 | ₹212.00 | Delivered
+  (Load More returned no further rows)
+- Zomato trackOffers Daily tab: gross ₹0, orders 0, discount ₹0, effective discount 0.0%, menu-to-order 0.0%
+  (comparison baseline: previous Thursday, 9 Jul → Daily = Thu 16 Jul = yesterday)
+  Campaigns: Active (2), Inactive (1). "20% off upto ₹50" active since 7 Jul 2026, min order ₹159,
+  100% funded by outlet — card shows ₹440 gross / 2 orders delivered / ₹88 discount / 20% effective.
+- Swiggy business-metrics, filter = Yesterday 16th Jul 2026 (16 Jul 00:00–23:59):
+  Net Sales ₹135 | Delivered Orders 1 | Net AOV ₹135 | Restaurant Cancelled 0 | Cancelled Loss ₹0
+  Ratings: Rated Orders 0, Poor Rated 0
+  Complaints: 0 across all categories
+  Funnel (yesterday): 18 impressions → 2 menu opens (11%) → 1 cart build (50%) → 1 order placed (100%)
+  Funnel (last Thu): 8 impressions → 3 menu opens → 0 carts → 0 orders
+  Operations (48h lag, data from 14 Jul): Online Availability 100%, Kitchen Prep Time 0.0 min
