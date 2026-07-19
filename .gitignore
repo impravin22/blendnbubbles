@@ -38,3 +38,7 @@ scripts/petpooja_exports/
 # Python cache (build-reports-data.py + tests)
 __pycache__/
 *.pyc
+
+# Sales dataset — lives in Cloudflare KV, never in the repo or the build.
+# scripts/build-reports-data.py writes here; upload with the command it prints.
+scripts/out/
