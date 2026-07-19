@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build src/data/reports-data.json from PetPooja "Order Report: Item Wise" CSV exports.
+"""Build scripts/out/reports-data.json from PetPooja "Order Report: Item Wise" CSV exports.
 
 The dashboard cross-filters a row-level ledger, so this emits one compact row
 per sold line item ({meta, dims, rows}) and lets the client derive every chart.
@@ -11,16 +11,19 @@ Refresh workflow:
      download each CSV.
   2. Drop the CSV(s) into scripts/petpooja_exports/ (create the folder).
   3. Run:  python3 scripts/build-reports-data.py
-  4. Commit src/data/reports-data.json and redeploy.
+  4. Upload it to Cloudflare KV (the script prints the exact command).
 
 The /reports dashboard reads the generated JSON, so this is the manual stand-in
 until the PetPooja API + a scheduled function automates the pull.
 
-The destination is deliberately src/data/ and NOT public/. Anything under
-public/ is copied verbatim into the build and served at a fixed, guessable URL —
-which is how this revenue data ended up publicly fetchable, and advertised to AI
-crawlers by robots.txt. From src/ it is imported as a lazy chunk behind the
-dashboard's gate instead. Do not move it back.
+The output is gitignored and goes nowhere near the site build. This data has
+been publicly exposed twice already: first as a file under public/ served at a
+fixed URL, then as a file under src/ committed to a public repository and
+compiled into a bundle chunk that asset-manifest.json named at the site root.
+Neither the passcode nor the lazy import gated anything.
+
+It now lives only in Cloudflare KV, read by services/reports behind a bearer
+token. Do not commit it, and do not put it under public/ or src/.
 """
 
 from __future__ import annotations
@@ -192,13 +195,20 @@ def main() -> int:
     combined = pd.concat(frames, ignore_index=True).drop_duplicates()
     result = build(combined)
 
-    dest = os.path.join(here, "..", "src", "data", "reports-data.json")
+    dest = os.path.join(here, "out", "reports-data.json")
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     with open(dest, "w", encoding="utf-8") as handle:
         # allow_nan=False fails loudly rather than writing NaN/Infinity, which
         # browsers reject when fetching the JSON.
         json.dump(result, handle, indent=2, allow_nan=False)
     print(f"Wrote {os.path.normpath(dest)} from {len(paths)} file(s).")
+    print()
+    print("This file is gitignored on purpose. Publish it with:")
+    print("  cd services/reports && npx wrangler kv key put sales-dataset \\")
+    print("    --path ../../scripts/out/reports-data.json --binding REPORTS --remote")
+    print()
+    print("The --remote flag is required. Without it wrangler writes to a local")
+    print("store and the live dashboard silently keeps serving the old data.")
     print(f"  Period: {result['meta']['date_from']} to {result['meta']['date_to']}")
     print(
         f"  Orders: {result['meta']['orders']}  Items: {result['meta']['items']}  Revenue: {result['meta']['revenue']}"

@@ -2,20 +2,21 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom';
 import { filterRows, kpis, groupSum, groupOrders, topDrinks, heatmapGrid, weeklySeries } from './reportsData';
 import './Reports.css';
+import {
+  fetchReportsData,
+  readStoredToken,
+  storeToken,
+  clearStoredToken,
+} from './reportsClient';
 
-// Client-side passcode. This is a deterrent, NOT security: the value sits in
-// the published bundle, and so does the data it gates. Treat everything this
-// page renders as disclosed until the route is behind real identity auth
-// (Cloudflare Access or equivalent), which is the actual fix.
+// Access is decided by the server, not here. The dataset lives in Cloudflare KV
+// behind a Worker that checks a bearer token held as a Worker secret, so this
+// bundle contains neither the data nor anything that validates a credential.
 //
-// The dataset used to live at a fixed public URL under public/, which meant it
-// was fetchable by anyone who knew the path and — because robots.txt invites
-// GPTBot, Google-Extended and Googlebot with no Disallow — explicitly offered
-// to AI training crawlers. It now loads as a lazy chunk imported below, so
-// there is no stable JSON endpoint to crawl, link, or archive. That removes the
-// one-request grab; it does not make the numbers private.
-const REPORTS_PIN = 'boba2026';
-const PIN_SESSION_KEY = 'bnbReportsAuthed';
+// The previous design shipped both: a `boba2026` constant sitting in the same
+// JavaScript as the 319KB of revenue it claimed to gate, with the raw file also
+// committed to a public repository. Anyone could read the code and skip the
+// gate, or skip the site entirely and read the file.
 
 const TEAL = '#0d6e6e';
 const GOLD = '#CEAA67';
@@ -253,30 +254,26 @@ function FilterBar({ sel, dows, onRemove, onClear, extraActive }) {
 }
 
 // ─── Gate ────────────────────────────────────────────────────
-function PinGate({ onPass }) {
-  const [pin, setPin] = useState('');
-  const [err, setErr] = useState(false);
-  const submit = (e) => {
-    e.preventDefault();
-    if (pin === REPORTS_PIN) {
-      try { sessionStorage.setItem(PIN_SESSION_KEY, '1'); } catch (storageErr) { /* sessionStorage may be blocked; gate still passes for this view */ }
-      onPass();
-    } else {
-      setErr(true);
-    }
-  };
+// Deliberately does not check the token. It cannot: only the Worker knows
+// whether one is valid. The gate collects it, the fetch decides, and a rejected
+// token is cleared so this reappears rather than looping on a stale value.
+function TokenGate({ onSubmit, rejected }) {
+  const [token, setToken] = useState('');
   return (
     <div className="rp-gate">
-      <form className="rp-gate-card" onSubmit={submit}>
+      <form
+        className="rp-gate-card"
+        onSubmit={(e) => { e.preventDefault(); if (token.trim()) onSubmit(token.trim()); }}
+      >
         <img src={process.env.PUBLIC_URL + '/logo.svg'} alt="BlendNBubbles" className="rp-gate-logo" />
         <h1 className="rp-gate-title">Sales Dashboard</h1>
-        <p className="rp-gate-sub">Staff only. Enter the access code.</p>
+        <p className="rp-gate-sub">Owner only. Paste your access token.</p>
         <input
-          className="rp-gate-input" type="password" value={pin}
-          onChange={(e) => { setPin(e.target.value); setErr(false); }}
-          placeholder="Access code" aria-label="Access code" autoFocus
+          className="rp-gate-input" type="password" value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder="Access token" aria-label="Access token" autoFocus
         />
-        {err && <p className="rp-gate-err" role="alert">Wrong code. Try again.</p>}
+        {rejected && <p className="rp-gate-err" role="alert">That token was rejected. Check it and try again.</p>}
         <button className="rp-gate-btn" type="submit">View Dashboard</button>
         <Link to="/" className="rp-gate-back">&larr; Back to site</Link>
       </form>
@@ -286,9 +283,8 @@ function PinGate({ onPass }) {
 
 // ─── Main ────────────────────────────────────────────────────
 function Reports() {
-  const [authed, setAuthed] = useState(() => {
-    try { return sessionStorage.getItem(PIN_SESSION_KEY) === '1'; } catch (storageErr) { return false; }
-  });
+  const [token, setToken] = useState(readStoredToken);
+  const [rejected, setRejected] = useState(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [sel, setSel] = useState(emptySel);
@@ -308,16 +304,28 @@ function Reports() {
   }, []);
 
   useEffect(() => {
-    if (!authed) return undefined;
+    if (!token) return undefined;
     let alive = true;
-    // Dynamic import so the dataset is a lazy chunk fetched only after the gate
-    // passes, rather than a fixed public URL or 319KB in the main bundle that
-    // every homepage visitor downloads.
-    import('./data/reports-data.json')
-      .then((mod) => { if (alive) setData(mod.default); })
-      .catch(() => { if (alive) setError('Could not load report data'); });
+    fetchReportsData(token).then((result) => {
+      if (!alive) return;
+      if (result.status === 'ok') { setData(result.data); setError(''); return; }
+      if (result.status === 'unauthorised') {
+        // Clear it, or every reload retries a token the server already refused.
+        clearStoredToken();
+        setToken('');
+        setRejected(true);
+        return;
+      }
+      // Keep the detail: on a static site with no error reporting, "could not
+      // load" alone makes a stale deploy or a dead Worker indistinguishable.
+      setError(
+        result.status === 'unconfigured'
+          ? 'Dashboard is not configured for this build (REACT_APP_REPORTS_URL is unset).'
+          : `Could not load report data — ${result.detail}`,
+      );
+    });
     return () => { alive = false; };
-  }, [authed]);
+  }, [token]);
 
   // Open on the latest month ("this month") once data arrives, so the dashboard
   // leads with the current month. Applied once; the "All time" pill or Reset clears it.
@@ -390,7 +398,14 @@ function Reports() {
     };
   }, [data, filtered, sel, cmp]);
 
-  if (!authed) return <PinGate onPass={() => setAuthed(true)} />;
+  if (!token) {
+    return (
+      <TokenGate
+        rejected={rejected}
+        onSubmit={(value) => { storeToken(value); setRejected(false); setError(''); setToken(value); }}
+      />
+    );
+  }
   if (error) return <div className="rp-page"><div className="rp-state">{error}</div></div>;
   if (!data || !derived) return <div className="rp-page"><div className="rp-state">Loading dashboard&hellip;</div></div>;
 
