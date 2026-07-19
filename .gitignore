@@ -42,3 +42,6 @@ __pycache__/
 # Sales dataset — lives in Cloudflare KV, never in the repo or the build.
 # scripts/build-reports-data.py writes here; upload with the command it prints.
 scripts/out/
+
+# Local credentials — token files, service-account keys. Never commit.
+.secrets/
