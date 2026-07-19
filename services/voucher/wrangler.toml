@@ -1,0 +1,23 @@
+name = "blendnbubbles-voucher"
+main = "src/index.js"
+compatibility_date = "2025-04-01"
+workers_dev = true
+
+# Both of these are public by design and already ship in the site bundle — the
+# Firebase API key is an identifier, not a credential, and the leaderboard it
+# reads is world-readable. The values that ARE secret (VOUCHER_SECRET,
+# STAFF_TOKEN) are never in this file; set them with:
+#   npx wrangler secret put VOUCHER_SECRET     # openssl rand -base64 32
+#   npx wrangler secret put STAFF_TOKEN        # openssl rand -base64 24
+[vars]
+FIREBASE_PROJECT_ID = "blendnbubbles-b166b"
+FIREBASE_API_KEY = "AIzaSyBTuYMNsRT665qMD3wwb3UabTfjf6sIm4Q"
+ALLOWED_ORIGIN = "https://blendnbubbles.com"
+
+# Redemption ledger — one key per voucher, so a screenshotted card is worth
+# exactly one drink. Create once with:
+#   npx wrangler kv namespace create VOUCHERS
+# and paste the returned id below.
+[[kv_namespaces]]
+binding = "VOUCHERS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
