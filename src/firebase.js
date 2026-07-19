@@ -4,7 +4,7 @@ import {
   getFirestore,
   collection,
   doc,
-  writeBatch,
+  setDoc,
   serverTimestamp,
   query,
   where,
@@ -95,11 +95,16 @@ export function isPlausibleScore(score, game = DEFAULT_GAME) {
  * what the board shows. The phone number goes to `contacts`, which rules make
  * write-only for clients: the site can add to it and can never read it back.
  *
- * Both rows are written in one batch so a rejected contact cannot leave an
- * orphaned score, nor a rejected score an orphaned contact.
+ * The score is written FIRST and is the only write allowed to fail the call.
+ * These two rows are not equally important: an orphaned contact row is
+ * harmless, a lost score is the entire product. An earlier version wrote both
+ * in one atomic batch, which read as tidy but meant any future tightening of
+ * the `contacts` rules would silently stop players recording scores at all.
  *
  * Returns:
- *   The DocumentReference of the leaderboard row.
+ *   { entryId, contactStored } — entryId feeds the voucher request;
+ *   contactStored is false when the score saved but the contact did not, so a
+ *   caller can surface it rather than the failure vanishing.
  */
 export async function submitScore(name, phone, score, game = DEFAULT_GAME, team = null, playerId = null) {
   if (!isPlausibleScore(score, game)) {
@@ -108,7 +113,9 @@ export async function submitScore(name, phone, score, game = DEFAULT_GAME, team 
   const cleanName = name.trim();
   const week = getWeekKey();
   // Server-stamped, not client-stamped: rules pin this to request.time, so the
-  // audit trail cannot be backdated from a tampered client.
+  // audit trail cannot be backdated from a tampered client. Swapping this for a
+  // client Date would make every write fail the rules — see firebase.submit.test.js,
+  // which asserts the sentinel rather than just the field's presence.
   const createdAt = serverTimestamp();
 
   const entry = { name: cleanName, score, game, week, createdAt };
@@ -120,15 +127,25 @@ export async function submitScore(name, phone, score, game = DEFAULT_GAME, team 
   // that omit it (e.g. Boba Catcher) leave the field off entirely.
   if (playerId) entry.playerId = playerId;
 
+  const entryRef = doc(collection(db, 'leaderboard'));
+  await setDoc(entryRef, entry);
+
+  // Same document id as the score, so the contact can be joined back to the row
+  // it came from. `contacts` is read-denied and create-only, so reusing the id
+  // cannot overwrite anything.
   const contact = { name: cleanName, phone: phone.trim(), week, createdAt };
   if (playerId) contact.playerId = playerId;
 
-  const batch = writeBatch(db);
-  const entryRef = doc(collection(db, 'leaderboard'));
-  batch.set(entryRef, entry);
-  batch.set(doc(collection(db, 'contacts')), contact);
-  await batch.commit();
-  return entryRef;
+  let contactStored = true;
+  try {
+    await setDoc(doc(db, 'contacts', entryRef.id), contact);
+  } catch (err) {
+    // Deliberately non-fatal: the player keeps their score. Surfaced in the
+    // return value rather than swallowed, and logged for the console.
+    contactStored = false;
+    console.error('Score saved but contact was not stored:', err);
+  }
+  return { entryId: entryRef.id, contactStored };
 }
 
 /**

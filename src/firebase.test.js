@@ -93,3 +93,28 @@ describe('football ceiling tracks the keeper curve', () => {
     expect(widestGap).toBeLessThan(wall.dive + wall.reachX);
   });
 });
+
+// firestore.rules is the copy that actually enforces the ceiling, and it cannot
+// import anything — so nothing but this test stops it drifting from the code.
+// The realistic failure is quiet: retune the curve, bump HONEST_MAX_STREAK,
+// tests pass, ship, and every player who reaches the new maximum gets "Could
+// not submit" while the leaderboard silently rejects them.
+describe('firestore.rules agrees with the derived ceiling', () => {
+  const fs = require('fs');
+  const path = require('path');
+
+  const ceilingIn = (file) => {
+    const source = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
+    const match = source.match(/game == 'football' \? (\d+)/);
+    if (!match) throw new Error(`No football ceiling found in ${file}`);
+    return Number(match[1]);
+  };
+
+  test('the live ruleset uses the same football ceiling as the client', () => {
+    expect(ceilingIn('firestore.rules')).toBe(SCORE_CEILINGS.football);
+  });
+
+  test('the transitional ruleset uses it too', () => {
+    expect(ceilingIn('firestore.rules.transitional')).toBe(SCORE_CEILINGS.football);
+  });
+});
