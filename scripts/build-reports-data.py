@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build public/reports-data.cbf3b17bc7.json from PetPooja "Order Report: Item Wise" CSV exports.
+"""Build src/data/reports-data.json from PetPooja "Order Report: Item Wise" CSV exports.
 
 The dashboard cross-filters a row-level ledger, so this emits one compact row
 per sold line item ({meta, dims, rows}) and lets the client derive every chart.
@@ -11,10 +11,16 @@ Refresh workflow:
      download each CSV.
   2. Drop the CSV(s) into scripts/petpooja_exports/ (create the folder).
   3. Run:  python3 scripts/build-reports-data.py
-  4. Commit public/reports-data.cbf3b17bc7.json and redeploy.
+  4. Commit src/data/reports-data.json and redeploy.
 
 The /reports dashboard reads the generated JSON, so this is the manual stand-in
 until the PetPooja API + a scheduled function automates the pull.
+
+The destination is deliberately src/data/ and NOT public/. Anything under
+public/ is copied verbatim into the build and served at a fixed, guessable URL —
+which is how this revenue data ended up publicly fetchable, and advertised to AI
+crawlers by robots.txt. From src/ it is imported as a lazy chunk behind the
+dashboard's gate instead. Do not move it back.
 """
 
 from __future__ import annotations
@@ -186,7 +192,7 @@ def main() -> int:
     combined = pd.concat(frames, ignore_index=True).drop_duplicates()
     result = build(combined)
 
-    dest = os.path.join(here, "..", "public", "reports-data.cbf3b17bc7.json")
+    dest = os.path.join(here, "..", "src", "data", "reports-data.json")
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     with open(dest, "w", encoding="utf-8") as handle:
         # allow_nan=False fails loudly rather than writing NaN/Infinity, which

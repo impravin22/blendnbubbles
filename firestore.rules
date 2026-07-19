@@ -5,36 +5,99 @@ rules_version = '2';
 // Deploy: Firebase Console -> Firestore Database -> Rules -> paste -> Publish.
 // (Or `firebase deploy --only firestore:rules` where the CLI is set up.)
 //
-// The leaderboard is written directly by the public site, so these rules are
-// the only server-side validation: they cap scores per game (real penalty
-// play tops out at 18, so 40 is generous headroom; spoofed 101+ submissions
-// get rejected even from dev tools), bound the PII field sizes, and forbid
-// client edits or deletes of existing rows.
+// These rules are the ONLY server-side validation. The site is a static build on
+// GitHub Pages writing straight to Firestore, so anything the browser can be
+// talked into sending arrives here unfiltered. Two consequences shape this file:
+//
+//   1. Rules are stateless predicates over a single write. They can check the
+//      shape and range of a document; they CANNOT verify that a game was really
+//      played. Any score within range is therefore assumed reachable, so the
+//      ceilings below sit at the honest maximum with no headroom above it.
+//      An earlier revision allowed football scores up to 40; a player read that
+//      ceiling out of the JS bundle and submitted exactly 40. Headroom above
+//      honest play is not a safety margin, it is the prize. Keep these equal to
+//      what a strong honest player can really score.
+//
+//   2. The leaderboard is world-readable, because every visitor's browser
+//      downloads it to draw the board. It must therefore never carry contact
+//      details. Phone numbers live in `contacts`, which clients may append to
+//      and may never read back.
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isNonEmptyString(value, maxLen) {
+      return value is string && value.size() > 0 && value.size() <= maxLen;
+    }
+
+    // Optional per-device UUID. Absent is fine; present must be a bounded
+    // string so a hand-edited client cannot push an arbitrarily large value.
+    function hasValidPlayerId(data) {
+      return !('playerId' in data)
+        || (data.playerId is string && data.playerId.size() <= 36);
+    }
+
+    // Highest score honest play reaches, per game. Mirrored in src/firebase.js
+    // as a client-side courtesy check; THIS copy is the one that enforces.
+    // Change both together.
+    //
+    // Football's 19 is derived from the keeper curve, not estimated. From kick
+    // 11 readBias pulls the keeper toward the shot; by kick 20 the widest gap a
+    // player can open (0.588) has fallen below the keeper's dive + reach
+    // (0.590), so kick 20 is unscoreable by anyone. Kick 19 is scoreable, so 19
+    // is the ceiling. Do not lower it to 18 — that would reject a legitimate
+    // best-ever run.
+    function scoreCeiling(game) {
+      return game == 'football' ? 19 : 1000;
+    }
+
+    // Public scoreboard. Read by everyone, so it holds only what the board
+    // renders: who, how many, which game, which week.
     match /leaderboard/{entry} {
       allow read: if true;
 
       allow create: if
-        request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 40
-        && request.resource.data.phone is string
-        && request.resource.data.phone.size() <= 20
-        && request.resource.data.week is string
-        && request.resource.data.week.size() <= 12
-        && (
-          !('playerId' in request.resource.data)
-          || (request.resource.data.playerId is string && request.resource.data.playerId.size() <= 36)
-        )
+        // Exact shape. hasOnly blocks a tampered client from appending unknown
+        // fields (bill-inflating blobs, or keys the reports pipeline consumes).
+        request.resource.data.keys().hasAll(['name', 'score', 'game', 'week', 'createdAt'])
+        && request.resource.data.keys().hasOnly(
+             ['name', 'score', 'game', 'week', 'createdAt', 'team', 'playerId'])
+        // Load-bearing: contact details must never enter a world-readable
+        // collection. hasOnly already excludes `phone`; this states the intent
+        // so a later edit to the allow-list cannot silently reopen it.
+        && !('phone' in request.resource.data)
+        && isNonEmptyString(request.resource.data.name, 40)
+        && isNonEmptyString(request.resource.data.week, 12)
+        && request.resource.data.createdAt == request.time
+        && hasValidPlayerId(request.resource.data)
+        && (!('team' in request.resource.data)
+             || isNonEmptyString(request.resource.data.team, 8))
+        // A game must be declared. An earlier revision let a document that
+        // simply omitted `game` through at the 1000 ceiling, which was a softer
+        // bypass than the football path it was written to guard.
+        && request.resource.data.game in ['football', 'bobacatcher']
         && request.resource.data.score is int
         && request.resource.data.score >= 0
-        && (
-          (request.resource.data.game == 'football' && request.resource.data.score <= 40)
-          || (request.resource.data.game == 'bobacatcher' && request.resource.data.score <= 1000)
-          || (!('game' in request.resource.data) && request.resource.data.score <= 1000)
-        );
+        && request.resource.data.score <= scoreCeiling(request.resource.data.game);
+
+      // Scores are immutable once written: no editing your way up the board.
+      allow update, delete: if false;
+    }
+
+    // Write-only contact capture. The public site appends to it and can never
+    // read it back; the owner reads it with the Admin SDK or the Firebase
+    // console. Split out of `leaderboard` so the board can stay public without
+    // publishing customer phone numbers alongside it.
+    match /contacts/{entry} {
+      allow read: if false;
+
+      allow create: if
+        request.resource.data.keys().hasAll(['name', 'phone', 'week', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['name', 'phone', 'week', 'createdAt', 'playerId'])
+        && isNonEmptyString(request.resource.data.name, 40)
+        && isNonEmptyString(request.resource.data.phone, 20)
+        && isNonEmptyString(request.resource.data.week, 12)
+        && request.resource.data.createdAt == request.time
+        && hasValidPlayerId(request.resource.data);
 
       allow update, delete: if false;
     }

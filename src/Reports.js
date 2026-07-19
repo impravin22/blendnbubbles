@@ -3,12 +3,19 @@ import { Link } from 'react-router-dom';
 import { filterRows, kpis, groupSum, groupOrders, topDrinks, heatmapGrid, weeklySeries } from './reportsData';
 import './Reports.css';
 
-// Client-side passcode. This is a deterrent for a static site, NOT strong
-// security: anyone can read the bundle. Change this value to rotate the code.
-// For real protection, move the data behind an authenticated API.
+// Client-side passcode. This is a deterrent, NOT security: the value sits in
+// the published bundle, and so does the data it gates. Treat everything this
+// page renders as disclosed until the route is behind real identity auth
+// (Cloudflare Access or equivalent), which is the actual fix.
+//
+// The dataset used to live at a fixed public URL under public/, which meant it
+// was fetchable by anyone who knew the path and — because robots.txt invites
+// GPTBot, Google-Extended and Googlebot with no Disallow — explicitly offered
+// to AI training crawlers. It now loads as a lazy chunk imported below, so
+// there is no stable JSON endpoint to crawl, link, or archive. That removes the
+// one-request grab; it does not make the numbers private.
 const REPORTS_PIN = 'boba2026';
 const PIN_SESSION_KEY = 'bnbReportsAuthed';
-const DATA_URL = '/reports-data.cbf3b17bc7.json';
 
 const TEAL = '#0d6e6e';
 const GOLD = '#CEAA67';
@@ -303,10 +310,12 @@ function Reports() {
   useEffect(() => {
     if (!authed) return undefined;
     let alive = true;
-    fetch(process.env.PUBLIC_URL + DATA_URL)
-      .then((r) => { if (!r.ok) throw new Error('Could not load report data'); return r.json(); })
-      .then((d) => { if (alive) setData(d); })
-      .catch((err) => { if (alive) setError(err.message); });
+    // Dynamic import so the dataset is a lazy chunk fetched only after the gate
+    // passes, rather than a fixed public URL or 319KB in the main bundle that
+    // every homepage visitor downloads.
+    import('./data/reports-data.json')
+      .then((mod) => { if (alive) setData(mod.default); })
+      .catch(() => { if (alive) setError('Could not load report data'); });
     return () => { alive = false; };
   }, [authed]);
 

@@ -39,12 +39,19 @@ export const SAVE_WORDS = [
  * Keeper behaviour for a given kick number (1-based). Returns how far and how
  * fast the keeper paces along the goal (oscRange / oscSpeed), how far it can
  * lunge toward the shot (dive), its reach half-box (reachX / reachY) and the
- * height it guards (guardY). The curve is built around the reward (free drink
- * at 5 goals), so it ramps tier by tier:
+ * height it guards (guardY). Every goal is worth money off (see getReward), so
+ * the curve ramps steadily rather than guarding one milestone:
  *   kick 1   : easy      - wide open net, get on the board
  *   kick 2   : medium    - decent placement needed
  *   kick 3-4 : very hard - fast, wide, springs high
- *   kick 5+  : extreme   - the reward kick: fastest and widest, ramping
+ *   kick 5+  : extreme   - fastest and widest, ramping with each kick
+ *
+ * This curve sets the highest score the game can produce, which the leaderboard
+ * ceiling in firebase.js / firestore.rules must match exactly — too low rejects
+ * a real best-ever run, too high hands free discount to anyone who edits their
+ * score in dev tools. firebase.test.js re-derives the ceiling from this
+ * function and fails if the two drift apart, so retune freely and let the test
+ * tell you the new number.
  */
 export function getKeeperDifficulty(kick) {
   const k = Math.max(1, kick);
@@ -59,8 +66,10 @@ export function getKeeperDifficulty(kick) {
   // pre-jumps toward wherever the shot is actually placed (it has "scouted"
   // the shooter), closing the far-corner exploit that let patient players run
   // 100-goal streaks. It scales the open gap down by (1 - readBias), so runs
-  // get probabilistically hard from the mid-teens and effectively wall out in
-  // the low twenties, in line with the reward cap at 15 goals.
+  // get probabilistically hard from kick 17 and wall out completely at kick 20,
+  // where the widest gap a player can open (0.588) finally falls below the
+  // keeper's dive + reachX (0.590). A 19-goal streak is therefore the most the
+  // game can produce.
   if (k <= 1) {
     // Goal 1: easy. Slow, low, narrow keeper leaves the corners and top bins.
     return { oscRange: 0.3, oscSpeed: 0.0034, dive: 0.14, diveVert: 0.1, reachX: 0.13, reachY: 0.24, guardY: 0.62, anticipate: 0, readBias: 0 };
@@ -164,21 +173,44 @@ export function applyPowerWobble(aim, power, rng = Math.random) {
 }
 
 // Rupees off per goal (the poster offer: 1 goal = Rs 2 off, 10 goals = Rs 20
-// off), and the ceiling it cannot exceed (reached at 25 goals).
+// off), and a hard backstop on the total.
+//
+// The backstop does not bind today: the keeper curve walls play out at 19
+// goals, so the most anyone can earn is Rs 38. It stays as a guard in case the
+// difficulty is ever softened, and is deliberately not advertised anywhere.
 export const RUPEES_PER_GOAL = 2;
 export const MAX_DISCOUNT_RS = 50;
+
+// The longest streak the keeper curve permits, and the single source of truth
+// for it — firebase.js derives its leaderboard ceiling from this constant, and
+// firebase.test.js re-derives the number from getKeeperDifficulty and fails if
+// the two ever disagree.
+//
+// Kick 20 is unscoreable by anyone: readBias has closed the widest gap a player
+// can open (0.588) below the keeper's dive + reachX (0.590). Kick 19 is
+// scoreable, so 19 it is.
+export const HONEST_MAX_STREAK = 19;
 
 /**
  * Single reward rule: every goal is worth Rs 2 off the next drink (10 goals =
  * Rs 20 off), capped at Rs 50. No tiers. Zero goals earns encouragement only.
  * The flavour line scales with the score.
+ *
+ * The goal count is clamped to HONEST_MAX_STREAK first. This card is rendered
+ * in the browser from a local variable, so without the clamp a tampered streak
+ * prints whatever discount the tamperer likes — which is exactly how a player
+ * walked in with a maximum-discount card the server had never seen. Clamping
+ * does not make the card trustworthy (nothing client-side can), but it caps
+ * what a forgery is worth at what a perfect honest run earns, and the counter
+ * verifies the real amount against a server-issued voucher.
  */
 export function getReward(goals) {
-  if (goals <= 0) {
+  const earned = Math.min(Math.max(0, Math.floor(goals) || 0), HONEST_MAX_STREAK);
+  if (earned <= 0) {
     return { prize: null, msg: 'Aaro ekbar hok! Every player gets a smile from us!' };
   }
-  const rs = Math.min(goals * RUPEES_PER_GOAL, MAX_DISCOUNT_RS);
-  const praise = goals >= 10 ? 'Legend toh bhai!' : goals >= 5 ? 'Daarun khelle!' : 'Bhalo khelecho!';
+  const rs = Math.min(earned * RUPEES_PER_GOAL, MAX_DISCOUNT_RS);
+  const praise = earned >= 10 ? 'Legend toh bhai!' : earned >= 5 ? 'Daarun khelle!' : 'Bhalo khelecho!';
   return {
     prize: `You've got ₹${rs} off on your next drink!`,
     msg: `${praise} Show this at the counter to claim.`,

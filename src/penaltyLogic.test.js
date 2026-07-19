@@ -5,6 +5,7 @@ import {
   dragToAim,
   applyPowerWobble,
   getReward,
+  HONEST_MAX_STREAK,
 } from './penaltyLogic';
 
 describe('getKeeperDifficulty (tiered by kick count)', () => {
@@ -214,10 +215,32 @@ describe('getReward (Rs 2 off per goal, capped)', () => {
     expect(getReward(5).prize).toBe("You've got ₹10 off on your next drink!");
   });
 
-  test('caps at Rs 50 from 25 goals up', () => {
-    expect(getReward(24).prize).toBe("You've got ₹48 off on your next drink!");
-    expect(getReward(25).prize).toBe("You've got ₹50 off on your next drink!");
-    expect(getReward(40).prize).toBe("You've got ₹50 off on your next drink!");
+  test('the highest score the game can produce earns Rs 38', () => {
+    // The keeper curve walls out at a 19-goal streak, so this is the real
+    // ceiling on the offer. See the derivation tests in firebase.test.js.
+    expect(getReward(19).prize).toBe("You've got ₹38 off on your next drink!");
+  });
+
+  test('a tampered streak cannot print more than a perfect honest run', () => {
+    // The card is rendered in the browser from a local variable, so a player who
+    // edits their streak decides what this function is called with. Clamping to
+    // HONEST_MAX_STREAK caps a forgery at what 19 goals earns — it does not make
+    // the card trustworthy, which is what the server-issued voucher is for.
+    const best = getReward(HONEST_MAX_STREAK).prize;
+    expect(best).toBe("You've got ₹38 off on your next drink!");
+    expect(getReward(25).prize).toBe(best);
+    expect(getReward(9999).prize).toBe(best);
+    expect(getReward(Infinity).prize).toBe(best);
+  });
+
+  test('junk input earns nothing rather than NaN', () => {
+    expect(getReward(-5).prize).toBeNull();
+    expect(getReward(NaN).prize).toBeNull();
+    expect(getReward(undefined).prize).toBeNull();
+  });
+
+  test('fractional streaks round down rather than paying half rupees', () => {
+    expect(getReward(7.9).prize).toBe("You've got ₹14 off on your next drink!");
   });
 
   test('flavour line scales with the score', () => {
