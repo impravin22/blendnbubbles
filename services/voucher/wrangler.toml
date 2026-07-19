@@ -15,9 +15,8 @@ FIREBASE_API_KEY = "AIzaSyBTuYMNsRT665qMD3wwb3UabTfjf6sIm4Q"
 ALLOWED_ORIGIN = "https://blendnbubbles.com"
 
 # Redemption ledger — one key per voucher, so a screenshotted card is worth
-# exactly one drink. Create once with:
-#   npx wrangler kv namespace create VOUCHERS
-# and paste the returned id below.
+# exactly one drink. Also holds the per-device daily counter.
+# Created with `npx wrangler kv namespace create VOUCHERS`.
 [[kv_namespaces]]
 binding = "VOUCHERS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "abe10333c849424fbbe32e332b553ead"

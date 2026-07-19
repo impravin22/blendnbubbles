@@ -66,8 +66,8 @@ device** — reading a verdict off the customer's screen defeats the control.
 cd services/voucher
 
 # 1. Redemption ledger
-npx wrangler kv namespace create VOUCHERS
-#    paste the returned id into wrangler.toml
+# (already created — id is in wrangler.toml)
+#    id: abe10333c849424fbbe32e332b553ead
 
 # 2. Secrets — never in wrangler.toml
 openssl rand -base64 32 | npx wrangler secret put VOUCHER_SECRET
