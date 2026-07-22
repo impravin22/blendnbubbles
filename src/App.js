@@ -7,7 +7,12 @@ import Menu from './Menu';
 import Story from './Story';
 import Offers from './Offers';
 import BobaCatcher from './BobaCatcher';
-import PenaltyShootout from './PenaltyShootout';
+// PenaltyShootout is no longer routed: the World Cup season closed in July 2026
+// and /play/football now serves the frozen Hall of Fame. The component is left
+// on disk so a future season is a one-line revert; nothing imports it, so it is
+// not bundled. Firestore rules also refuse new football scores, which is what
+// actually stops the game — see firestore.rules.
+import HallOfFame from './HallOfFame';
 import Reports from './Reports';
 import Navbar from './Navbar';
 import { ThemeProvider } from './ThemeContext';
@@ -101,7 +106,7 @@ function AnimatedRoutes() {
             <Route path="/story" element={<Story />} />
             <Route path="/offers" element={<Offers />} />
             <Route path="/play" element={<BobaCatcher />} />
-            <Route path="/play/football" element={<PenaltyShootout />} />
+            <Route path="/play/football" element={<HallOfFame />} />
             <Route path="/reports" element={<Reports />} />
           </Routes>
         </div>
