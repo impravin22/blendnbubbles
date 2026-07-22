@@ -1,4 +1,4 @@
-import { isPlausibleScore, SCORE_CEILINGS } from './firebase';
+import { getWeekKey, isPlausibleScore, SCORE_CEILINGS } from './firebase';
 import { getKeeperDifficulty, isSaved } from './penaltyLogic';
 
 /**
@@ -116,5 +116,68 @@ describe('firestore.rules agrees with the derived ceiling', () => {
 
   test('the transitional ruleset uses it too', () => {
     expect(ceilingIn('firestore.rules.transitional')).toBe(SCORE_CEILINGS.football);
+  });
+});
+
+// The rules pin `week` to a shape rather than a length, because the generated
+// Hall of Fame module interpolates the first and last week keys into its header
+// and a newline in one would end that comment. The cost of pinning it is that
+// getWeekKey() must never emit anything outside the shape: if it did, every
+// score submission would start failing server-side while the client showed no
+// error at all. That makes this contract worth a test, not just a comment.
+//
+// It is a live constraint, not a historical one — Boba Catcher still writes.
+describe('getWeekKey satisfies the week shape firestore.rules enforces', () => {
+  const fs = require('fs');
+  const path = require('path');
+
+  // Read the pattern out of the ruleset rather than restating it, so editing
+  // one without the other fails here.
+  const rulePattern = () => {
+    const source = fs.readFileSync(path.join(__dirname, '..', 'firestore.rules'), 'utf8');
+    const match = source.match(/value\.matches\('([^']+)'\)/);
+    if (!match) throw new Error('No week pattern found in firestore.rules');
+    return new RegExp(match[1]);
+  };
+
+  test('the ruleset states a week pattern', () => {
+    expect(rulePattern().source).toBe('^[0-9]{4}-W[0-9]{2}$');
+  });
+
+  test('todays key matches it', () => {
+    expect(getWeekKey()).toMatch(rulePattern());
+  });
+
+  test.each([0, 1, 2, 5, 13, 26, 52, 104])('an offset of %i weeks back matches it', (offset) => {
+    expect(getWeekKey(offset)).toMatch(rulePattern());
+  });
+
+  test('every week of every year from 2020 to 2035 matches it', () => {
+    // getWeekKey reads the clock, so replicate its arithmetic over fixed dates.
+    const keyAt = (date) => {
+      const jan1 = new Date(date.getFullYear(), 0, 1);
+      const days = Math.floor((date - jan1) / 86400000);
+      const week = Math.ceil((days + jan1.getDay() + 1) / 7);
+      return `${date.getFullYear()}-W${String(week).padStart(2, '0')}`;
+    };
+
+    const pattern = rulePattern();
+    const offenders = [];
+    for (const d = new Date(2020, 0, 1); d < new Date(2036, 0, 1); d.setDate(d.getDate() + 1)) {
+      const key = keyAt(d);
+      if (!pattern.test(key)) offenders.push(key);
+    }
+
+    expect(offenders).toEqual([]);
+  });
+
+  test('the replicated arithmetic still matches the real implementation', () => {
+    // Guards the test above from drifting away from the function it stands in for.
+    const now = new Date();
+    const jan1 = new Date(now.getFullYear(), 0, 1);
+    const days = Math.floor((now - jan1) / 86400000);
+    const week = Math.ceil((days + jan1.getDay() + 1) / 7);
+
+    expect(`${now.getFullYear()}-W${String(week).padStart(2, '0')}`).toBe(getWeekKey());
   });
 });
