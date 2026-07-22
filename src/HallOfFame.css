@@ -1,0 +1,651 @@
+/* Hall of Fame (/play/football) — the frozen all-time board.
+ *
+ * Extends the existing BnB surface: the teal ground and #CEAA67 gold come from
+ * Reports.css. The ground sits deeper than the dashboard's #012020 because this
+ * page is a trophy cabinet, not a working dashboard, and gold is reserved
+ * strictly for goal figures — never for decoration.
+ *
+ * Committed to a single dark treatment on purpose, matching Reports, which is
+ * also dark regardless of ThemeContext. */
+
+.hof-root {
+  --hof-pitch: #041a19;
+  --hof-glow: #0a4442;
+  --hof-gold: #ceaa67;
+  --hof-gold-lit: #f2d9a0;
+  --hof-bronze: #bb8750;
+  --hof-chalk: #f4f4f4;
+  --hof-chalk-dim: rgba(244, 244, 244, 0.62);
+  --hof-hairline: rgba(244, 244, 244, 0.12);
+  --hof-surface: rgba(255, 255, 255, 0.05);
+
+  /* Georgia ships on every device the shop's customers use: zero bytes, no CDN,
+     no silent fallback — and it carries real editorial weight against the
+     Open Sans the rest of the site runs on. That contrast is the pairing. */
+  --hof-display: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+
+  display: block;
+  min-height: 100vh;
+  color: var(--hof-chalk);
+  font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+  background: var(--hof-pitch);
+}
+
+.hof-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* ── Closed-season gate ──────────────────────────────────────── */
+
+.hof-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 40px clamp(16px, 5vw, 48px);
+  background: radial-gradient(900px 460px at 50% -12%, var(--hof-glow) 0%, #05302e 45%, var(--hof-pitch) 100%);
+}
+
+.hof-gate-card {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 38px 32px 30px;
+  border-radius: 22px;
+  text-align: center;
+  background: var(--hof-surface);
+  border: 1px solid var(--hof-hairline);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+
+.hof-whistle {
+  margin: 0;
+  font-family: var(--hof-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--hof-gold);
+}
+
+.hof-gate-title {
+  margin: 0;
+  font-family: var(--hof-display);
+  font-size: clamp(38px, 9vw, 52px);
+  font-weight: 700;
+  line-height: 0.95;
+  text-wrap: balance;
+}
+
+.hof-gate-sub {
+  margin: 0 auto;
+  max-width: 32ch;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--hof-chalk-dim);
+}
+
+.hof-gate-input {
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-align: center;
+  text-transform: uppercase;
+  padding: 15px 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--hof-chalk);
+  /* Gold, not the hairline: the hairline measures ~1.4:1 against the card and
+     fails WCAG 1.4.11, which matters more than usual here because the field's
+     only label is visually hidden — the boundary is what says "type here". */
+  border: 1px solid var(--hof-gold);
+}
+
+.hof-gate-input::placeholder {
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  /* Was rgba(...,0.42) at ~3.35:1, under the 4.5:1 this size and weight needs. */
+  color: var(--hof-chalk-dim);
+}
+
+.hof-gate-input:focus-visible {
+  outline: 2px solid var(--hof-gold);
+  outline-offset: 2px;
+  border-color: var(--hof-gold);
+}
+
+.hof-gate-btn {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 14px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: none;
+  color: #12100a;
+  background: linear-gradient(45deg, var(--hof-bronze), var(--hof-gold));
+}
+
+.hof-gate-btn:hover {
+  filter: brightness(1.08);
+}
+
+.hof-gate-btn:focus-visible {
+  outline: 2px solid var(--hof-gold-lit);
+  outline-offset: 3px;
+}
+
+.hof-gate-err {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  /* 6.4:1 on the card ground — the palette has no red that clears AA. */
+  color: #ffb4a8;
+}
+
+.hof-gate-back {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hof-gold);
+  text-decoration: none;
+}
+
+.hof-gate-back:hover {
+  text-decoration: underline;
+}
+
+.hof-gate-back:focus-visible {
+  outline: 2px solid var(--hof-gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── Board ───────────────────────────────────────────────────── */
+
+.hof-page {
+  min-height: 100vh;
+  padding: clamp(26px, 5vw, 56px) clamp(16px, 5vw, 48px) 64px;
+  background: radial-gradient(1100px 520px at 50% -14%, var(--hof-glow) 0%, #05302e 42%, var(--hof-pitch) 100%);
+}
+
+.hof-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.hof-eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--hof-gold);
+}
+
+.hof-h1 {
+  margin: 0;
+  font-family: var(--hof-display);
+  font-weight: 700;
+  font-size: clamp(40px, 8vw, 76px);
+  line-height: 0.88;
+  text-wrap: balance;
+}
+
+.hof-home {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hof-gold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hof-home:hover {
+  text-decoration: underline;
+}
+
+.hof-home:focus-visible {
+  outline: 2px solid var(--hof-gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Season totals: summary before detail. */
+.hof-strip {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 26px;
+  border-top: 1px solid var(--hof-hairline);
+  border-bottom: 1px solid var(--hof-hairline);
+}
+
+.hof-strip-cell {
+  flex: 1 1 118px;
+  display: flex;
+  /* dt is first in the DOM for validity; reversed so the figure reads on top. */
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 14px 18px 13px;
+  border-right: 1px solid var(--hof-hairline);
+}
+
+.hof-strip-cell:last-child {
+  border-right: none;
+}
+
+.hof-strip-v {
+  margin: 0;
+  font-family: var(--hof-display);
+  font-size: 27px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.hof-strip-l {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--hof-chalk-dim);
+}
+
+/* ── Tabs ────────────────────────────────────────────────────── */
+
+.hof-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hof-tab {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 999px;
+  color: var(--hof-chalk-dim);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--hof-hairline);
+}
+
+.hof-tab:hover {
+  color: var(--hof-chalk);
+  border-color: var(--hof-gold);
+}
+
+.hof-tab[aria-selected='true'] {
+  background: var(--hof-gold);
+  border-color: var(--hof-gold);
+  color: #12100a;
+  font-weight: 800;
+}
+
+.hof-tab:focus-visible {
+  outline: 2px solid var(--hof-gold-lit);
+  outline-offset: 2px;
+}
+
+.hof-panel:focus {
+  outline: none;
+}
+
+.hof-hint {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--hof-chalk-dim);
+}
+
+/* ── Podium (ranks 1–3) ──────────────────────────────────────── */
+
+/* Container, not viewport: the seat must reflow whenever the CARD is narrow,
+   which is a different question from whether the phone is. Keyed to the
+   viewport instead, the name column collapses to 0px inside any narrow parent
+   and the goal tally overflows the card. */
+.hof-podium {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+  container-type: inline-size;
+  container-name: hofpodium;
+}
+
+.hof-seat {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: clamp(12px, 3vw, 26px);
+  padding: clamp(20px, 3.4vw, 30px) clamp(20px, 3vw, 30px);
+  border-radius: 20px;
+  background: var(--hof-surface);
+  border: 1px solid var(--hof-hairline);
+}
+
+/* Set behind the content and bled past the left edge — the deliberate grid
+   break. Decorative: the real rank is announced by .hof-sr in the name. */
+.hof-seat-num {
+  position: absolute;
+  left: -0.14em;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--hof-display);
+  font-weight: 700;
+  line-height: 0.8;
+  color: rgba(244, 244, 244, 0.07);
+  pointer-events: none;
+  user-select: none;
+}
+
+.hof-seat-1 {
+  border-color: rgba(206, 170, 103, 0.42);
+  background: linear-gradient(100deg, rgba(206, 170, 103, 0.13), rgba(255, 255, 255, 0.04) 58%);
+}
+
+.hof-seat-1 .hof-seat-num {
+  font-size: 160px;
+  font-size: clamp(120px, 26cqw, 230px);
+  color: rgba(206, 170, 103, 0.13);
+}
+
+.hof-seat-2 {
+  border-color: rgba(244, 244, 244, 0.2);
+}
+
+.hof-seat-3 {
+  border-color: rgba(187, 135, 80, 0.34);
+}
+
+.hof-seat-2 .hof-seat-num,
+.hof-seat-3 .hof-seat-num {
+  font-size: 105px;
+  font-size: clamp(84px, 17cqw, 140px);
+}
+
+.hof-seat-flag {
+  position: relative;
+  font-size: 42px;
+  font-size: clamp(34px, 6cqw, 52px);
+  line-height: 1;
+}
+
+.hof-seat-1 .hof-seat-flag {
+  font-size: 56px;
+  font-size: clamp(44px, 8cqw, 68px);
+}
+
+.hof-seat-who {
+  position: relative;
+  min-width: 0;
+}
+
+.hof-seat-name {
+  margin: 0;
+  font-family: var(--hof-display);
+  font-weight: 700;
+  font-size: 30px;
+  font-size: clamp(23px, 4.4cqw, 38px);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.hof-seat-1 .hof-seat-name {
+  font-size: 38px;
+  font-size: clamp(28px, 6cqw, 50px);
+}
+
+.hof-seat-meta {
+  margin: 7px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hof-chalk-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.hof-medal {
+  display: inline-block;
+  margin-bottom: 9px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.hof-seat-1 .hof-medal {
+  background: var(--hof-gold);
+  color: #12100a;
+}
+
+.hof-seat-2 .hof-medal {
+  background: rgba(244, 244, 244, 0.86);
+  color: #12100a;
+}
+
+.hof-seat-3 .hof-medal {
+  background: var(--hof-bronze);
+  color: #12100a;
+}
+
+.hof-seat-tally {
+  position: relative;
+  text-align: right;
+}
+
+.hof-tally-v {
+  font-family: var(--hof-display);
+  font-weight: 700;
+  line-height: 0.85;
+  font-variant-numeric: tabular-nums;
+  color: var(--hof-gold-lit);
+  font-size: 48px;
+  font-size: clamp(38px, 7cqw, 62px);
+}
+
+.hof-seat-1 .hof-tally-v {
+  font-size: 68px;
+  font-size: clamp(50px, 11cqw, 92px);
+}
+
+.hof-tally-l {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hof-chalk-dim);
+}
+
+/* Narrow card: the tally drops to its own row so the name keeps its width. */
+@container hofpodium (max-width: 560px) {
+  .hof-seat {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 14px;
+  }
+
+  .hof-seat-tally {
+    grid-column: 1 / -1;
+    text-align: left;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .hof-tally-l {
+    margin-top: 0;
+  }
+
+  .hof-seat-1 .hof-tally-v {
+    font-size: clamp(44px, 15cqw, 68px);
+  }
+
+  .hof-seat-1 .hof-seat-name {
+    font-size: clamp(26px, 9cqw, 36px);
+  }
+}
+
+/* Same reflow for browsers without container query support. */
+@supports not (container-type: inline-size) {
+  @media (max-width: 560px) {
+    .hof-seat {
+      grid-template-columns: auto minmax(0, 1fr);
+      row-gap: 14px;
+    }
+
+    .hof-seat-tally {
+      grid-column: 1 / -1;
+      text-align: left;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .hof-tally-l {
+      margin-top: 0;
+    }
+  }
+}
+
+/* ── Ledger (ranks 4–10) ─────────────────────────────────────── */
+
+/* Deliberately denser than the podium: the rhythm change marks where the
+   podium ends, so no heading has to say it. */
+.hof-ledger {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--hof-hairline);
+}
+
+.hof-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 2.6ch auto minmax(0, 1fr) auto;
+  gap: clamp(10px, 2.4vw, 20px);
+  padding: 13px clamp(4px, 1.4vw, 12px);
+  border-bottom: 1px solid var(--hof-hairline);
+}
+
+.hof-row:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.hof-row-num {
+  font-family: var(--hof-display);
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--hof-chalk-dim);
+  text-align: right;
+}
+
+.hof-row-flag {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.hof-row-who {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hof-row-name {
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.hof-row-meta {
+  font-size: 14px;
+  color: var(--hof-chalk-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.hof-row-tally {
+  font-family: var(--hof-display);
+  font-size: 25px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--hof-gold);
+  text-align: right;
+}
+
+.hof-foot {
+  margin: 26px 0 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--hof-gold);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--hof-chalk-dim);
+  max-width: 62ch;
+}
+
+.hof-foot p {
+  margin: 0 0 7px;
+}
+
+.hof-foot p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Motion ──────────────────────────────────────────────────── */
+
+@keyframes hof-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hof-seat,
+.hof-row {
+  animation: hof-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hof-seat-1 { animation-delay: 0.04s; }
+.hof-seat-2 { animation-delay: 0.11s; }
+.hof-seat-3 { animation-delay: 0.18s; }
+.hof-row:nth-child(1) { animation-delay: 0.25s; }
+.hof-row:nth-child(2) { animation-delay: 0.3s; }
+.hof-row:nth-child(3) { animation-delay: 0.35s; }
+.hof-row:nth-child(4) { animation-delay: 0.4s; }
+.hof-row:nth-child(5) { animation-delay: 0.45s; }
+.hof-row:nth-child(6) { animation-delay: 0.5s; }
+.hof-row:nth-child(7) { animation-delay: 0.55s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hof-seat,
+  .hof-row {
+    animation: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .hof-row {
+    grid-template-columns: 2.4ch auto minmax(0, 1fr) auto;
+  }
+}

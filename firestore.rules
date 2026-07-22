@@ -29,6 +29,19 @@ service cloud.firestore {
       return value is string && value.size() > 0 && value.size() <= maxLen;
     }
 
+    // Week keys must match exactly what getWeekKey() in src/firebase.js emits.
+    //
+    // A length bound alone is not enough. `week` is written by an
+    // unauthenticated public client and is later read back by
+    // scripts/build-hall-of-fame.mjs, which writes a generated JavaScript
+    // module that the site imports. A week value containing a newline or a
+    // backtick is a code-injection vector against that generator, and no length
+    // limit prevents one. Pinning the shape here kills the whole class at the
+    // only point that can actually refuse it.
+    function isWeekKey(value) {
+      return value is string && value.matches('^[0-9]{4}-W[0-9]{2}$');
+    }
+
     // Optional per-device UUID. Absent is fine; present must be a bounded
     // string so a hand-edited client cannot push an arbitrarily large value.
     function hasValidPlayerId(data) {
@@ -50,6 +63,27 @@ service cloud.firestore {
       return game == 'football' ? 19 : 1000;
     }
 
+    // Seasons that still accept scores.
+    //
+    // The World Cup promotion ended on 2026-07-22. Its board is now frozen and
+    // published as a static table (src/hallOfFameData.js), so nothing on the
+    // site reads new football rows — but taking the game out of the UI does not
+    // stop writes. The endpoint is a public Firestore collection, and the shape
+    // of a valid submission is visible to anyone who watched the network tab
+    // while the game was live. Closing the write here is what actually ends the
+    // season: it stops scripted rows the shop would pay to store and nobody
+    // would ever see, and it keeps the published table honest by making it
+    // impossible for the underlying data to drift after the fact.
+    //
+    // Existing football rows are untouched — reads stay open, and update/delete
+    // were already denied, so the history cannot be rewritten either.
+    //
+    // To reopen for another season: add 'football' back here, restore the route
+    // in src/App.js, and regenerate the table afterwards.
+    function isGameOpen(game) {
+      return game == 'bobacatcher';
+    }
+
     // Public scoreboard. Read by everyone, so it holds only what the board
     // renders: who, how many, which game, which week.
     match /leaderboard/{entry} {
@@ -66,7 +100,7 @@ service cloud.firestore {
         // so a later edit to the allow-list cannot silently reopen it.
         && !('phone' in request.resource.data)
         && isNonEmptyString(request.resource.data.name, 40)
-        && isNonEmptyString(request.resource.data.week, 12)
+        && isWeekKey(request.resource.data.week)
         && request.resource.data.createdAt == request.time
         && hasValidPlayerId(request.resource.data)
         && (!('team' in request.resource.data)
@@ -75,6 +109,9 @@ service cloud.firestore {
         // simply omitted `game` through at the 1000 ceiling, which was a softer
         // bypass than the football path it was written to guard.
         && request.resource.data.game in ['football', 'bobacatcher']
+        // Named game AND still running. The list above rejects a typo'd or
+        // invented game name; this rejects a real one whose season has ended.
+        && isGameOpen(request.resource.data.game)
         && request.resource.data.score is int
         && request.resource.data.score >= 0
         && request.resource.data.score <= scoreCeiling(request.resource.data.game);
@@ -95,7 +132,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['name', 'phone', 'week', 'createdAt', 'playerId'])
         && isNonEmptyString(request.resource.data.name, 40)
         && isNonEmptyString(request.resource.data.phone, 20)
-        && isNonEmptyString(request.resource.data.week, 12)
+        && isWeekKey(request.resource.data.week)
         && request.resource.data.createdAt == request.time
         && hasValidPlayerId(request.resource.data);
 
