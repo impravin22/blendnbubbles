@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './App.css';
-import SpinWheel, { PRIZES } from './SpinWheel';
+// SpinWheel is no longer mounted: the anniversary campaign closed in
+// August 2026 and the wheel came down with it. The component is left on
+// disk so a future campaign is a one-line revert; nothing imports it, so
+// it is not bundled. Spin history stays in the campaign spreadsheet fed
+// by scripts/apps-script-spins.
 
 function Offers() {
   const [scrolled, setScrolled] = useState(false);
@@ -76,6 +80,9 @@ function Offers() {
                 <Link className="nav-link active" to="/offers">Offers</Link>
               </li>
               <li className="nav-item">
+                <Link className="nav-link" to="/events">Events</Link>
+              </li>
+              <li className="nav-item">
                 <a className="nav-link" href="/#contact" onClick={handleVisitUsClick}>Visit Us</a>
               </li>
               <li className="nav-item ms-lg-2">
@@ -95,12 +102,12 @@ function Offers() {
             <div className="row align-items-center">
               <div className="col-lg-7 hero-text-container">
                 <p className="hero-subtitle">Tap. Sip. Win.</p>
-                <h1 className="hero-title">Spin &amp; Win</h1>
+                <h1 className="hero-title">Offers &amp; happenings</h1>
                 <p className="hero-text">
-                  Take one spin on the anniversary wheel for a prize you can claim in-store. One play per customer.
+                  The anniversary wheel has taken its final spin — thanks for playing! Here&apos;s what&apos;s brewing now.
                 </p>
                 <div className="hero-buttons">
-                  <a href="#spin-prizes" className="btn btn-primary">Spin the Wheel</a>
+                  <a href="#current-offers" className="btn btn-primary">See what&apos;s on</a>
                   <a href="/#contact" onClick={handleVisitUsClick} className="btn btn-outline">Visit Us</a>
                 </div>
               </div>
@@ -121,36 +128,37 @@ function Offers() {
         </div>
       </header>
 
-      {/* Spin & Win wheel */}
-      <section className="py-5" id="spin-prizes">
+      {/* Current offers & event CTA */}
+      <section className="py-5" id="current-offers">
         <div className="container">
-          <div className="text-center mb-5 reveal">
-            <div className="mb-3">
-              <span className="offer-tag offer-tag-spin">SPIN &amp; WIN</span>
+          <div className="row">
+            <div className="col-md-6 mb-4 reveal">
+              <div className="card h-100">
+                <div className="card-body">
+                  <div className="mb-3">
+                    <span className="offer-tag">This month</span>
+                  </div>
+                  <h3 className="card-title">Fresh offers on Instagram</h3>
+                  <p className="card-text">New deals and seasonal specials drop first on our Instagram. Follow along so you never miss one.</p>
+                  <a href="https://www.instagram.com/blendnbubbles" target="_blank" rel="noopener noreferrer" className="btn btn-primary">Follow @blendnbubbles</a>
+                </div>
+              </div>
             </div>
-            <h2 className="mb-2">Spin the anniversary wheel</h2>
-            <p className="text-muted mb-0">One spin per customer. Land anywhere and the prize is yours.</p>
-          </div>
-
-          <div className="row justify-content-center reveal">
-            <div className="col-12 col-md-10 col-lg-8">
-              <SpinWheel />
+            <div className="col-md-6 mb-4 reveal">
+              <div className="card h-100">
+                <div className="card-body">
+                  <div className="mb-3">
+                    <span className="offer-tag">New</span>
+                  </div>
+                  <h3 className="card-title">Host your event with us</h3>
+                  <p className="card-text">Birthdays, fests, office parties — bubble tea counters and bulk orders for any headcount.</p>
+                  <Link to="/events" className="btn btn-primary">Request an event</Link>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="text-center mt-5 reveal">
-            <details className="prize-disclosure">
-              <summary className="prize-disclosure-summary">See all {PRIZES.length} prizes</summary>
-              <ul className="prize-disclosure-list mt-3">
-                {PRIZES.map((prize, index) => (
-                  <li key={prize.option}>
-                    <strong>{index + 1}.</strong> {prize.title}
-                  </li>
-                ))}
-              </ul>
-            </details>
-            <p className="text-muted small mt-4 mb-4">All offers available in-store during our anniversary celebrations. One spin per customer, prizes while stocks last.</p>
-            <Link to="/" className="btn btn-primary">Back to Home</Link>
+          <div className="text-center mt-3 reveal">
+            <Link to="/" className="btn btn-outline-primary">Back to Home</Link>
           </div>
         </div>
       </section>

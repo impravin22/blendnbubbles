@@ -1662,6 +1662,9 @@ section h2::after {
   box-shadow: 0 4px 12px rgba(187, 135, 80, 0.25);
 }
 
+/* .offer-tag-spin and .prize-disclosure* below are unreferenced since the
+   anniversary wheel came down (Aug 2026). Kept, like SpinWheel.js, so a
+   future campaign is a straight revert. */
 .offer-tag-spin {
   background: var(--primary);
   font-size: 0.95rem;
