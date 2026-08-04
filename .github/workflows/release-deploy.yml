@@ -1,0 +1,76 @@
+name: Release & Deploy Site
+
+# Tag-driven CI/CD for blendnbubbles.com: pushing a v* tag runs the test
+# suite, builds the site, publishes the build to the gh-pages branch (GitHub
+# Pages serves it on the custom domain via public/CNAME), and creates a
+# GitHub release from the tag. workflow_dispatch redeploys the current main
+# without cutting a release.
+#
+# The events form webhook URL is a repo-level Actions *variable* (not a
+# secret — it is public in the shipped bundle by design):
+#   Settings → Secrets and variables → Actions → Variables →
+#   REACT_APP_EVENTS_WEBHOOK_URL = https://script.google.com/macros/s/…/exec
+# Left unset, the form renders its direct-contact fallback.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-deploy
+  cancel-in-progress: false
+
+jobs:
+  release-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npx react-scripts test --watchAll=false
+        env:
+          CI: "true"
+
+      - name: Build
+        run: npm run build
+        env:
+          CI: "true"
+          REACT_APP_EVENTS_WEBHOOK_URL: ${{ vars.REACT_APP_EVENTS_WEBHOOK_URL }}
+
+      - name: Verify build artefacts
+        run: |
+          set -euo pipefail
+          test -f build/index.html
+          test -f build/events/index.html
+          test -f build/CNAME
+          grep -q "blendnbubbles.com" build/CNAME
+
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
