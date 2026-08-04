@@ -1,0 +1,349 @@
+/* /events — event request page. Brand tokens come from index.css :root. */
+
+.events-page .hero {
+  padding-bottom: 56px;
+}
+
+.events-grid {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 36px;
+  align-items: start;
+  padding: 56px 0 72px;
+}
+
+@media (max-width: 992px) {
+  .events-grid {
+    grid-template-columns: 1fr;
+    padding-top: 36px;
+  }
+}
+
+/* ---------- pitch rail ---------- */
+
+.events-pitch {
+  position: sticky;
+  top: 96px;
+}
+
+@media (max-width: 992px) {
+  .events-pitch {
+    position: static;
+  }
+}
+
+.events-pitch h2 {
+  font-family: 'Fraunces', serif;
+  color: var(--primary);
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.events-pitch-lede {
+  color: var(--light-text);
+  margin-bottom: 24px;
+}
+
+.events-step {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.events-step-num {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--teal-gradient);
+  color: var(--secondary-light);
+  font-family: 'Fraunces', serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.events-step h3 {
+  font-family: 'Fraunces', serif;
+  color: var(--primary);
+  font-size: 17px;
+  margin-bottom: 2px;
+}
+
+.events-step p {
+  color: var(--light-text);
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
+.events-direct-card {
+  margin-top: 26px;
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 18px 20px;
+  border: 1.5px dashed var(--secondary);
+  font-size: 14px;
+}
+
+.events-direct-card strong {
+  display: block;
+  font-family: 'Fraunces', serif;
+  color: var(--primary);
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.events-direct-card a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.events-direct-card a:hover {
+  color: var(--accent);
+}
+
+/* ---------- form card ---------- */
+
+.events-form-card {
+  background: var(--card-bg);
+  border-radius: 18px;
+  padding: 34px 34px 38px;
+  box-shadow: 0 10px 40px rgba(0, 51, 51, 0.1);
+  border-top: 5px solid var(--secondary);
+}
+
+@media (max-width: 576px) {
+  .events-form-card {
+    padding: 24px 18px 28px;
+  }
+}
+
+.events-form-card h2 {
+  font-family: 'Fraunces', serif;
+  color: var(--primary);
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.events-form-lede {
+  color: var(--light-text);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.events-frow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+@media (max-width: 576px) {
+  .events-frow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.events-fgroup {
+  margin-bottom: 16px;
+}
+
+.events-fgroup label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+
+.events-fgroup label .events-opt {
+  color: var(--light-text);
+  font-weight: 400;
+}
+
+.events-fgroup input,
+.events-fgroup select,
+.events-fgroup textarea {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 15px;
+  font-family: 'Open Sans', sans-serif;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.events-fgroup input:hover,
+.events-fgroup select:hover,
+.events-fgroup textarea:hover {
+  border-color: var(--secondary);
+}
+
+.events-fgroup input:focus,
+.events-fgroup select:focus,
+.events-fgroup textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 51, 51, 0.15);
+}
+
+.events-fgroup input[aria-invalid='true'],
+.events-fgroup select[aria-invalid='true'] {
+  border-color: #d9534f;
+}
+
+.events-field-error {
+  color: #b02a26;
+  font-size: 12.5px;
+  margin: 4px 0 0;
+}
+
+[data-theme='dark'] .events-field-error {
+  color: #f0a29c;
+}
+
+/* Honeypot: parked off-screen, not display:none, so naive bots still see a
+   fillable input while humans and screen readers never meet it. */
+.events-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.events-submit {
+  width: 100%;
+  margin-top: 6px;
+  background: var(--teal-gradient);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 30px;
+  padding: 14px;
+  cursor: pointer;
+  font-family: 'Open Sans', sans-serif;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.events-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 51, 51, 0.28);
+}
+
+.events-submit:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.events-submit:disabled {
+  opacity: 0.75;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .events-submit,
+  .events-submit:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+.events-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: events-spin 0.7s linear infinite;
+  vertical-align: -3px;
+  margin-right: 8px;
+}
+
+@keyframes events-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .events-spinner {
+    animation-duration: 1.5s;
+  }
+}
+
+.events-privacy-note {
+  font-size: 12.5px;
+  color: var(--light-text);
+  text-align: center;
+  margin: 12px 0 0;
+}
+
+/* ---------- outcome states ---------- */
+
+.events-success {
+  text-align: center;
+  padding: 30px 10px 10px;
+}
+
+.events-success-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: var(--gold-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  font-size: 32px;
+  color: #fff;
+}
+
+.events-success h2 {
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.events-success p {
+  color: var(--light-text);
+  max-width: 400px;
+  margin: 0 auto 10px;
+}
+
+.events-error-banner {
+  background: #fdf0ee;
+  border: 1.5px solid #d9534f;
+  color: #8a2723;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.events-error-banner strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.events-error-banner a {
+  color: #8a2723;
+  font-weight: 700;
+}
+
+[data-theme='dark'] .events-error-banner {
+  background: #3a1f1d;
+  border-color: #b0524e;
+  color: #f0c9c6;
+}
+
+[data-theme='dark'] .events-error-banner a {
+  color: #f0c9c6;
+}

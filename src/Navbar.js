@@ -57,6 +57,9 @@ function Navbar({ scrolled, navbarCollapseRef, scrollToSection }) {
               <Link className={`nav-link ${location.pathname === '/offers' ? 'active' : ''}`} to="/offers">Offers</Link>
             </li>
             <li className="nav-item">
+              <Link className={`nav-link ${location.pathname === '/events' ? 'active' : ''}`} to="/events">Events</Link>
+            </li>
+            <li className="nav-item">
               <a className="nav-link" href={isHomePage ? "#contact" : "/#contact"} onClick={handleVisitUsClick}>Visit Us</a>
             </li>
             <li className="nav-item ms-lg-2">

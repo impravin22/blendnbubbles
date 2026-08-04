@@ -6,6 +6,7 @@ import './App.css';
 import Menu from './Menu';
 import Story from './Story';
 import Offers from './Offers';
+import Events from './Events';
 import BobaCatcher from './BobaCatcher';
 // PenaltyShootout is no longer routed: the World Cup season closed in July 2026
 // and /play/football now serves the frozen Hall of Fame. The component is left
@@ -105,6 +106,7 @@ function AnimatedRoutes() {
             <Route path="/menu" element={<Menu />} />
             <Route path="/story" element={<Story />} />
             <Route path="/offers" element={<Offers />} />
+            <Route path="/events" element={<Events />} />
             <Route path="/play" element={<BobaCatcher />} />
             <Route path="/play/football" element={<HallOfFame />} />
             <Route path="/reports" element={<Reports />} />

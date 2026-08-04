@@ -45,6 +45,26 @@ describe('/play/football', () => {
   });
 });
 
+describe('/events', () => {
+  const visit = (path) => {
+    window.history.pushState({}, '', path);
+    return render(<App />);
+  };
+
+  afterEach(() => {
+    window.history.pushState({}, '', '/');
+  });
+
+  test('serves the event request page', () => {
+    visit('/events');
+
+    expect(
+      screen.getByRole('heading', { name: /bubble tea for your big day/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send event request/i })).toBeInTheDocument();
+  });
+});
+
 test('renders router Links that resolve to the menu route', () => {
   render(<App />);
   // Verify react-router-dom's Link rendered a working anchor to /menu.
