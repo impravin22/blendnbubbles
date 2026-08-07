@@ -45,3 +45,4 @@ scripts/out/
 
 # Local credentials — token files, service-account keys. Never commit.
 .secrets/
+.claude/launch.json

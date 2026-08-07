@@ -347,3 +347,365 @@
 [data-theme='dark'] .events-error-banner a {
   color: #f0c9c6;
 }
+
+/* ─── Corporate & campus events block (/events) ──────────────
+   Renders from src/corporateData.js. Sits below the consumer request form and
+   targets HR, admin and facilities teams. */
+.corporate-occasions {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.corporate-occasions li {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-text);
+  background: rgba(187, 135, 80, 0.1);
+  border: 1px solid rgba(187, 135, 80, 0.32);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+}
+
+.corporate-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.corporate-option {
+  background: var(--card-bg);
+  border: 1px solid rgba(187, 135, 80, 0.28);
+  border-radius: 18px;
+  padding: 1.75rem;
+  box-shadow: 0 10px 30px rgba(0, 51, 51, 0.08);
+}
+
+.corporate-option.is-highlighted {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 153, 51, 0.12), 0 10px 30px rgba(0, 51, 51, 0.08);
+}
+
+.corporate-option-tag {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.corporate-option.is-highlighted .corporate-option-tag { color: var(--accent-text); }
+
+.corporate-option h3 {
+  margin: 0.4rem 0 0;
+  font-size: 1.45rem;
+  color: var(--primary);
+}
+
+.corporate-option-cost {
+  margin: 0.5rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--accent-text);
+}
+
+.corporate-option-body {
+  margin: 0.65rem 0 0;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.corporate-option-note {
+  margin: 0.65rem 0 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--light-text);
+}
+
+.corporate-packages { margin-top: 2.5rem; }
+
+.corporate-packages h3 {
+  margin: 0 0 1.25rem;
+  font-size: 1.4rem;
+  color: var(--primary);
+}
+
+.corporate-packages ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.corporate-packages li {
+  display: flex;
+  flex-direction: column;
+  background: var(--card-bg);
+  border: 1px solid rgba(187, 135, 80, 0.24);
+  border-radius: 14px;
+  padding: 1.25rem 1.4rem;
+}
+
+.corporate-pack-cups {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--primary);
+}
+
+.corporate-pack-unit {
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--light-text);
+}
+
+.corporate-pack-fits {
+  margin-top: 0.65rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.corporate-pack-detail {
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+  color: var(--light-text);
+}
+
+.corporate-packages-note {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.corporate-trust {
+  list-style: none;
+  padding: 0;
+  margin: 2.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+.corporate-trust li {
+  border-left: 3px solid var(--secondary);
+  padding-left: 0.75rem;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.corporate-trust strong { color: var(--primary); }
+.corporate-trust span { color: var(--light-text); }
+
+@media (max-width: 575px) {
+  .corporate-option { padding: 1.35rem; }
+}
+
+/* ─── Event type tabs (/events) ──────────────────────────────
+   WAI-ARIA tabs pattern. Touch targets clear 44px, focus is always visible,
+   and the active tab is marked by weight and an underline as well as colour,
+   so colour is never the only signal. */
+.events-tabs {
+  margin: 2.5rem 0 0;
+}
+
+.events-tablist {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid rgba(187, 135, 80, 0.28);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.events-tablist::-webkit-scrollbar { display: none; }
+
+.events-tab {
+  flex: 1 1 auto;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.85rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--light-text);
+  transition: color 200ms ease, border-color 200ms ease, background-color 200ms ease;
+}
+
+.events-tab:hover { color: var(--primary); background: rgba(187, 135, 80, 0.07); }
+
+.events-tab:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+  border-radius: 6px 6px 0 0;
+}
+
+.events-tab.is-active {
+  color: var(--primary);
+  border-bottom-color: var(--secondary);
+}
+
+.events-tab-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.events-tab.is-active .events-tab-label { font-weight: 800; }
+
+.events-tab-sub {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--light-text);
+}
+
+.events-panel { padding: 2.5rem 0 0; }
+
+.events-panel-title {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--primary);
+}
+
+.events-panel-lede {
+  margin: 0.75rem 0 0;
+  max-width: 640px;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--text);
+}
+
+/* ─── Catering packages (Celebrations tab) ───────────────────*/
+.catering-packages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.catering-package {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid rgba(187, 135, 80, 0.28);
+  border-radius: 18px;
+  padding: 1.75rem;
+  box-shadow: 0 10px 30px rgba(0, 51, 51, 0.08);
+}
+
+.catering-package.is-popular {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 4px rgba(187, 135, 80, 0.14), 0 10px 30px rgba(0, 51, 51, 0.08);
+}
+
+.catering-package-flag {
+  position: absolute;
+  top: -0.8rem;
+  left: 1.75rem;
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3d2408;
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+}
+
+.catering-package-guests {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.catering-package h3 {
+  margin: 0.35rem 0 0;
+  font-size: 1.45rem;
+  color: var(--primary);
+}
+
+.catering-package-cups {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--light-text);
+}
+
+.catering-package-cups span {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: normal;
+  color: var(--primary);
+  vertical-align: -0.1em;
+  margin-right: 0.3rem;
+}
+
+.catering-package ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.catering-package li {
+  position: relative;
+  padding-left: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.catering-package li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  background: var(--secondary);
+}
+
+.catering-package-fits {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--light-text);
+}
+
+@media (max-width: 575px) {
+  .events-tabs { margin-top: 1.75rem; }
+  .events-tab { padding: 0.8rem 0.9rem; }
+  .events-tab-label { font-size: 0.95rem; }
+  .events-tab-sub { font-size: 0.72rem; white-space: normal; }
+  .events-panel { padding-top: 1.75rem; }
+  .events-panel-title { font-size: 1.65rem; }
+  .catering-package { padding: 1.35rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .events-tab { transition: none; }
+}

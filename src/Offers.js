@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { PLATFORM_OFFERS, COMBOS, countOffers } from './offersData';
 import './App.css';
 // SpinWheel is no longer mounted: the anniversary campaign closed in
 // August 2026 and the wheel came down with it. The component is left on
@@ -38,7 +39,7 @@ function Offers() {
   useEffect(() => {
     document.title = 'Exclusive Offers - BlendNBubbles | Tap. Sip. Win.';
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'Exclusive BlendNBubbles offers, anniversary surprises and weekly perks. Tap your fridge magnet to unlock fresh announcements.');
+    if (meta) meta.setAttribute('content', 'Live Zomato and Swiggy offers from BlendNBubbles Barrackpore: first-order discounts, Buy 2 Get 1, free nachos and combo deals. Same boba, smaller bill.');
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute('href', 'https://blendnbubbles.com/offers');
   }, []);
@@ -104,7 +105,8 @@ function Offers() {
                 <p className="hero-subtitle">Tap. Sip. Win.</p>
                 <h1 className="hero-title">Offers &amp; happenings</h1>
                 <p className="hero-text">
-                  The anniversary wheel has taken its final spin — thanks for playing! Here&apos;s what&apos;s brewing now.
+                  {countOffers()} live deals running right now on Zomato and Swiggy. Same boba,
+                  smaller bill.
                 </p>
                 <div className="hero-buttons">
                   <a href="#current-offers" className="btn btn-primary">See what&apos;s on</a>
@@ -128,10 +130,72 @@ function Offers() {
         </div>
       </header>
 
-      {/* Current offers & event CTA */}
+      {/* Live delivery-platform offers */}
       <section className="py-5" id="current-offers">
         <div className="container">
-          <div className="row">
+          <div className="section-header reveal">
+            <h2 className="section-title">Live on both apps</h2>
+            <p className="section-subtitle">
+              Tap a card to open our store and order. Offers are set by us and can change,
+              so the app always shows what is live right now.
+            </p>
+          </div>
+
+          <div className="platform-offers">
+            {PLATFORM_OFFERS.map((platform) => (
+              <article key={platform.id} className={`platform-card platform-${platform.id} reveal`}>
+                <header className="platform-card-head">
+                  <h3>{platform.name}</h3>
+                  <p>{platform.note}</p>
+                </header>
+
+                <ul className="platform-offer-list">
+                  {platform.offers.map((offer) => (
+                    <li key={offer.id} className="platform-offer">
+                      <p className="platform-offer-top">
+                        <span className="platform-offer-headline">{offer.headline}</span>
+                        {offer.cap ? <span className="platform-offer-cap">{offer.cap}</span> : null}
+                        {offer.isNew ? <span className="platform-offer-new">New</span> : null}
+                      </p>
+                      <p className="platform-offer-who">{offer.who}</p>
+                      <p className="platform-offer-condition">{offer.condition}</p>
+                      {offer.code ? (
+                        <p className="platform-offer-code">
+                          <span className="sr-only">Coupon code: </span>
+                          {offer.code}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="platform-card-footnote">{platform.footnote}</p>
+
+                <a
+                  className="btn btn-primary platform-card-cta"
+                  href={platform.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Order on {platform.name}
+                </a>
+              </article>
+            ))}
+          </div>
+
+          <div className="combo-strip reveal">
+            <h3>Combo deals</h3>
+            <ul>
+              {COMBOS.map((combo) => (
+                <li key={combo.id}>
+                  <span className="combo-name">{combo.name}</span>
+                  <span className="combo-price">₹{combo.price}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="row mt-5">
             <div className="col-md-6 mb-4 reveal">
               <div className="card h-100">
                 <div className="card-body">

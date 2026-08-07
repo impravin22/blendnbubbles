@@ -4,6 +4,14 @@ import './Events.css';
 import Navbar from './Navbar';
 import { isEventsEnabled, submitEventRequest } from './eventsClient';
 
+import {
+  BOOKING_OPTIONS,
+  OCCASIONS,
+  PACKAGES,
+  TRUST_MARKERS,
+} from './corporateData';
+import { CATERING_OCCASIONS, CATERING_PACKAGES, CATERING_STEPS } from './cateringData';
+
 export const EVENT_TYPES = [
   'Birthday party',
   'Corporate / office event',
@@ -14,6 +22,11 @@ export const EVENT_TYPES = [
 ];
 
 export const GUEST_BANDS = ['Under 25', '25 – 50', '50 – 100', '100 – 250', '250+'];
+
+export const EVENT_TABS = [
+  { id: 'celebrations', label: 'Celebrations', sub: 'Birthdays, weddings, fests' },
+  { id: 'corporate', label: 'Corporate & campus', sub: 'Offices, tech parks, colleges' },
+];
 
 const EMPTY_FORM = {
   name: '',
@@ -69,6 +82,7 @@ function validate(form) {
 
 function Events() {
   const [scrolled, setScrolled] = useState(false);
+  const [activeTab, setActiveTab] = useState('celebrations');
   const [form, setForm] = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
   // idle | submitting | success | error | disabled
@@ -100,6 +114,26 @@ function Events() {
     document.body.appendChild(script);
     return () => { if (document.body.contains(script)) document.body.removeChild(script); };
   }, []);
+
+  // Roving tabindex: left/right move between tabs, home/end jump to the ends.
+  // Matches the WAI-ARIA tabs pattern so keyboard users are not trapped.
+  const handleTabKeyDown = (event) => {
+    const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (!keys.includes(event.key)) return;
+    event.preventDefault();
+
+    const index = EVENT_TABS.findIndex((tab) => tab.id === activeTab);
+    let nextIndex = index;
+    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + EVENT_TABS.length) % EVENT_TABS.length;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % EVENT_TABS.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = EVENT_TABS.length - 1;
+
+    const nextTab = EVENT_TABS[nextIndex];
+    setActiveTab(nextTab.id);
+    const nextEl = document.getElementById(`tab-${nextTab.id}`);
+    if (nextEl) nextEl.focus();
+  };
 
   const setField = (key) => (event) => {
     const value = event.target.value;
@@ -195,6 +229,130 @@ function Events() {
         </header>
 
         <div className="container">
+          <div className="events-tabs">
+            <div className="events-tablist" role="tablist" aria-label="Types of event">
+              {EVENT_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  id={`tab-${tab.id}`}
+                  aria-selected={activeTab === tab.id}
+                  aria-controls={`panel-${tab.id}`}
+                  tabIndex={activeTab === tab.id ? 0 : -1}
+                  className={`events-tab${activeTab === tab.id ? ' is-active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                  onKeyDown={handleTabKeyDown}
+                >
+                  <span className="events-tab-label">{tab.label}</span>
+                  <span className="events-tab-sub">{tab.sub}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div
+            role="tabpanel"
+            id="panel-celebrations"
+            aria-labelledby="tab-celebrations"
+            hidden={activeTab !== 'celebrations'}
+            tabIndex={0}
+            className="events-panel"
+          >
+            <h2 className="events-panel-title">Parties, weddings and fests</h2>
+            <p className="events-panel-lede">
+              A live boba counter at your venue, shaken to order in front of your guests.
+              Ingredients imported from Taiwan.
+            </p>
+            <ul className="corporate-occasions">
+              {CATERING_OCCASIONS.map((occasion) => (
+                <li key={occasion}>{occasion}</li>
+              ))}
+            </ul>
+
+            <div className="catering-packages">
+              {CATERING_PACKAGES.map((pack) => (
+                <article
+                  key={pack.id}
+                  className={`catering-package${pack.popular ? ' is-popular' : ''}`}
+                >
+                  {pack.popular ? <p className="catering-package-flag">Most booked</p> : null}
+                  <p className="catering-package-guests">{pack.guests}</p>
+                  <h3>{pack.name}</h3>
+                  <p className="catering-package-cups">
+                    <span>{pack.cups}</span> {pack.unit}
+                  </p>
+                  <ul>
+                    {pack.includes.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                  <p className="catering-package-fits">{pack.fits}</p>
+                </article>
+              ))}
+            </div>
+            <p className="corporate-packages-note">Set-up and clean-up included.</p>
+          </div>
+
+          <div
+            role="tabpanel"
+            id="panel-corporate"
+            aria-labelledby="tab-corporate"
+            hidden={activeTab !== 'corporate'}
+            tabIndex={0}
+            className="events-panel"
+          >
+            <h2 className="events-panel-title">Your event, our bubble tea bar</h2>
+            <p className="events-panel-lede">
+              We bring a live Taiwanese bubble tea counter to your office, campus or tech park.
+              Brewed fresh on site, cup by cup, while your people watch. Serving events across
+              Kolkata.
+            </p>
+            <ul className="corporate-occasions">
+              {OCCASIONS.map((occasion) => (
+                <li key={occasion}>{occasion}</li>
+              ))}
+            </ul>
+
+            <div className="corporate-options">
+              {BOOKING_OPTIONS.map((option) => (
+                <article
+                  key={option.id}
+                  className={`corporate-option${option.highlight ? ' is-highlighted' : ''}`}
+                >
+                  <p className="corporate-option-tag">{option.tag}</p>
+                  <h3>{option.name}</h3>
+                  <p className="corporate-option-cost">{option.cost}</p>
+                  <p className="corporate-option-body">{option.body}</p>
+                  <p className="corporate-option-note">{option.note}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="corporate-packages">
+              <h3>Pick your headcount</h3>
+              <ul>
+                {PACKAGES.map((pack) => (
+                  <li key={pack.id}>
+                    <span className="corporate-pack-cups">{pack.cups}</span>
+                    <span className="corporate-pack-unit">{pack.unit}</span>
+                    <span className="corporate-pack-fits">{pack.fits}</span>
+                    <span className="corporate-pack-detail">{pack.detail}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="corporate-packages-note">Set-up and clean-up included.</p>
+            </div>
+
+            <ul className="corporate-trust">
+              {TRUST_MARKERS.map((marker) => (
+                <li key={marker.id}>
+                  <strong>{marker.label}</strong> <span>{marker.detail}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <div className="events-grid">
 
             <aside className="events-pitch">
@@ -205,27 +363,15 @@ function Events() {
                 bulk orders and in-store parties, with ingredients imported from Taiwan.
               </p>
 
-              <div className="events-step">
-                <div className="events-step-num" aria-hidden="true">1</div>
-                <div>
-                  <h3>Tell us about your event</h3>
-                  <p>Fill the form — takes under two minutes.</p>
+              {CATERING_STEPS.map((step, index) => (
+                <div className="events-step" key={step.id}>
+                  <div className="events-step-num" aria-hidden="true">{index + 1}</div>
+                  <div>
+                    <h3>{step.title}</h3>
+                    <p>{step.body}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="events-step">
-                <div className="events-step-num" aria-hidden="true">2</div>
-                <div>
-                  <h3>We call you back</h3>
-                  <p>Within 24 hours, with a menu and a quote for your headcount.</p>
-                </div>
-              </div>
-              <div className="events-step">
-                <div className="events-step-num" aria-hidden="true">3</div>
-                <div>
-                  <h3>We pour, you party</h3>
-                  <p>Freshly shaken at your venue or ours. Every bubble tells a story.</p>
-                </div>
-              </div>
+              ))}
 
               <div className="events-direct-card">
                 <strong>Prefer to talk?</strong>
@@ -370,6 +516,7 @@ function Events() {
 
           </div>
         </div>
+
       </main>
 
       <footer className="bg-dark text-white py-4">
