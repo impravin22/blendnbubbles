@@ -32,6 +32,9 @@ code {
   --footer-bg: #212529;
   --input-bg: #ffffff;
   --input-border: #ced4da;
+  /* Warm accent for text on light surfaces. --secondary (#BB8750) fails AA
+     against cream at 2.91:1, so body-weight accent text uses this instead. */
+  --accent-text: #8a5a2e;
   
   /* Gradients */
   --gold-gradient: linear-gradient(45deg, #BB8750, #CEAA67);
@@ -52,6 +55,7 @@ code {
   --footer-bg: #0a0a0a;
   --input-bg: #2d2d2d;
   --input-border: #444444;
+  --accent-text: #d4a773;
   
   --gold-gradient: linear-gradient(45deg, #d4a773, #dfc491);
   --teal-gradient: linear-gradient(45deg, #121212, #1e1e1e);

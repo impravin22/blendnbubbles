@@ -1,9 +1,11 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from './ThemeContext';
 import Events from './Events';
 import * as eventsClient from './eventsClient';
+import { BOOKING_OPTIONS, OCCASIONS, PACKAGES } from './corporateData';
+import { CATERING_PACKAGES, CATERING_STEPS } from './cateringData';
 
 jest.mock('./eventsClient');
 
@@ -153,5 +155,102 @@ describe('Events page', () => {
     // The success card interpolates the first "word" of the name — the raw
     // string must appear as text, never as an element.
     expect(document.querySelector('img[src="x"]')).toBeNull();
+  });
+});
+
+describe('Events page tabs', () => {
+  // The inactive panel carries `hidden`, so it is out of the accessibility tree
+  // and role queries cannot reach it — but asserting that it IS hidden is the
+  // whole point of these tests. getElementById is the honest tool here.
+  /* eslint-disable testing-library/no-node-access */
+  const corporatePanel = () => document.getElementById('panel-corporate');
+  const celebrationsPanel = () => document.getElementById('panel-celebrations');
+  /* eslint-enable testing-library/no-node-access */
+
+  it('opens on Celebrations, with the corporate panel hidden', () => {
+    renderEvents();
+    expect(screen.getByRole('tab', { name: /celebrations/i })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    expect(celebrationsPanel()).not.toHaveAttribute('hidden');
+    expect(corporatePanel()).toHaveAttribute('hidden');
+  });
+
+  it('switches to the corporate panel on click', () => {
+    renderEvents();
+    fireEvent.click(screen.getByRole('tab', { name: /corporate/i }));
+    expect(corporatePanel()).not.toHaveAttribute('hidden');
+    expect(celebrationsPanel()).toHaveAttribute('hidden');
+  });
+
+  it('moves between tabs with arrow keys, per the WAI-ARIA tabs pattern', () => {
+    renderEvents();
+    const first = screen.getByRole('tab', { name: /celebrations/i });
+    first.focus();
+    fireEvent.keyDown(first, { key: 'ArrowRight' });
+    expect(screen.getByRole('tab', { name: /corporate/i })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    fireEvent.keyDown(screen.getByRole('tab', { name: /corporate/i }), { key: 'ArrowLeft' });
+    expect(first).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('keeps only the active tab in the tab order', () => {
+    renderEvents();
+    expect(screen.getByRole('tab', { name: /celebrations/i })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('tab', { name: /corporate/i })).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('renders the how-it-works steps from data, not hardcoded copy', () => {
+    renderEvents();
+    CATERING_STEPS.forEach((step) => {
+      expect(screen.getByRole('heading', { name: step.title })).toBeInTheDocument();
+      expect(screen.getByText(step.body)).toBeInTheDocument();
+    });
+  });
+
+  it('makes both tabpanels reachable by keyboard', () => {
+    renderEvents();
+    expect(celebrationsPanel()).toHaveAttribute('tabindex', '0');
+    expect(corporatePanel()).toHaveAttribute('tabindex', '0');
+  });
+
+  it('shows catering packages in the celebrations panel', () => {
+    renderEvents();
+    const panel = within(celebrationsPanel());
+    CATERING_PACKAGES.forEach((pack) => {
+      expect(panel.getByRole('heading', { name: pack.name })).toBeInTheDocument();
+      expect(panel.getByText(pack.guests)).toBeInTheDocument();
+    });
+  });
+
+  it('shows both booking routes so a buyer with no budget still has a yes', () => {
+    renderEvents();
+    fireEvent.click(screen.getByRole('tab', { name: /corporate/i }));
+    const panel = within(corporatePanel());
+    BOOKING_OPTIONS.forEach((option) => {
+      expect(panel.getByRole('heading', { name: option.name })).toBeInTheDocument();
+      expect(panel.getByText(option.cost)).toBeInTheDocument();
+    });
+  });
+
+  it('lists every corporate occasion and headcount package', () => {
+    renderEvents();
+    fireEvent.click(screen.getByRole('tab', { name: /corporate/i }));
+    const panel = within(corporatePanel());
+    OCCASIONS.forEach((occasion) => {
+      expect(panel.getByText(occasion)).toBeInTheDocument();
+    });
+    PACKAGES.forEach((pack) => {
+      expect(panel.getByText(pack.fits)).toBeInTheDocument();
+    });
+  });
+
+  it('shows the FSSAI licence, the credibility marker a facilities team looks for', () => {
+    renderEvents();
+    fireEvent.click(screen.getByRole('tab', { name: /corporate/i }));
+    expect(within(corporatePanel()).getByText('12825999000080')).toBeInTheDocument();
   });
 });
