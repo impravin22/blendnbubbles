@@ -230,17 +230,47 @@ describe('failure states stay distinguishable', () => {
 });
 
 describe('search engines', () => {
-  it('marks the portal noindex while it is mounted', async () => {
+  const mountWithData = () => {
     window.localStorage.setItem(partnersClient.TOKEN_KEY, 'owner-token');
     jest
       .spyOn(partnersClient, 'fetchPartnerSheets')
       .mockResolvedValue({ status: 'ok', data: EXTRACT });
-    const { unmount } = renderPartners();
+    return renderPartners();
+  };
+
+  const robotsTags = () =>
+    [...document.querySelectorAll('meta[name="robots"]')].map((m) => m.content);
+
+  afterEach(() => {
+    document.querySelectorAll('meta[name="robots"]').forEach((m) => m.remove());
+  });
+
+  it('marks the portal noindex while it is mounted, and cleans up after', async () => {
+    const { unmount } = mountWithData();
 
     await screen.findByText('Ananya Sen');
-    expect(document.querySelector('meta[name="robots"]').content).toBe('noindex,nofollow');
+    expect(robotsTags()).toEqual(['noindex,nofollow']);
 
     unmount();
-    expect(document.querySelector('meta[name="robots"]')).toBeNull();
+    expect(robotsTags()).toEqual([]);
+  });
+
+  it('overrides an existing robots tag rather than adding a second one', async () => {
+    // index.html ships `<meta name="robots" content="index, follow">`. Two tags
+    // in the head leaves the outcome to crawler policy; there must be exactly
+    // one, and it must say noindex.
+    const shipped = document.createElement('meta');
+    shipped.name = 'robots';
+    shipped.content = 'index, follow';
+    document.head.appendChild(shipped);
+
+    const { unmount } = mountWithData();
+    await screen.findByText('Ananya Sen');
+
+    expect(robotsTags()).toEqual(['noindex,nofollow']);
+
+    // Leaving the site must hand the marketing pages back their indexable tag.
+    unmount();
+    expect(robotsTags()).toEqual(['index, follow']);
   });
 });
