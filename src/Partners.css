@@ -1,0 +1,393 @@
+/* Partner Portal.
+ *
+ * Every selector here is scoped to a .partners-* root. CRA concatenates all
+ * imported CSS into one global stylesheet, so a bare `table` or `th` rule would
+ * restyle the sales dashboard's tables on a page that never imports this file.
+ */
+
+/* ─── Gate and full-page states ─────────────────────────────── */
+.partners-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
+  font-family: 'Inter', 'Roboto', sans-serif;
+  color: #fff;
+  padding: 2rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.partners-container::before,
+.partners-container::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  filter: blur(40px);
+  animation: partners-float 10s infinite ease-in-out alternate;
+  z-index: 0;
+}
+
+.partners-container::before {
+  top: -50px;
+  left: -50px;
+}
+
+.partners-container::after {
+  bottom: -50px;
+  right: -50px;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes partners-float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(50px, 50px) scale(1.1); }
+}
+
+/* Glassmorphism card.
+ *
+ * The backdrop is dark rather than white-on-gradient: the page gradient runs to
+ * #928dab, and muted text over that lands near 1.2:1. Pinning the card to a
+ * dark translucent surface keeps the glass effect while giving every label a
+ * predictable background to meet 4.5:1 against.
+ */
+.partners-card {
+  background: rgba(15, 17, 21, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 3rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+  z-index: 1;
+  text-align: center;
+}
+
+.partners-card h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  /* Colour first: the clip-to-text treatment is progressive enhancement, and
+   * without a base colour a browser that ignores it renders nothing. */
+  color: #fff;
+  background: linear-gradient(to right, #fff, #d4d4d8);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .partners-card h1 {
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.partners-card p {
+  color: #d4d4d8;
+  margin-bottom: 2rem;
+}
+
+.passcode-input-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.passcode-input {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1.1rem;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.passcode-input::placeholder {
+  color: #9b9ba4;
+}
+
+.passcode-input:focus-visible {
+  border-color: #a5b4fc;
+  box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.45);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -10px rgba(147, 51, 234, 0.6);
+}
+
+.submit-btn:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
+.error-msg {
+  color: #fca5a5;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.partners-back {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: #d4d4d8;
+  font-size: 0.95rem;
+}
+
+.partners-back:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Dashboard ─────────────────────────────────────────────── */
+.partners-dashboard-layout {
+  display: flex;
+  height: 100vh;
+  background: #0f1115;
+  color: #fff;
+  font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+.partners-dashboard-layout .sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.02);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.partners-dashboard-layout .sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.partners-dashboard-layout .sidebar h2 {
+  font-size: 1.2rem;
+  margin: 0;
+  color: #b6b6bf;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sign-out-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #d4d4d8;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.sign-out-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.sign-out-btn:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
+.tab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #e4e4e7;
+  text-align: left;
+  padding: 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tab-btn:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: -2px;
+}
+
+.tab-btn.active {
+  background: rgba(99, 102, 241, 0.16);
+  border-color: rgba(129, 140, 248, 0.5);
+  color: #c7d2fe;
+  font-weight: 600;
+}
+
+.no-sheets {
+  color: #b6b6bf;
+  font-size: 0.95rem;
+}
+
+.content-area {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sheet-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.sheet-meta {
+  color: #b6b6bf;
+  margin: 0;
+}
+
+.btn-outline {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.btn-outline:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
+/* ─── Sheet table ───────────────────────────────────────────── */
+.table-container {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.table-container th,
+.table-container td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.table-container th {
+  background: #1a1d24;
+  font-weight: 600;
+  color: #b6b6bf;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table-container tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.no-data {
+  text-align: center;
+  padding: 3rem;
+  color: #b6b6bf;
+}
+
+/* ─── Responsive ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .partners-dashboard-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .partners-dashboard-layout .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .content-area {
+    padding: 1.25rem;
+  }
+
+  .partners-card {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partners-container::before,
+  .partners-container::after {
+    animation: none;
+  }
+
+  .submit-btn,
+  .tab-btn,
+  .btn-outline,
+  .sign-out-btn,
+  .passcode-input {
+    transition: none;
+  }
+
+  .submit-btn:hover {
+    transform: none;
+  }
+}
