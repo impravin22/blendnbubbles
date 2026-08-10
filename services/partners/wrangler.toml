@@ -15,9 +15,9 @@ ALLOWED_ORIGIN = "https://blendnbubbles.com"
 # carries customer names and phone numbers, so it lives here rather than in the
 # repo or the build — that is the entire point of this service.
 #
-# One-time setup:
-#   npx wrangler kv namespace create PARTNERS     # paste the id below
+# The id is not a secret — it names the namespace, it does not open it. The
+# value that IS secret is PARTNERS_TOKEN, which is never in this file:
 #   npx wrangler secret put PARTNERS_TOKEN        # openssl rand -base64 32
 [[kv_namespaces]]
 binding = "PARTNERS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "f96d03148ff34b999761891668389d2a"
