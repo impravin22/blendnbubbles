@@ -103,13 +103,23 @@ function Partners() {
 
   useEffect(() => {
     document.title = 'Partner Portal - BlendNBubbles';
-    // Keep the portal out of search engines. Scoped to this route only (removed
+    // Keep the portal out of search engines. Scoped to this route only (undone
     // on unmount) so the public marketing pages stay indexable.
-    const robots = document.createElement('meta');
-    robots.name = 'robots';
+    //
+    // index.html already ships `<meta name="robots" content="index, follow">`.
+    // Appending a second tag leaves both in the head and makes the outcome a
+    // matter of crawler policy — Google takes the most restrictive, others need
+    // not. Override the existing tag instead, so there is only ever one answer.
+    const existing = document.querySelector('meta[name="robots"]');
+    const previous = existing?.content ?? null;
+    const robots = existing ?? document.head.appendChild(
+      Object.assign(document.createElement('meta'), { name: 'robots' }),
+    );
     robots.content = 'noindex,nofollow';
-    document.head.appendChild(robots);
-    return () => { robots.remove(); };
+    return () => {
+      if (previous === null) robots.remove();
+      else robots.content = previous;
+    };
   }, []);
 
   useEffect(() => {
