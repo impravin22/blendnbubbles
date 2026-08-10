@@ -46,3 +46,22 @@ scripts/out/
 # Local credentials — token files, service-account keys. Never commit.
 .secrets/
 .claude/launch.json
+
+# Google OAuth token — holds a live refresh token for the business Drive
+# account. Never commit; revoke at myaccount.google.com/permissions if it ever
+# leaves this machine.
+token.json
+
+# Partner sheet extract — customer names, phone numbers, and event enquiries
+# pulled from Drive. Lives in Cloudflare KV like the sales dataset, never in
+# the repo and never in the build. The staging copy that
+# scripts/fetch-partner-data.js writes is already covered by scripts/out/ above;
+# this line stops the extract ever reappearing under src/, where webpack would
+# bundle it into the public site.
+src/partnerData.json
+
+# Agent worktrees, browser captures, and scratch screenshot scripts.
+.claude/worktrees/
+.playwright-mcp/
+zomato-pics/
+_shot.js

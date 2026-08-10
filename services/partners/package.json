@@ -1,0 +1,15 @@
+{
+  "name": "@blendnbubbles/partners",
+  "version": "0.1.0",
+  "description": "Serves the partner sheet extract from KV behind a bearer token, keeping customer personal data out of the public repo and public build",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy"
+  },
+  "dependencies": {}
+}

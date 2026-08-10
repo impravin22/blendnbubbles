@@ -15,6 +15,7 @@ import BobaCatcher from './BobaCatcher';
 // actually stops the game — see firestore.rules.
 import HallOfFame from './HallOfFame';
 import Reports from './Reports';
+import Partners from './Partners';
 import Navbar from './Navbar';
 import { ThemeProvider } from './ThemeContext';
 
@@ -110,6 +111,7 @@ function AnimatedRoutes() {
             <Route path="/play" element={<BobaCatcher />} />
             <Route path="/play/football" element={<HallOfFame />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/partners" element={<Partners />} />
           </Routes>
         </div>
       </CSSTransition>

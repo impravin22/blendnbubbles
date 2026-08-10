@@ -1,0 +1,23 @@
+name = "blendnbubbles-partners"
+main = "src/index.js"
+compatibility_date = "2025-04-01"
+workers_dev = true
+
+# Off deliberately. Preview URLs give every deployed version its own permanent
+# public hostname carrying the same secret and the same KV data, so a version
+# with a flawed auth check would stay reachable after the main route was fixed.
+preview_urls = false
+
+[vars]
+ALLOWED_ORIGIN = "https://blendnbubbles.com"
+
+# Holds the partner sheet extract under the key `partner-sheets`. The extract
+# carries customer names and phone numbers, so it lives here rather than in the
+# repo or the build — that is the entire point of this service.
+#
+# One-time setup:
+#   npx wrangler kv namespace create PARTNERS     # paste the id below
+#   npx wrangler secret put PARTNERS_TOKEN        # openssl rand -base64 32
+[[kv_namespaces]]
+binding = "PARTNERS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"

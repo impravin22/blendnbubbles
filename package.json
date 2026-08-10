@@ -12,6 +12,7 @@
     "dotenv": "^17.2.3",
     "firebase": "^12.9.0",
     "gh-pages": "^6.3.0",
+    "googleapis": "^174.0.1",
     "nodemailer": "^7.0.11",
     "react": "^18.2.0",
     "react-custom-roulette": "^1.4.1",
@@ -22,11 +23,12 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "update-partner-data": "node scripts/fetch-partner-data.js",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "GENERATE_SOURCEMAP=false react-scripts build && npm run postbuild",
-    "postbuild": "cd build && mkdir -p menu story play play/football offers events reports && cp index.html menu/index.html && cp index.html story/index.html && cp index.html play/index.html && cp index.html play/football/index.html && cp index.html offers/index.html && cp index.html events/index.html && cp index.html reports/index.html",
+    "postbuild": "cd build && mkdir -p menu story play play/football offers events reports partners && cp index.html menu/index.html && cp index.html story/index.html && cp index.html play/index.html && cp index.html play/football/index.html && cp index.html offers/index.html && cp index.html events/index.html && cp index.html reports/index.html && cp index.html partners/index.html",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
