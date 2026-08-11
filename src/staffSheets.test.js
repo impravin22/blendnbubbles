@@ -1,181 +1,153 @@
-// The schema is two things at once, and both are load-bearing.
-//
-// It is a READER: these five sheets put their headers on four different rows
-// (0, 1, 2 and 3), and Sheets omits trailing empty cells so every row arrives
-// ragged. Nothing can address a column by name without this.
-//
-// It is also a SECURITY BOUNDARY: it is an allowlist. `customer details
-// dec-april`, `Daily_Sales_Record_Tracker_2025` and the webhook-fed sheets are
-// absent by construction, so no request — however malformed — can reach them.
+// The schema describes sheets the console creates for itself, and it is the
+// security boundary: it is an allowlist, so no request can name an existing
+// sheet however it is formed. Google enforces the same thing independently via
+// the `drive.file` grant — this is the belt to that pair of braces.
 
 const {
-  listSheets,
-  getSchema,
-  parseRecords,
-  parseCategories,
-  validate,
-  toRowValues,
-  canEdit,
+  listSheets, getSchema, headerFor, widthOf, editableFields,
+  parseRecords, validate, toRowValues, canEdit,
 } = require('./staffSheets');
 
-const USER = { email: 'rishav@blendnbubbles.com', name: 'Rishav' };
-const OTHER = { email: 'arpan@blendnbubbles.com', name: 'Arpan' };
-
-// Shapes lifted verbatim from the live Drive extract (2026-08-10), including
-// the ragged tails and the blank leading column.
-const MARKETING_ROWS = [
-  ['', 'Department', 'Task Name', 'Subtask', 'Owner', 'Start Date', 'Due Date',
-   'Priority', 'Status', 'Approval', 'Expected Impact', 'Remarks', 'Attachment Link'],
-  ['1', 'Marketing', 'penalty kick campaign', 'shoot, edit', 'Rishav',
-   '2026-06-27', '2026-06-01', '1', 'Not Started', 'FALSE', 'increase followers'],
-  ['2', 'Marketing', 'leaflets', 'distribution', 'Rishav',
-   '2026-06-11', '2026-06-16', '3', 'In Progress', 'FALSE', 'drive footfall'],
-  ['3', 'Marketing', 'festival stall banner', 'design', 'Arpan',
-   '2026-06-02', '2026-06-22', '2', 'Done', 'TRUE', 'stall visibility'],
-];
-
-const FEST_ROWS = [
-  [],
-  ['Utensils', 'Stationery', 'Appliances ', 'Premix', 'Syrup', "Tapioca/ Popping boba's", 'Others'],
-  ['boba boil pot', 'sticky pad', 'mixture/grinder 2', 'creamer 3 kg', 'special sugar'],
-  ['strainer', 'marker'],
-  ['shaker cups'],
-];
+const RISHAV = { name: 'Rishav', email: 'rishav@blendnbubbles.com' };
+const ARPAN = { name: 'Arpan', email: 'arpan@blendnbubbles.com' };
+const NOW = '2026-08-11T09:00:00.000Z';
 
 describe('the allowlist', () => {
-  it('exposes exactly the five sheets staff were given', () => {
+  it('exposes exactly the five sheets the console creates', () => {
     expect(listSheets().map((s) => s.id).sort()).toEqual([
-      'attendance', 'drinks-invention', 'experiments', 'fest-list', 'marketing-tracker',
+      'staff-attendance', 'staff-drinks', 'staff-experiments', 'staff-fest-list', 'staff-tasks',
     ]);
   });
 
-  it('does not expose the customer list, sales tracker, or webhook sheets', () => {
-    const exposed = listSheets().map((s) => s.driveName.toLowerCase());
-    for (const forbidden of [
-      'customer details dec-april',
-      'daily_sales_record_tracker_2025',
-      'bnb event requests',
-      'bnb anniversary spins webhook',
-      'bnb campaign quotation',
+  it('names no existing sheet as a write target', () => {
+    // seedFrom is a read source, deliberately separate from the write target.
+    const titles = listSheets().map((s) => s.title.toLowerCase());
+    for (const original of [
+      'customer details dec-april', 'daily_sales_record_tracker_2025',
+      'bnb event requests', 'needed for fest', 'attendance tracker 2026',
+      'marketing & content project tracker 2026',
     ]) {
-      expect(exposed).not.toContain(forbidden);
+      expect(titles).not.toContain(original);
     }
   });
 
-  it('returns null for an unknown id rather than guessing', () => {
-    expect(getSchema('customer-details')).toBeNull();
-    expect(getSchema('')).toBeNull();
-    expect(getSchema(undefined)).toBeNull();
+  it('every target title is namespaced so it cannot collide with a real sheet', () => {
+    expect(listSheets().every((s) => s.title.startsWith('BnB Staff —'))).toBe(true);
   });
 
-  it('rejects a traversal-flavoured id without throwing', () => {
-    expect(getSchema('../../customer details dec-april')).toBeNull();
-    expect(getSchema('__proto__')).toBeNull();
-    expect(getSchema('constructor')).toBeNull();
+  it('refuses unknown, empty and prototype ids', () => {
+    for (const id of ['customer-details', 'marketing-tracker', '', undefined, '__proto__', 'constructor']) {
+      expect(getSchema(id)).toBeNull();
+    }
   });
 
-  it('every schema declares where its header row actually is', () => {
-    // The bug this prevents: assuming row 0. Five sheets, four different answers.
-    const rows = listSheets().map((s) => [s.id, getSchema(s.id).headerRow]);
-    expect(Object.fromEntries(rows)).toEqual({
-      'marketing-tracker': 0,
-      'fest-list': 1,
-      experiments: 2,
-      'drinks-invention': 3,
-      attendance: 4,
-    });
+  it('puts the header on row 0 everywhere — we build these, so there is no archaeology', () => {
+    expect(listSheets().every((s) => getSchema(s.id).headerRow === 0)).toBe(true);
+  });
+
+  it('gives every sheet the same audit spine', () => {
+    for (const { id } of listSheets()) {
+      const keys = getSchema(id).fields.map((f) => f.key);
+      expect(keys).toEqual(expect.arrayContaining(['rowId', 'addedBy', 'addedAt', 'updatedBy', 'updatedAt']));
+    }
+  });
+
+  it('assigns every field a distinct column', () => {
+    for (const { id } of listSheets()) {
+      const indexes = getSchema(id).fields.map((f) => f.index);
+      expect(new Set(indexes).size).toBe(indexes.length);
+    }
+  });
+});
+
+describe('headerFor', () => {
+  it('builds the header row the sheet is created with', () => {
+    expect(headerFor(getSchema('staff-attendance')))
+      .toEqual(['Row Id', 'Employee', 'Date', 'Status', 'Note',
+        'Added By', 'Added At', 'Updated By', 'Updated At']);
+  });
+
+  it('matches the declared width', () => {
+    for (const { id } of listSheets()) {
+      const schema = getSchema(id);
+      expect(headerFor(schema)).toHaveLength(widthOf(schema));
+    }
+  });
+
+  it('leaves audit and identity columns out of what a person may send', () => {
+    const keys = editableFields(getSchema('staff-tasks')).map((f) => f.key);
+    expect(keys).not.toContain('rowId');
+    expect(keys).not.toContain('addedBy');
+    expect(keys).not.toContain('updatedAt');
+    expect(keys).toContain('taskName');
   });
 });
 
 describe('parseRecords', () => {
-  const schema = getSchema('marketing-tracker');
+  const schema = getSchema('staff-tasks');
+  const rows = [
+    headerFor(schema),
+    ['r1', 'Marketing', 'penalty kick campaign', 'shoot', '2026-06-27', '2026-06-01',
+     '1', 'Not Started', '', '', '', 'Rishav', NOW, 'Rishav', NOW],
+    ['r2', 'Content', 'leaflets', '', '', '2026-06-16', '5', 'Completed'],
+  ];
 
-  it('maps cells to field keys by header position', () => {
-    const [first] = parseRecords(schema, MARKETING_ROWS);
+  it('reads values back by field key', () => {
+    const [first] = parseRecords(schema, rows);
     expect(first.values.taskName).toBe('penalty kick campaign');
-    expect(first.values.owner).toBe('Rishav');
-    expect(first.values.priority).toBe('1');
+    expect(first.values.addedBy).toBe('Rishav');
   });
 
-  it('pads ragged rows instead of shearing them', () => {
-    // Row 1 has 11 cells against a 13-column header; Sheets dropped the tail.
-    const [first] = parseRecords(schema, MARKETING_ROWS);
-    expect(first.values.remarks).toBe('');
-    expect(first.values.attachmentLink).toBe('');
+  it('pads a ragged row rather than shearing it', () => {
+    const [, second] = parseRecords(schema, rows);
+    expect(second.values.updatedAt).toBe('');
+    expect(second.values.status).toBe('Completed');
   });
 
-  it('records the real sheet row number so an edit can target it', () => {
-    const records = parseRecords(schema, MARKETING_ROWS);
-    // Header at index 0, so the first record is sheet row 2 (1-indexed).
-    expect(records.map((r) => r.rowNumber)).toEqual([2, 3, 4]);
+  it('numbers rows as the Sheets API does', () => {
+    expect(parseRecords(schema, rows).map((r) => r.rowNumber)).toEqual([2, 3]);
   });
 
-  it('skips rows that are entirely blank', () => {
-    const withGap = [MARKETING_ROWS[0], [], MARKETING_ROWS[1], ['', '', '']];
-    expect(parseRecords(schema, withGap)).toHaveLength(1);
-  });
-
-  it('returns an empty list for a sheet with only a header', () => {
-    expect(parseRecords(schema, [MARKETING_ROWS[0]])).toEqual([]);
-  });
-
-  it('survives rows arriving before the header row exists', () => {
+  it('skips blank rows and survives missing input', () => {
+    expect(parseRecords(schema, [headerFor(schema), [], ['', '']])).toEqual([]);
     expect(parseRecords(schema, [])).toEqual([]);
     expect(parseRecords(schema, null)).toEqual([]);
-  });
-
-  it('reads experiments from row 2, not row 0', () => {
-    const exp = getSchema('experiments');
-    const rows = [
-      [],
-      ['', 'EXPERIMENTS - TRACKER'],
-      ['', 'Subject', 'Assignment', 'Priority', 'Items needed', 'Status', 'Time', 'Start date', 'Due on'],
-      ['', 'Brown sugar ratio', 'Rishav', '2', 'syrup, scale', 'In Progress', '2h', '2026-08-01', '2026-08-09'],
-    ];
-    const [rec] = parseRecords(exp, rows);
-    expect(rec.values.subject).toBe('Brown sugar ratio');
-    expect(rec.rowNumber).toBe(4);
   });
 });
 
 describe('ownership', () => {
-  const schema = getSchema('marketing-tracker');
+  const tasks = getSchema('staff-tasks');
 
-  it('matches a record to the signed-in user by name', () => {
-    const [mine, , theirs] = parseRecords(schema, MARKETING_ROWS);
-    expect(canEdit(schema, mine, USER)).toBe(true);
-    expect(canEdit(schema, theirs, USER)).toBe(false);
+  it('lets a person edit what they added', () => {
+    const rec = { values: { addedBy: 'Rishav' } };
+    expect(canEdit(tasks, rec, RISHAV)).toBe(true);
+    expect(canEdit(tasks, rec, ARPAN)).toBe(false);
   });
 
-  it('is case and whitespace insensitive — sheets are typed by hand', () => {
-    const rows = [MARKETING_ROWS[0], ['1', 'Marketing', 'x', '', '  rishav  ', '', '', '', '', '', '']];
-    const [rec] = parseRecords(schema, rows);
-    expect(canEdit(schema, rec, USER)).toBe(true);
+  it('ignores case and stray whitespace', () => {
+    expect(canEdit(tasks, { values: { addedBy: '  rishav ' } }, RISHAV)).toBe(true);
   });
 
-  it('refuses when the owner cell is blank rather than letting anyone claim it', () => {
-    const rows = [MARKETING_ROWS[0], ['1', 'Marketing', 'orphan task', '', '', '', '', '', '', '', '']];
-    const [rec] = parseRecords(schema, rows);
-    expect(canEdit(schema, rec, USER)).toBe(false);
-    expect(canEdit(schema, rec, OTHER)).toBe(false);
+  it('refuses an unowned row rather than letting anyone claim it', () => {
+    expect(canEdit(tasks, { values: { addedBy: '' } }, RISHAV)).toBe(false);
   });
 
-  it('refuses when there is no signed-in user at all', () => {
-    const [mine] = parseRecords(schema, MARKETING_ROWS);
-    expect(canEdit(schema, mine, null)).toBe(false);
-    expect(canEdit(schema, mine, {})).toBe(false);
+  it('refuses with no signed-in user', () => {
+    expect(canEdit(tasks, { values: { addedBy: 'Rishav' } }, null)).toBe(false);
+    expect(canEdit(tasks, { values: { addedBy: 'Rishav' } }, {})).toBe(false);
   });
 
-  it('never grants edit on a shape that has no owner column', () => {
-    const att = getSchema('attendance');
-    expect(canEdit(att, { values: {} }, USER)).toBe(false);
+  it('scopes attendance by the employee, not by who typed it', () => {
+    const att = getSchema('staff-attendance');
+    expect(canEdit(att, { values: { employee: 'Rishav', addedBy: 'Arpan' } }, RISHAV)).toBe(true);
+    expect(canEdit(att, { values: { employee: 'Arpan', addedBy: 'Rishav' } }, RISHAV)).toBe(false);
   });
 });
 
 describe('validate', () => {
-  const schema = getSchema('marketing-tracker');
+  const schema = getSchema('staff-tasks');
   const good = {
-    department: 'Marketing', taskName: 'Durga Puja promo', owner: 'Rishav',
+    department: 'Marketing', taskName: 'Durga Puja promo',
     startDate: '2026-08-11', dueDate: '2026-10-26', priority: '2', status: 'Not Started',
   };
 
@@ -183,159 +155,104 @@ describe('validate', () => {
     expect(validate(schema, good)).toEqual({ valid: true, errors: {} });
   });
 
-  it('names every missing required field, not just the first', () => {
-    const { valid, errors } = validate(schema, { ...good, taskName: '', dueDate: '' });
-    expect(valid).toBe(false);
+  it('accepts the values the live sheets actually use', () => {
+    expect(validate(schema, { ...good, department: 'Content', priority: '5', status: 'Completed' }).valid).toBe(true);
+    expect(validate(schema, { ...good, department: 'TBD' }).valid).toBe(true);
+  });
+
+  it('names every missing required field at once', () => {
+    const { errors } = validate(schema, { ...good, taskName: '  ', dueDate: '' });
     expect(Object.keys(errors).sort()).toEqual(['dueDate', 'taskName']);
   });
 
-  it('treats whitespace as missing', () => {
-    expect(validate(schema, { ...good, taskName: '   ' }).errors.taskName).toBeTruthy();
-  });
-
   it('rejects a due date before the start date', () => {
-    // This is not hypothetical: the live "penalty kick campaign" row starts
-    // 2026-06-27 and is due 2026-06-01.
-    const { valid, errors } = validate(schema, {
-      ...good, startDate: '2026-06-27', dueDate: '2026-06-01',
-    });
-    expect(valid).toBe(false);
-    expect(errors.dueDate).toMatch(/start/i);
+    expect(validate(schema, { ...good, startDate: '2026-06-27', dueDate: '2026-06-01' }).errors.dueDate)
+      .toMatch(/start/i);
   });
 
-  it('allows a due date equal to the start date', () => {
-    expect(validate(schema, { ...good, startDate: '2026-08-11', dueDate: '2026-08-11' }).valid).toBe(true);
+  it('rejects an impossible date instead of rolling it over', () => {
+    expect(validate(schema, { ...good, dueDate: '2026-13-45' }).errors.dueDate).toBeTruthy();
+    expect(validate(schema, { ...good, dueDate: 'next tuesday' }).errors.dueDate).toBeTruthy();
   });
 
-  it('rejects a value outside a select field options', () => {
+  it('rejects an option outside the list', () => {
     expect(validate(schema, { ...good, status: 'Nearly done' }).errors.status).toBeTruthy();
     expect(validate(schema, { ...good, priority: '9' }).errors.priority).toBeTruthy();
   });
 
-  it('rejects a malformed date rather than passing it to the sheet', () => {
-    expect(validate(schema, { ...good, dueDate: 'next tuesday' }).errors.dueDate).toBeTruthy();
-    expect(validate(schema, { ...good, dueDate: '2026-13-45' }).errors.dueDate).toBeTruthy();
-  });
-
-  it('caps free text so one paste cannot bloat the row', () => {
-    expect(validate(schema, { ...good, taskName: 'x'.repeat(500) }).errors.taskName).toMatch(/long/i);
-  });
-
-  it('rejects a formula injection attempt in a text cell', () => {
-    // A leading =, +, - or @ makes Sheets evaluate the cell. HYPERLINK and
-    // IMPORTXML in a shared sheet are a genuine exfiltration route.
-    for (const payload of ['=HYPERLINK("http://evil","x")', '+1+1', '-2+3', '@SUM(A1)']) {
+  it('refuses a formula lead — Sheets would evaluate it', () => {
+    for (const payload of ['=IMPORTXML("http://evil","//a")', '+1+1', '-2+3', '@SUM(A1)']) {
       expect(validate(schema, { ...good, taskName: payload }).errors.taskName).toMatch(/formula/i);
     }
   });
 
-  it('leaves an ordinary hyphenated or plus-containing string alone', () => {
-    expect(validate(schema, { ...good, taskName: 'Buy-one-get-one promo' }).valid).toBe(true);
+  it('leaves ordinary punctuation alone', () => {
+    expect(validate(schema, { ...good, taskName: 'Buy-one-get-one' }).valid).toBe(true);
     expect(validate(schema, { ...good, taskName: 'Matcha + oat' }).valid).toBe(true);
+  });
+
+  it('caps a paste', () => {
+    expect(validate(schema, { ...good, taskName: 'x'.repeat(500) }).errors.taskName).toMatch(/long/i);
+  });
+
+  it('rejects a non-http link', () => {
+    expect(validate(schema, { ...good, attachmentLink: 'javascript:alert(1)' }).errors.attachmentLink).toBeTruthy();
+  });
+
+  it('allowIncomplete relaxes required and ordering but nothing that is a safety rule', () => {
+    const legacy = { department: 'TBD', taskName: 'stall banner' };
+    expect(validate(schema, legacy, { allowIncomplete: true }).valid).toBe(true);
+    expect(validate(schema, legacy).errors.dueDate).toMatch(/required/i);
+
+    const opts = { allowIncomplete: true };
+    expect(validate(schema, { taskName: '=HYPERLINK("x","y")' }, opts).errors.taskName).toMatch(/formula/i);
+    expect(validate(schema, { taskName: 'x', status: 'Nearly' }, opts).errors.status).toBeTruthy();
+    expect(validate(schema, { taskName: 'x', dueDate: '2026-13-45' }, opts).errors.dueDate).toBeTruthy();
   });
 });
 
 describe('toRowValues', () => {
-  const schema = getSchema('marketing-tracker');
+  const schema = getSchema('staff-tasks');
+  const meta = { user: RISHAV, now: NOW, rowId: 'row-abc' };
 
-  it('positions each value at its header index', () => {
-    const row = toRowValues(schema, {
-      department: 'Marketing', taskName: 'Durga Puja promo', owner: 'Rishav',
-      startDate: '2026-08-11', dueDate: '2026-10-26', priority: '2', status: 'Not Started',
-    });
+  it('positions each value at its declared column', () => {
+    const row = toRowValues(schema, { department: 'Marketing', taskName: 'promo' }, null, meta);
     expect(row[1]).toBe('Marketing');
-    expect(row[2]).toBe('Durga Puja promo');
-    expect(row[4]).toBe('Rishav');
-    expect(row[6]).toBe('2026-10-26');
+    expect(row[2]).toBe('promo');
   });
 
-  it('emits a row the full width of the header', () => {
-    expect(toRowValues(schema, { taskName: 'x' })).toHaveLength(13);
+  it('stamps identity and audit from the session, never the payload', () => {
+    const row = toRowValues(schema, {
+      taskName: 'promo', rowId: 'forged', addedBy: 'Arpan', updatedBy: 'Arpan', addedAt: '1999-01-01',
+    }, null, meta);
+    expect(row[0]).toBe('row-abc');
+    expect(row[11]).toBe('Rishav');
+    expect(row[12]).toBe(NOW);
+    expect(row[13]).toBe('Rishav');
   });
 
-  it('preserves unmapped columns of an existing row when editing', () => {
-    // Column 0 is the sheet's own index column — not ours to overwrite.
-    const existing = MARKETING_ROWS[1];
-    const row = toRowValues(schema, { taskName: 'renamed' }, existing);
-    expect(row[0]).toBe('1');
+  it('does not re-stamp addedBy when editing an existing row', () => {
+    const existing = toRowValues(schema, { taskName: 'promo' }, null, { user: ARPAN, now: NOW, rowId: 'r9' });
+    const edited = toRowValues(schema, { taskName: 'renamed' }, existing, meta);
+    expect(edited[0]).toBe('r9');
+    expect(edited[11]).toBe('Arpan');
+    expect(edited[13]).toBe('Rishav');
+  });
+
+  it('preserves columns the schema does not map', () => {
+    const existing = Array.from({ length: 20 }, (_, i) => `keep${i}`);
+    const row = toRowValues(schema, { taskName: 'renamed' }, existing, meta);
+    expect(row[19]).toBe('keep19');
     expect(row[2]).toBe('renamed');
   });
 
-  it('never writes the owner field from user input', () => {
-    // Owner comes from the session, never the payload — otherwise "edit your
-    // own" is bypassed by simply typing someone else's name.
-    const row = toRowValues(schema, { taskName: 'x', owner: 'Arpan' }, null, USER);
-    expect(row[4]).toBe('Rishav');
-  });
-});
-
-describe('parseCategories', () => {
-  const schema = getSchema('fest-list');
-
-  it('reads the seven categories from row 1', () => {
-    expect(parseCategories(schema, FEST_ROWS).map((c) => c.category)).toEqual([
-      'Utensils', 'Stationery', 'Appliances', 'Premix', 'Syrup', "Tapioca/ Popping boba's", 'Others',
-    ]);
+  it('sets the attendance employee from the session, so nobody marks someone else present', () => {
+    const att = getSchema('staff-attendance');
+    const row = toRowValues(att, { employee: 'Arpan', date: '2026-05-01', status: 'Present' }, null, meta);
+    expect(row[1]).toBe('Rishav');
   });
 
-  it('collects each column downward as that category list', () => {
-    const [utensils] = parseCategories(schema, FEST_ROWS);
-    expect(utensils.items.map((i) => i.value)).toEqual(['boba boil pot', 'strainer', 'shaker cups']);
-  });
-
-  it('carries the cell address so a tick can target it', () => {
-    const [utensils] = parseCategories(schema, FEST_ROWS);
-    expect(utensils.items[0]).toMatchObject({ row: 3, column: 1 });
-  });
-
-  it('skips blanks inside a column rather than emitting empty items', () => {
-    const gappy = [[], ['Utensils'], ['pot'], [''], ['jug']];
-    const [cat] = parseCategories(schema, gappy);
-    expect(cat.items.map((i) => i.value)).toEqual(['pot', 'jug']);
-  });
-
-  it('reports the first free cell so an add does not overwrite', () => {
-    const [utensils] = parseCategories(schema, FEST_ROWS);
-    expect(utensils.nextFreeRow).toBe(6);
-  });
-
-  it('handles a category with no items at all', () => {
-    const [, stationery] = parseCategories(schema, [[], ['Utensils', 'Stationery'], ['pot']]);
-    expect(stationery.items).toEqual([]);
-    expect(stationery.nextFreeRow).toBe(3);
-  });
-});
-
-describe('drinks invention — the schema that did not exist', () => {
-  const schema = getSchema('drinks-invention');
-
-  it('defines the columns the sheet was missing', () => {
-    expect(schema.fields.map((f) => f.key)).toEqual([
-      'drinkName', 'inspirationLink', 'ingredients', 'currentStatus', 'addedBy',
-    ]);
-  });
-
-  it('requires a name and nothing else', () => {
-    expect(validate(schema, { drinkName: 'Blue Pea Matcha Cloud' }).valid).toBe(true);
-    expect(validate(schema, { drinkName: '' }).valid).toBe(false);
-  });
-
-  it('rejects a non-http inspiration link', () => {
-    expect(validate(schema, { drinkName: 'x', inspirationLink: 'javascript:alert(1)' }).errors.inspirationLink)
-      .toBeTruthy();
-    expect(validate(schema, { drinkName: 'x', inspirationLink: 'https://instagram.com/p/abc' }).valid).toBe(true);
-  });
-
-  it('reads the existing rows despite the header sitting on row 3', () => {
-    const rows = [
-      [], ['', 'Drinks Invention List'], [],
-      ['', 'Drink Name', '', 'Inspiration Link', 'Ingredients', 'Current Status'],
-      ['', 'Blue Pea Matcha Cloud'],
-      ['', 'Blue Pea Fruit Tea', '', '', 'Peach/ Passion/ Red Grapefruit'],
-    ];
-    const recs = parseRecords(schema, rows);
-    expect(recs).toHaveLength(2);
-    expect(recs[1].values.ingredients).toBe('Peach/ Passion/ Red Grapefruit');
-    expect(recs[0].rowNumber).toBe(5);
+  it('emits at least the full sheet width', () => {
+    expect(toRowValues(schema, { taskName: 'x' }, null, meta).length).toBeGreaterThanOrEqual(widthOf(schema));
   });
 });
