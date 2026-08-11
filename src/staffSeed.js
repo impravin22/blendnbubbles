@@ -73,12 +73,14 @@ export function seedTasks(rows = []) {
       if (row && row.some((c) => text(c))) skipped.push({ row: i + 2, why: 'no task name' });
       return;
     }
+    const startDate = isoDate(cell(row, 5));
+    const dueDate = isoDate(cell(row, 6));
     out.push(record({
       department: cell(row, 1) || 'TBD',
       taskName,
       subtask: cell(row, 3),
-      startDate: isoDate(cell(row, 5)),
-      dueDate: isoDate(cell(row, 6)),
+      startDate,
+      dueDate,
       priority: priority(cell(row, 7)),
       status: mapWith(STATUS_MAP, cell(row, 8)),
       expectedImpact: cell(row, 10),
@@ -92,10 +94,8 @@ export function seedTasks(rows = []) {
     // Carried, not corrected — but surfaced, so it is a decision rather than a
     // silent import. The live "penalty kick campaign" row is due 2026-06-01
     // and starts 2026-06-27.
-    const start = isoDate(cell(row, 5));
-    const due = isoDate(cell(row, 6));
-    if (start && due && due < start) {
-      warnings.push({ row: i + 2, why: `due ${due} is before start ${start}`, task: taskName });
+    if (startDate && dueDate && dueDate < startDate) {
+      warnings.push({ row: i + 2, why: `due ${dueDate} is before start ${startDate}`, task: taskName });
     }
   });
   return { records: out, skipped, warnings };
@@ -103,6 +103,7 @@ export function seedTasks(rows = []) {
 
 export function seedExperiments(rows = []) {
   const skipped = [];
+  const warnings = [];
   const out = [];
   rows.slice(3).forEach((row, i) => {
     const subject = cell(row, 1);
@@ -126,11 +127,12 @@ export function seedExperiments(rows = []) {
       addedBy: '',
     }, i + 4));
   });
-  return { records: out, skipped };
+  return { records: out, skipped, warnings };
 }
 
 export function seedDrinks(rows = []) {
   const skipped = [];
+  const warnings = [];
   const out = [];
   rows.slice(4).forEach((row, i) => {
     const drinkName = cell(row, 1);
@@ -147,7 +149,7 @@ export function seedDrinks(rows = []) {
       addedBy: '',
     }, i + 5));
   });
-  return { records: out, skipped };
+  return { records: out, skipped, warnings };
 }
 
 /**
@@ -159,6 +161,7 @@ export function seedDrinks(rows = []) {
 export function seedFestList(rows = []) {
   const header = Array.isArray(rows[1]) ? rows[1] : [];
   const skipped = [];
+  const warnings = [];
   const out = [];
 
   header.forEach((rawCategory, col) => {
@@ -178,7 +181,7 @@ export function seedFestList(rows = []) {
     });
   });
 
-  return { records: out, skipped };
+  return { records: out, skipped, warnings };
 }
 
 /**
@@ -191,12 +194,13 @@ export function seedFestList(rows = []) {
  */
 export function seedAttendance(rows = []) {
   const skipped = [];
+  const warnings = [];
   const out = [];
 
   const year = text(cell(rows[1], 1));
   const month = text(cell(rows[2], 1));
   if (!/^\d{4}$/.test(year) || !/^\d{1,2}$/.test(month)) {
-    return { records: [], skipped: [{ row: 2, why: `unreadable year/month (${year}/${month})` }] };
+    return { records: [], warnings, skipped: [{ row: 2, why: `unreadable year/month (${year}/${month})` }] };
   }
 
   const header = Array.isArray(rows[4]) ? rows[4] : [];
@@ -229,7 +233,7 @@ export function seedAttendance(rows = []) {
     }
   });
 
-  return { records: out, skipped };
+  return { records: out, skipped, warnings };
 }
 
 const SEEDERS = {
@@ -242,5 +246,5 @@ const SEEDERS = {
 
 export function seedFor(schemaId, rows) {
   const fn = Object.prototype.hasOwnProperty.call(SEEDERS, schemaId) ? SEEDERS[schemaId] : null;
-  return fn ? fn(rows) : { records: [], skipped: [{ row: 0, why: `no seeder for ${schemaId}` }] };
+  return fn ? fn(rows) : { records: [], warnings: [], skipped: [{ row: 0, why: `no seeder for ${schemaId}` }] };
 }

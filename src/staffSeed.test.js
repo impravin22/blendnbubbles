@@ -219,14 +219,41 @@ describe('seeded records satisfy the schema they are destined for', () => {
   });
 });
 
+describe('every seeder returns the same shape', () => {
+  // seedFor dispatches across all five, so a caller that reads `warnings`
+  // uniformly must not crash on the four that happen to have none.
+  const all = [
+    ['staff-tasks', TASK_ROWS], ['staff-experiments', []], ['staff-drinks', []],
+    ['staff-fest-list', FEST_ROWS], ['staff-attendance', ATT_ROWS],
+  ];
+
+  it.each(all)('%s returns records, skipped and warnings', (id, rows) => {
+    const result = seedFor(id, rows);
+    expect(Array.isArray(result.records)).toBe(true);
+    expect(Array.isArray(result.skipped)).toBe(true);
+    expect(Array.isArray(result.warnings)).toBe(true);
+  });
+
+  it('an unreadable attendance sheet still returns a warnings array', () => {
+    const broken = [[], ['Year:', 'twenty'], ['Month Number:', ''], [], [], [], ['Rishav']];
+    expect(Array.isArray(seedAttendance(broken).warnings)).toBe(true);
+  });
+
+  it('summing across every seeder does not throw', () => {
+    const total = all.reduce((n, [id, rows]) => n + seedFor(id, rows).warnings.length, 0);
+    expect(total).toBe(1);
+  });
+});
+
 describe('seedFor', () => {
   it('dispatches by schema id', () => {
     expect(seedFor('staff-tasks', TASK_ROWS).records).toHaveLength(3);
   });
 
   it('refuses an unknown id rather than running an arbitrary seeder', () => {
-    const { records, skipped } = seedFor('customer-details', TASK_ROWS);
+    const { records, skipped, warnings } = seedFor('customer-details', TASK_ROWS);
     expect(records).toEqual([]);
+    expect(warnings).toEqual([]);
     expect(skipped[0].why).toMatch(/no seeder/);
   });
 });
