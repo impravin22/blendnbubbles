@@ -16,14 +16,29 @@
 //   who       – which customers the platform targets this at
 //   condition – minimum order value or other gate, customer-facing wording
 //   code      – Swiggy coupon code; Zomato applies its offers automatically
+//   items     – optional list of the exact drinks an offer is limited to, so a
+//               customer can see what qualifies without opening the app
 //   isNew     – flags a recently launched offer with a "New" badge
 
-export const LAST_VERIFIED = '2026-08-07';
+export const LAST_VERIFIED = '2026-09-01';
 
 export const ORDER_LINKS = {
   zomato: 'https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore/order',
   swiggy: 'https://www.swiggy.com/city/kolkata/blend-n-bubbles-barrackpore-rest1401296',
 };
+
+// The Swiggy Buy 1 Get 1 is limited to these seven Fruit Teas, exactly as the
+// offer's item picker lists them. Kept here rather than derived from menuData
+// so the offer stays truthful even if the menu is reorganised.
+export const BOGO_FRUIT_TEAS = [
+  'Taiwan Pink Guava Splash',
+  'Raw Mango Mist Pop',
+  'Tropical Pineapple Pop',
+  'Passion Fruit Rush',
+  'Orange Ginger Spark',
+  'Mango Jade Splash',
+  'Kiwi Island Tea',
+];
 
 export const PLATFORM_OFFERS = [
   {
@@ -33,31 +48,31 @@ export const PLATFORM_OFFERS = [
     link: ORDER_LINKS.zomato,
     offers: [
       {
-        id: 'z-first-order',
-        headline: '40% off',
-        cap: 'up to ₹80',
-        who: 'Your first order',
-        condition: 'Min order ₹149 · all menu items',
-      },
-      {
-        id: 'z-everyone',
-        headline: '20% off',
-        cap: 'up to ₹50',
-        who: 'Everyone, every order',
-        condition: 'Min order ₹159 · all menu items',
+        id: 'z-b1g1',
+        headline: 'Buy 1 Get 1',
+        who: 'Everyone, on drinks in Great Offers',
+        condition: 'No minimum order · all of September',
+        isNew: true,
       },
       {
         id: 'z-free-nachos',
         headline: 'Free Loaded Nachos',
         who: 'On orders above ₹349',
         condition: 'All customers · every day',
-        isNew: true,
       },
       {
-        id: 'z-b2g1',
-        headline: 'Buy 2 Get 1',
-        who: 'On selected drinks',
-        condition: 'No minimum order',
+        id: 'z-first-order',
+        headline: '40% off',
+        cap: 'up to ₹80',
+        who: 'Your first order',
+        condition: 'Min order ₹149 · excludes MRP items',
+      },
+      {
+        id: 'z-everyone',
+        headline: '20% off',
+        cap: 'up to ₹50',
+        who: 'Everyone, every order',
+        condition: 'Min order ₹159 · excludes MRP items',
       },
     ],
     footnote:
@@ -70,19 +85,21 @@ export const PLATFORM_OFFERS = [
     link: ORDER_LINKS.swiggy,
     offers: [
       {
+        id: 's-b1g1',
+        headline: 'Buy 1 Get 1',
+        who: 'Everyone, on all seven Fruit Teas',
+        condition: 'No minimum order',
+        code: 'BUY1GET1',
+        items: BOGO_FRUIT_TEAS,
+        isNew: true,
+      },
+      {
         id: 's-trynew',
         headline: '50% off',
         cap: 'up to ₹100',
         who: 'New to BlendNBubbles',
         condition: 'Min order ₹179',
         code: 'TRYNEW',
-      },
-      {
-        id: 's-b2g1',
-        headline: 'Buy 2 Get 1',
-        who: 'Free drink on us, whole menu',
-        condition: 'All customers · every day',
-        isNew: true,
       },
       {
         id: 's-swiggyit',
@@ -105,6 +122,16 @@ export const PLATFORM_OFFERS = [
       'Bank and UPI offers stack on top. Look for SBI, Visa and BHIM UPI deals at checkout.',
   },
 ];
+
+// Running at the counter only, so it sits outside PLATFORM_OFFERS and outside
+// countOffers() — the hero counts app offers, and this one cannot be ordered
+// through either app.
+export const IN_STORE_OFFER = {
+  id: 'pos-monsoon-bogo',
+  headline: 'Buy 1 Get 1',
+  who: 'Walk in and ask — Lychee and Peach sodas',
+  condition: 'At the counter only · not on the apps',
+};
 
 // Bundled prices that hold in store and on both platforms.
 export const COMBOS = [

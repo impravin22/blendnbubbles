@@ -2046,6 +2046,60 @@ section h2::after {
   padding: 0.25rem 0.6rem;
 }
 
+/* The exact drinks an offer is limited to, so a customer can see what
+   qualifies without opening the app. Sits under the condition line in
+   quieter type: it is a reference list, not a selling line. */
+.platform-offer-items {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--light-text);
+  border-left: 2px solid rgba(187, 135, 80, 0.35);
+  padding-left: 0.65rem;
+}
+
+/* Counter-only offer. Deliberately not a platform card — it cannot be
+   ordered through either app, and reading as a third app would mislead. */
+.in-store-offer {
+  margin-top: 2.5rem;
+  background: var(--card-bg);
+  border: 1px dashed rgba(187, 135, 80, 0.5);
+  border-radius: 18px;
+  padding: 1.5rem 1.75rem;
+}
+
+.in-store-offer-tag {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.in-store-offer-top {
+  margin: 0;
+}
+
+.in-store-offer-headline {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--primary);
+}
+
+.in-store-offer-who {
+  margin: 0.35rem 0 0;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.in-store-offer-condition {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+  color: var(--light-text);
+}
+
 .platform-card-footnote {
   margin: 1.25rem 0 1.5rem;
   font-size: 0.85rem;
@@ -2104,4 +2158,6 @@ section h2::after {
 @media (max-width: 575px) {
   .platform-card { padding: 1.35rem; }
   .platform-offer-headline { font-size: 1.5rem; }
+  .in-store-offer { padding: 1.35rem; }
+  .in-store-offer-headline { font-size: 1.5rem; }
 }

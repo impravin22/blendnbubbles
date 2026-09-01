@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Offers from './Offers';
-import { PLATFORM_OFFERS, countOffers } from './offersData';
+import { PLATFORM_OFFERS, IN_STORE_OFFER, BOGO_FRUIT_TEAS, countOffers } from './offersData';
 
 const renderOffers = () =>
   render(
@@ -66,5 +66,35 @@ describe('Offers page after the spin-wheel retirement', () => {
     renderOffers();
     expect(screen.getByRole('link', { name: /request an event/i })).toHaveAttribute('href', '/events');
     expect(screen.getByRole('link', { name: /^events$/i })).toHaveAttribute('href', '/events');
+  });
+});
+
+describe('Offers page, September line-up', () => {
+  it('names every Fruit Tea the Buy 1 Get 1 covers, so nobody has to guess', () => {
+    renderOffers();
+    BOGO_FRUIT_TEAS.forEach((tea) => {
+      expect(screen.getByText(new RegExp(tea, 'i'))).toBeInTheDocument();
+    });
+  });
+
+  it('shows the counter-only offer apart from the app cards', () => {
+    renderOffers();
+    expect(screen.getByText(/at the counter$/i)).toBeInTheDocument();
+    expect(screen.getByText(IN_STORE_OFFER.who)).toBeInTheDocument();
+    expect(screen.getByText(IN_STORE_OFFER.condition)).toBeInTheDocument();
+  });
+
+  it('badges the two offers that launched on 1 September, and only those', () => {
+    renderOffers();
+    const badged = PLATFORM_OFFERS.flatMap((p) => p.offers).filter((o) => o.isNew);
+    expect(badged).toHaveLength(2);
+    // The page also carries an unrelated "New" card tag in the bottom grid,
+    // so assert the count of offer badges rather than of every "New" on the page.
+    expect(document.querySelectorAll('.platform-offer-new')).toHaveLength(badged.length);
+  });
+
+  it('no longer advertises the retired Buy 2 Get 1', () => {
+    renderOffers();
+    expect(screen.queryByText(/buy 2 get 1/i)).not.toBeInTheDocument();
   });
 });
