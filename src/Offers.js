@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PLATFORM_OFFERS, COMBOS, countOffers } from './offersData';
+import { PLATFORM_OFFERS, COMBOS, IN_STORE_OFFER, countOffers } from './offersData';
 import './App.css';
 // SpinWheel is no longer mounted: the anniversary campaign closed in
 // August 2026 and the wheel came down with it. The component is left on
@@ -39,7 +39,7 @@ function Offers() {
   useEffect(() => {
     document.title = 'Exclusive Offers - BlendNBubbles | Tap. Sip. Win.';
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'Live Zomato and Swiggy offers from BlendNBubbles Barrackpore: first-order discounts, Buy 2 Get 1, free nachos and combo deals. Same boba, smaller bill.');
+    if (meta) meta.setAttribute('content', 'Live Zomato and Swiggy offers from BlendNBubbles Barrackpore: Buy 1 Get 1 on Fruit Teas, first-order discounts, free nachos and combo deals. Same boba, smaller bill.');
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute('href', 'https://blendnbubbles.com/offers');
   }, []);
@@ -159,6 +159,9 @@ function Offers() {
                       </p>
                       <p className="platform-offer-who">{offer.who}</p>
                       <p className="platform-offer-condition">{offer.condition}</p>
+                      {offer.items ? (
+                        <p className="platform-offer-items">{offer.items.join(' · ')}</p>
+                      ) : null}
                       {offer.code ? (
                         <p className="platform-offer-code">
                           <span className="sr-only">Coupon code: </span>
@@ -182,6 +185,15 @@ function Offers() {
               </article>
             ))}
           </div>
+
+          <aside className="in-store-offer reveal">
+            <p className="in-store-offer-tag">At the counter</p>
+            <p className="in-store-offer-top">
+              <span className="in-store-offer-headline">{IN_STORE_OFFER.headline}</span>
+            </p>
+            <p className="in-store-offer-who">{IN_STORE_OFFER.who}</p>
+            <p className="in-store-offer-condition">{IN_STORE_OFFER.condition}</p>
+          </aside>
 
           <div className="combo-strip reveal">
             <h3>Combo deals</h3>
