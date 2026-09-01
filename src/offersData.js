@@ -27,9 +27,9 @@ export const ORDER_LINKS = {
   swiggy: 'https://www.swiggy.com/city/kolkata/blend-n-bubbles-barrackpore-rest1401296',
 };
 
-// The Swiggy Buy 1 Get 1 is limited to these seven Fruit Teas, exactly as the
-// offer's item picker lists them. Kept here rather than derived from menuData
-// so the offer stays truthful even if the menu is reorganised.
+// Both platforms limit the Buy 1 Get 1 to these seven Fruit Teas, exactly as
+// the offer item pickers list them. Kept here rather than derived from
+// menuData so the offer stays truthful even if the menu is reorganised.
 export const BOGO_FRUIT_TEAS = [
   'Taiwan Pink Guava Splash',
   'Raw Mango Mist Pop',
@@ -50,8 +50,9 @@ export const PLATFORM_OFFERS = [
       {
         id: 'z-b1g1',
         headline: 'Buy 1 Get 1',
-        who: 'Everyone, on drinks in Great Offers',
+        who: 'Everyone, on all seven Fruit Teas',
         condition: 'No minimum order · all of September',
+        items: BOGO_FRUIT_TEAS,
         isNew: true,
       },
       {

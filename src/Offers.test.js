@@ -70,10 +70,14 @@ describe('Offers page after the spin-wheel retirement', () => {
 });
 
 describe('Offers page, September line-up', () => {
-  it('names every Fruit Tea the Buy 1 Get 1 covers, so nobody has to guess', () => {
+  it('names every Fruit Tea the Buy 1 Get 1 covers, on both cards', () => {
     renderOffers();
-    BOGO_FRUIT_TEAS.forEach((tea) => {
-      expect(screen.getByText(new RegExp(tea, 'i'))).toBeInTheDocument();
+    // The same seven drinks qualify on Zomato and on Swiggy, so the list is
+    // rendered once per platform card rather than shared between them.
+    const lists = document.querySelectorAll('.platform-offer-items');
+    expect(lists).toHaveLength(2);
+    lists.forEach((list) => {
+      BOGO_FRUIT_TEAS.forEach((tea) => expect(list.textContent).toContain(tea));
     });
   });
 
