@@ -85,6 +85,7 @@ describe('the September 2026 line-up', () => {
       expect(offer.headline).toBe('Buy 1 Get 1');
       expect(offer.isNew).toBe(true);
       expect(offer.condition).toMatch(/no minimum order/i);
+      expect(offer.items).toBe(BOGO_FRUIT_TEAS);
     });
   });
 
@@ -93,10 +94,12 @@ describe('the September 2026 line-up', () => {
     expect(headlines).not.toContain('Buy 2 Get 1');
   });
 
-  it('names the exact seven Fruit Teas the Swiggy code applies to', () => {
+  it('scopes both platforms to the same seven Fruit Teas', () => {
     expect(BOGO_FRUIT_TEAS).toHaveLength(7);
     expect(new Set(BOGO_FRUIT_TEAS).size).toBe(7);
+    expect(zomato.offers[0].items).toBe(BOGO_FRUIT_TEAS);
     expect(swiggy.offers[0].items).toBe(BOGO_FRUIT_TEAS);
+    expect(zomato.offers[0].who).toBe(swiggy.offers[0].who);
     expect(swiggy.offers[0].code).toBe('BUY1GET1');
     BOGO_FRUIT_TEAS.forEach((tea) => {
       expect(typeof tea).toBe('string');

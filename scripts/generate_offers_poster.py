@@ -43,8 +43,8 @@ ZOMATO_URL = "https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore/order"
 SWIGGY_URL = "https://www.swiggy.com/city/kolkata/blend-n-bubbles-barrackpore-rest1401296"
 OFFERS_URL = "https://blendnbubbles.com/offers"
 
-# The seven drinks the Swiggy Buy 1 Get 1 covers, mirroring BOGO_FRUIT_TEAS in
-# src/offersData.js. Printed on the poster so the counter is not asked.
+# The seven drinks the Buy 1 Get 1 covers on both apps, mirroring
+# BOGO_FRUIT_TEAS in src/offersData.js. Printed so the counter is not asked.
 FRUIT_TEAS = [
     "Taiwan Pink Guava Splash",
     "Raw Mango Mist Pop",
@@ -144,88 +144,148 @@ def _gradient_v(size: tuple[int, int], top, bottom) -> Image.Image:
     return img
 
 
-def build_poster() -> Path:
-    W, H = 1748, 2480  # A5 @300dpi
-    poster = _gradient_v((W, H), TEAL_DARKEST, TEAL_DEEP).convert("RGBA")
-    draw = ImageDraw.Draw(poster)
-    cx = W // 2
+# ── Fruit colours ────────────────────────────────────────────────
+# One per tea, pulled towards the fruit rather than the brand palette: the
+# teal ground is the brand, and the drinks are what the poster is selling.
+TEA_COLOURS = {
+    "Taiwan Pink Guava Splash": (242, 120, 159),
+    "Raw Mango Mist Pop": (198, 214, 60),
+    "Tropical Pineapple Pop": (245, 197, 66),
+    "Passion Fruit Rush": (242, 139, 48),
+    "Orange Ginger Spark": (242, 109, 61),
+    "Mango Jade Splash": (255, 182, 39),
+    "Kiwi Island Tea": (127, 181, 57),
+}
 
-    # Gold frame.
-    inset = 56
-    draw.rounded_rectangle([(inset, inset), (W - inset, H - inset)], radius=48, outline=GOLD, width=6)
+SS = 2  # supersample factor for the illustration, downsampled for clean edges
 
-    # Brand logo at the top.
-    logo = Image.open(LOGO_PATH).convert("RGBA")
-    logo.thumbnail((260, 260), Image.LANCZOS)
-    poster.alpha_composite(logo, dest=(cx - logo.size[0] // 2, 150))
 
-    y = 150 + logo.size[1] + 44
+def _serif(size: int, *, bold: bool = False, italic: bool = False) -> ImageFont.FreeTypeFont:
+    """Georgia. Carries U+20B9, and its warmth offsets the grotesque headlines."""
+    name = "Georgia"
+    if bold and italic:
+        name += " Bold Italic"
+    elif bold:
+        name += " Bold"
+    elif italic:
+        name += " Italic"
+    path = Path(f"/System/Library/Fonts/Supplemental/{name}.ttf")
+    if path.exists():
+        try:
+            return ImageFont.truetype(str(path), size=size)
+        except OSError:
+            pass
+    return _font(size, bold=bold)
 
-    # The hero offer.
-    y += _centre_text(draw, cx, y, "BUY 1", _font(200, bold=True), WHITE) + 10
-    y += _centre_text(draw, cx, y, "GET 1 FREE", _font(200, bold=True), GOLD) + 38
-    y += _centre_text(draw, cx, y, "on selected drinks  ·  from ₹210", _font(62), CREAM) + 26
-    y += _centre_text(draw, cx, y, "NO MINIMUM ORDER", _font(50, bold=True), MUTED) + 48
 
-    # The seven qualifying drinks, two columns so the block stays compact.
-    rule_w = 640
-    draw.line([(cx - rule_w // 2, y), (cx + rule_w // 2, y)], fill=GOLD, width=2)
-    y += 26
-    y += _centre_text(draw, cx, y, "THE SEVEN FRUIT TEAS ON SWIGGY", _font(36, bold=True), GOLD) + 26
+def _text(draw, x: int, y: int, s: str, font, fill, *, anchor: str = "lt") -> tuple[int, int]:
+    """Draw `s` and return its (width, height). `anchor` follows Pillow's."""
+    draw.text((x, y), s, font=font, fill=fill, anchor=anchor)
+    bbox = draw.textbbox((0, 0), s, font=font)
+    return bbox[2] - bbox[0], bbox[3] - bbox[1]
 
-    tea_font = _font(46)
-    col_gap = 60
-    half = (len(FRUIT_TEAS) + 1) // 2
-    columns = (FRUIT_TEAS[:half], FRUIT_TEAS[half:])
-    col_w = max(
-        draw.textbbox((0, 0), tea, font=tea_font)[2] for tea in FRUIT_TEAS
-    )
-    left_cx = cx - (col_w + col_gap) // 2
-    right_cx = cx + (col_w + col_gap) // 2
-    line_h = 66
-    for col_cx, names in zip((left_cx, right_cx), columns):
-        for row, name in enumerate(names):
-            _centre_text(draw, col_cx, y + row * line_h, name, tea_font, CREAM)
-    y += line_h * half + 22
 
-    draw.line([(cx - rule_w // 2, y), (cx + rule_w // 2, y)], fill=GOLD, width=2)
-    y += 52
+def _halftone(size: tuple[int, int], *, spacing: int, radius: int, colour) -> Image.Image:
+    """A dot grid, so the flat ground has some tooth rather than reading as vinyl."""
+    layer = Image.new("RGBA", size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    for y in range(0, size[1], spacing):
+        offset = (spacing // 2) if (y // spacing) % 2 else 0
+        for x in range(-spacing, size[0] + spacing, spacing):
+            draw.ellipse([(x + offset, y), (x + offset + radius, y + radius)], fill=colour)
+    return layer
 
-    # One QR per app, so a customer lands in the right store.
-    qr_px, pad = 510, 26
-    card_size = qr_px + pad * 2
-    gap = 96
-    left_x = cx - gap // 2 - card_size
-    right_x = cx + gap // 2
-    label_font = _font(56, bold=True)
-    note_font = _font(38)
 
-    y += _centre_text(draw, left_x + card_size // 2, y, "ZOMATO", label_font, ZOMATO_RED)
-    _centre_text(draw, right_x + card_size // 2, y - label_font.size, "SWIGGY", label_font, SWIGGY_ORANGE)
-    y += 22
+def _draw_cup(layer: Image.Image, cx: int, top: int, h: int, tea, *, lean: float = 0.0) -> None:
+    """A boba cup: tapered body, domed lid, straw, pearls settled at the base.
 
-    poster.alpha_composite(_qr_card(ZOMATO_URL, qr_px, pad), dest=(left_x, y))
-    poster.alpha_composite(_qr_card(SWIGGY_URL, qr_px, pad), dest=(right_x, y))
-    y += card_size + 32
+    Drawn at SS scale on `layer` and downsampled by the caller. `lean` shears
+    the cup off vertical so a pair of them can overlap without looking stacked.
 
-    note_line_h = 50
-    for col_cx, lines in (
-        (left_x + card_size // 2, ("Drinks in Great Offers", "Applied at checkout")),
-        (right_x + card_size // 2, ("All seven Fruit Teas", f"Code {SWIGGY_CODE}")),
-    ):
-        for row, line in enumerate(lines):
-            _centre_text(draw, col_cx, y + row * note_line_h, line, note_font, MUTED)
-    y += note_line_h * 2 + 42
+    Translucent fills go on their own layer and are alpha-composited: Pillow's
+    ImageDraw replaces pixels rather than blending them, so drawing the sheen
+    straight onto the cup punched a flat grey slab through it.
+    """
+    draw = ImageDraw.Draw(layer)
+    top_w, bot_w = int(h * 0.60), int(h * 0.40)
 
-    y += _centre_text(draw, cx, y, "SCAN  ·  ORDER  ·  SIP", _font(72, bold=True), GOLD) + 28
-    y += _centre_text(draw, cx, y, "Blend N Bubbles  ·  Barrackpore, Kolkata", _font(52), CREAM) + 20
-    _centre_text(draw, cx, y, "New here? Up to 50% off your first order", _font(46), MUTED)
+    def shear(y_frac: float) -> int:
+        return int(lean * h * (1 - y_frac))
 
-    print(f"  poster content ends at y={y}, frame inner bottom={H - inset}")
+    def edge(y_frac: float) -> tuple[int, int]:
+        """Half-width and centre offset at a given height down the cup."""
+        return int((top_w + (bot_w - top_w) * y_frac) / 2), shear(y_frac)
 
-    out = PUBLIC_DIR / "offers-poster-a5.png"
-    poster.convert("RGB").save(out, "PNG", optimize=True, dpi=(300, 300))
-    return out
+    half_t, off_t = edge(0.0)
+    half_b, off_b = edge(1.0)
+    tl, tr = (cx - half_t + off_t, top), (cx + half_t + off_t, top)
+    br, bl = (cx + half_b + off_b, top + h), (cx - half_b + off_b, top + h)
+
+    # Straw first, so the lid closes over its base.
+    straw_w = int(h * 0.045)
+    sx = cx + off_t + int(top_w * 0.20)
+    draw.line([(sx - int(h * 0.07), top - int(h * 0.28)), (sx, top + int(h * 0.04))],
+              fill=GOLD + (255,), width=straw_w)
+
+    draw.polygon([tl, tr, br, bl], fill=tea + (255,))
+
+    # A lighter band down the left third reads as a curved surface.
+    sheen = Image.new("RGBA", layer.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sheen).polygon([
+        tl,
+        (cx - half_t * 0.34 + off_t, top),
+        (cx - half_b * 0.34 + off_b, top + h),
+        bl,
+    ], fill=tuple(min(255, c + 58) for c in tea) + (76,))
+    layer.alpha_composite(sheen)
+
+    # Pearls: three settled rows, tucked inside the taper.
+    pearl_r = int(h * 0.032)
+    for y_frac, count in ((0.90, 4), (0.845, 5), (0.79, 4)):
+        y = top + int(h * y_frac)
+        half, off = edge(y_frac)
+        span = half - pearl_r * 1.7
+        for i in range(count):
+            t = 0.5 if count == 1 else i / (count - 1)
+            x = cx + off + int((t * 2 - 1) * span)
+            draw.ellipse([(x - pearl_r, y - pearl_r), (x + pearl_r, y + pearl_r)],
+                         fill=(38, 24, 20, 255))
+
+    # Lid, sitting a touch proud of the body on both sides.
+    lid_h = int(h * 0.085)
+    lid_over = int(top_w * 0.08)
+    draw.rounded_rectangle(
+        [(tl[0] - lid_over, top - lid_h), (tr[0] + lid_over, top + int(lid_h * 0.30))],
+        radius=lid_h // 2, fill=CREAM + (255,))
+
+
+def _cup_pair(width: int, height: int, front: tuple, back: tuple) -> Image.Image:
+    """Two overlapping cups — the free one behind, the bought one in front."""
+    layer = Image.new("RGBA", (width * SS, height * SS), (0, 0, 0, 0))
+
+    # Drop shadow first, so both cups sit on the ground rather than float.
+    shadow = Image.new("RGBA", layer.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).ellipse(
+        [(int(width * SS * 0.10), int(height * SS * 0.86)),
+         (int(width * SS * 0.92), int(height * SS * 0.99))],
+        fill=(0, 20, 20, 120))
+    layer.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(radius=18 * SS)))
+
+    _draw_cup(layer, int(width * SS * 0.66), int(height * SS * 0.22),
+              int(height * SS * 0.62), back, lean=0.06)
+    _draw_cup(layer, int(width * SS * 0.34), int(height * SS * 0.28),
+              int(height * SS * 0.66), front, lean=-0.04)
+
+    return layer.resize((width, height), Image.LANCZOS)
+
+
+def _ribbon(draw: ImageDraw.ImageDraw, box, label: str, font) -> None:
+    """An angled tab in the corner — the one element that breaks the grid."""
+    x0, y0, x1, y1 = box
+    skew = (y1 - y0) // 2
+    draw.polygon([(x0, y0), (x1, y0), (x1 - skew, y1), (x0 - skew, y1)], fill=GOLD + (255,))
+    _text(draw, (x0 + x1) // 2 - skew // 2, (y0 + y1) // 2, label, font,
+          TEAL_DARKEST, anchor="mm")
 
 
 def _chord_width(diameter: int, y: int, *, margin: int) -> int:
@@ -253,30 +313,134 @@ def _fit_font(draw: ImageDraw.ImageDraw, text: str, max_w: int, start: int, *, b
     return _font(10, bold=bold)
 
 
+def build_poster() -> Path:
+    W, H = 1748, 2480  # A5 @300dpi
+    poster = _gradient_v((W, H), TEAL_DARKEST, TEAL_DEEP).convert("RGBA")
+    poster.alpha_composite(_halftone((W, H), spacing=26, radius=4, colour=(255, 255, 255, 9)))
+    draw = ImageDraw.Draw(poster)
+
+    inset = 56
+    draw.rounded_rectangle([(inset, inset), (W - inset, H - inset)],
+                           radius=48, outline=GOLD, width=5)
+
+    margin = 128
+
+    # ── Masthead ────────────────────────────────────────────────
+    logo = Image.open(LOGO_PATH).convert("RGBA")
+    logo.thumbnail((150, 150), Image.LANCZOS)
+    poster.alpha_composite(logo, dest=(margin, 132))
+    _text(draw, margin + logo.size[0] + 26, 132 + logo.size[1] // 2 - 4,
+          "BLEND N BUBBLES", _font(40, bold=True), CREAM, anchor="lm")
+    _text(draw, margin + logo.size[0] + 26, 132 + logo.size[1] // 2 + 40,
+          "Barrackpore, Kolkata", _serif(32, italic=True), MUTED, anchor="lm")
+
+    _ribbon(draw, (W - margin - 470, 150, W - margin, 226),
+            "SEPTEMBER ONLY", _font(34, bold=True))
+
+    # ── Hero: numerals left, illustration right ─────────────────
+    hero_top = 380
+    plus_font, num_font = _font(300, bold=True), _font(300, bold=True)
+
+    x = margin
+    w, _h = _text(draw, x, hero_top, "1", num_font, CREAM)
+    x += w + 14
+    w, _h = _text(draw, x, hero_top + 24, "+", plus_font, GOLD)
+    x += w + 14
+    _text(draw, x, hero_top, "1", num_font, GOLD)
+
+    y = hero_top + 330
+    y += _text(draw, margin, y, "BUY ONE", _font(96, bold=True), CREAM)[1] + 36
+    y += _text(draw, margin, y, "GET ONE FREE", _font(96, bold=True), GOLD)[1] + 44
+    _text(draw, margin, y, "on our Fruit Teas", _serif(56, italic=True), CREAM)
+
+    art = _cup_pair(700, 900, TEA_COLOURS["Taiwan Pink Guava Splash"],
+                    TEA_COLOURS["Tropical Pineapple Pop"])
+    poster.alpha_composite(art, dest=(W - margin - art.size[0] + 40, hero_top - 120))
+
+    # ── The seven drinks, each under its own colour ─────────────
+    y = 1290
+    draw.line([(margin, y), (W - margin, y)], fill=GOLD, width=3)
+    y += 30
+    _text(draw, margin, y, "ALL SEVEN, ON BOTH APPS", _font(38, bold=True), GOLD)
+    _text(draw, W - margin, y + 6, "no minimum order  ·  from ₹210",
+          _serif(34, italic=True), MUTED, anchor="rt")
+    y += 84
+
+    tea_font = _serif(40)
+    dot_r, line_h, col_w = 13, 68, (W - margin * 2) // 2
+    for i, tea in enumerate(FRUIT_TEAS):
+        col, row = divmod(i, 4)
+        tx = margin + col * col_w
+        ty = y + row * line_h
+        draw.ellipse([(tx, ty + 12), (tx + dot_r * 2, ty + 12 + dot_r * 2)],
+                     fill=TEA_COLOURS[tea] + (255,))
+        _text(draw, tx + dot_r * 2 + 22, ty, tea, tea_font, CREAM)
+
+    y += line_h * 4 + 26
+    draw.line([(margin, y), (W - margin, y)], fill=GOLD, width=3)
+
+    # ── Order strip ─────────────────────────────────────────────
+    y += 62
+    qr_px, pad = 300, 20
+    card = qr_px + pad * 2
+    label_font, note_font = _font(46, bold=True), _serif(32)
+
+    order_col = (W - margin * 2) // 2
+    for x0, url, name, colour, note in (
+        (margin, ZOMATO_URL, "ZOMATO", ZOMATO_RED, "No code needed"),
+        (margin + order_col, SWIGGY_URL, "SWIGGY", SWIGGY_ORANGE, f"Code {SWIGGY_CODE}"),
+    ):
+        poster.alpha_composite(_qr_card(url, qr_px, pad), dest=(x0, y))
+        tx = x0 + card + 34
+        _text(draw, tx, y + 96, name, label_font, colour)
+        _text(draw, tx, y + 158, "Scan to order", _serif(34), CREAM)
+        _text(draw, tx, y + 206, note, note_font, MUTED)
+
+    y += card + 74
+
+    # ── Foot ────────────────────────────────────────────────────
+    draw.rounded_rectangle([(margin, y), (W - margin, y + 92)], radius=46, fill=GOLD + (255,))
+    _text(draw, W // 2, y + 46, "SCAN  ·  ORDER  ·  SIP", _font(46, bold=True),
+          TEAL_DARKEST, anchor="mm")
+    y += 92 + 34
+    _text(draw, W // 2, y, "New here? Up to 50% off your first order",
+          _serif(36, italic=True), MUTED, anchor="mt")
+
+    print(f"  poster content ends at y={y + 46}, frame inner bottom={H - inset}")
+
+    out = PUBLIC_DIR / "offers-poster-a5.png"
+    poster.convert("RGB").save(out, "PNG", optimize=True, dpi=(300, 300))
+    return out
+
+
 def build_sticker() -> Path:
     """50mm round sticker. Points at the website, so it survives the campaign."""
     S = 591
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     draw.ellipse([(0, 0), (S, S)], fill=TEAL_DARKEST + (255,))
-    draw.ellipse([(10, 10), (S - 10, S - 10)], outline=GOLD, width=8)
+
+    ring = _halftone((S, S), spacing=18, radius=3, colour=(255, 255, 255, 12))
+    mask = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(mask).ellipse([(0, 0), (S, S)], fill=255)
+    img.alpha_composite(Image.composite(ring, Image.new("RGBA", (S, S), (0, 0, 0, 0)), mask))
+
+    draw.ellipse([(9, 9), (S - 9, S - 9)], outline=GOLD, width=7)
     cx = S // 2
 
-    headline, subline, url_label = "BUY 1 GET 1", "ON FRUIT TEAS", "blendnbubbles.com/offers"
+    y = 74
+    font = _fit_font(draw, "1+1", _chord_width(S, y, margin=40), 120, bold=True)
+    y += _text(draw, cx, y, "1+1", font, GOLD, anchor="mt")[1] + 16
 
-    y = 92
-    font = _fit_font(draw, headline, _chord_width(S, y, margin=34), 62, bold=True)
-    y += _centre_text(draw, cx, y, headline, font, GOLD) + 14
+    font = _fit_font(draw, "ON FRUIT TEAS", _chord_width(S, y, margin=40), 34, bold=True)
+    y += _text(draw, cx, y, "ON FRUIT TEAS", font, CREAM, anchor="mt")[1] + 20
 
-    font = _fit_font(draw, subline, _chord_width(S, y, margin=34), 36, bold=True)
-    y += _centre_text(draw, cx, y, subline, font, WHITE) + 18
-
-    card = _qr_card(OFFERS_URL, 250, 12)
+    card = _qr_card(OFFERS_URL, 224, 11)
     img.alpha_composite(card, dest=(cx - card.size[0] // 2, y))
     y += card.size[1] + 16
 
-    font = _fit_font(draw, url_label, _chord_width(S, y, margin=34), 26)
-    _centre_text(draw, cx, y, url_label, font, MUTED)
+    font = _fit_font(draw, "blendnbubbles.com/offers", _chord_width(S, y, margin=40), 26)
+    _text(draw, cx, y, "blendnbubbles.com/offers", font, MUTED, anchor="mt")
 
     out = PUBLIC_DIR / "offers-sticker.png"
     img.save(out, "PNG", optimize=True, dpi=(300, 300))
