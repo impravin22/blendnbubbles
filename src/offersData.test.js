@@ -117,6 +117,23 @@ describe('the September 2026 line-up', () => {
       .toEqual(['BUY1GET1', 'TRYNEW', 'SWIGGYIT', 'MISSEDYOU']);
   });
 
+  it('carries TRYNEW at 30% capped at ₹75, cut from 50% on 16 September', () => {
+    // The 50% version spent ₹2,897 over three months for 29 first orders and
+    // zero repeats. If anyone restores it, this test is the tripwire.
+    const trynew = swiggy.offers.find((offer) => offer.id === 's-trynew');
+    expect(trynew.headline).toBe('30% off');
+    expect(trynew.cap).toBe('up to ₹75');
+    expect(trynew.condition).toBe('Min order ₹179');
+  });
+
+  it('runs no offer deeper than 40% off on Swiggy', () => {
+    const rates = swiggy.offers
+      .map((offer) => Number((offer.headline.match(/^(\d+)% off$/) || [])[1]))
+      .filter((rate) => !Number.isNaN(rate));
+    expect(rates.length).toBeGreaterThan(0);
+    rates.forEach((rate) => expect(rate).toBeLessThanOrEqual(40));
+  });
+
   it('spells out the MRP exclusion on the two percentage offers', () => {
     ['z-first-order', 'z-everyone'].forEach((id) => {
       expect(zomato.offers.find((o) => o.id === id).condition).toMatch(/excludes MRP items/);
@@ -152,7 +169,7 @@ describe('the September 2026 line-up', () => {
     expect(IN_STORE_OFFER.who).toMatch(/peach/i);
   });
 
-  it('was verified against the dashboards on the day the offers went live', () => {
-    expect(LAST_VERIFIED).toBe('2026-09-01');
+  it('was re-verified against the dashboards when TRYNEW was cut to 30%', () => {
+    expect(LAST_VERIFIED).toBe('2026-09-16');
   });
 });

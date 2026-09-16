@@ -20,7 +20,7 @@
 //               customer can see what qualifies without opening the app
 //   isNew     – flags a recently launched offer with a "New" badge
 
-export const LAST_VERIFIED = '2026-09-01';
+export const LAST_VERIFIED = '2026-09-16';
 
 export const ORDER_LINKS = {
   zomato: 'https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore/order',
@@ -96,8 +96,8 @@ export const PLATFORM_OFFERS = [
       },
       {
         id: 's-trynew',
-        headline: '50% off',
-        cap: 'up to ₹100',
+        headline: '30% off',
+        cap: 'up to ₹75',
         who: 'New to BlendNBubbles',
         condition: 'Min order ₹179',
         code: 'TRYNEW',
