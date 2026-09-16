@@ -27,9 +27,11 @@ export const ORDER_LINKS = {
   swiggy: 'https://www.swiggy.com/city/kolkata/blend-n-bubbles-barrackpore-rest1401296',
 };
 
-// Both platforms limit the Buy 1 Get 1 to these seven Fruit Teas, exactly as
-// the offer item pickers list them. Kept here rather than derived from
-// menuData so the offer stays truthful even if the menu is reorganised.
+// The Buy 1 Get 1 now runs on Swiggy only: Zomato's copy was stopped on
+// 16 September to free the single Zomato discount slot PetPooja allows per
+// outlet. These are the seven Fruit Teas exactly as Swiggy's item picker
+// lists them. Kept here rather than derived from menuData so the offer stays
+// truthful even if the menu is reorganised.
 export const BOGO_FRUIT_TEAS = [
   'Taiwan Pink Guava Splash',
   'Raw Mango Mist Pop',
@@ -40,6 +42,14 @@ export const BOGO_FRUIT_TEAS = [
   'Kiwi Island Tea',
 ];
 
+// The two passionfruit drinks still on the menu. A third, Pomelo Passion
+// Twist, appears in older Zomato price exports but has been delisted and is
+// not in the POS item tree, so it is deliberately absent here.
+export const PASSIONFRUIT_DRINKS = [
+  'Passion Fruit Rush',
+  'Exotic Passion Splash',
+];
+
 export const PLATFORM_OFFERS = [
   {
     id: 'zomato',
@@ -48,11 +58,11 @@ export const PLATFORM_OFFERS = [
     link: ORDER_LINKS.zomato,
     offers: [
       {
-        id: 'z-b1g1',
-        headline: 'Buy 1 Get 1',
-        who: 'Everyone, on all seven Fruit Teas',
-        condition: 'No minimum order · all of September',
-        items: BOGO_FRUIT_TEAS,
+        id: 'z-passionfruit',
+        headline: '30% off',
+        who: 'Everyone, on both passionfruit drinks',
+        condition: 'No minimum order · until 16 October',
+        items: PASSIONFRUIT_DRINKS,
         isNew: true,
       },
       {
@@ -89,10 +99,9 @@ export const PLATFORM_OFFERS = [
         id: 's-b1g1',
         headline: 'Buy 1 Get 1',
         who: 'Everyone, on all seven Fruit Teas',
-        condition: 'No minimum order',
+        condition: 'No minimum order · Swiggy only',
         code: 'BUY1GET1',
         items: BOGO_FRUIT_TEAS,
-        isNew: true,
       },
       {
         id: 's-trynew',

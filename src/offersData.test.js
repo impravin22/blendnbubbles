@@ -1,6 +1,6 @@
 import {
   PLATFORM_OFFERS, COMBOS, ORDER_LINKS, LAST_VERIFIED, IN_STORE_OFFER,
-  BOGO_FRUIT_TEAS, countOffers,
+  BOGO_FRUIT_TEAS, PASSIONFRUIT_DRINKS, countOffers,
 } from './offersData';
 
 describe('offersData', () => {
@@ -66,7 +66,7 @@ describe('offersData', () => {
   });
 });
 
-describe('the September 2026 line-up', () => {
+describe('the line-up as of 16 September 2026', () => {
   // These assertions exist so a stale offer cannot survive a careless edit:
   // the page is a promise to a customer standing in front of the app.
   const zomato = PLATFORM_OFFERS.find((p) => p.id === 'zomato');
@@ -78,15 +78,32 @@ describe('the September 2026 line-up', () => {
     expect(countOffers()).toBe(8);
   });
 
-  it('leads each platform with the Buy 1 Get 1, badged new', () => {
-    expect(zomato.offers[0].id).toBe('z-b1g1');
+  it('runs the Buy 1 Get 1 on Swiggy only, since Zomato\'s copy was stopped', () => {
+    // PetPooja allows one Zomato discount per outlet. The Fruit Tea BOGO held
+    // that slot, took zero Zomato orders in sixteen days, and was stopped on
+    // 16 September so the passionfruit discount could use it.
     expect(swiggy.offers[0].id).toBe('s-b1g1');
-    [zomato.offers[0], swiggy.offers[0]].forEach((offer) => {
-      expect(offer.headline).toBe('Buy 1 Get 1');
-      expect(offer.isNew).toBe(true);
-      expect(offer.condition).toMatch(/no minimum order/i);
-      expect(offer.items).toBe(BOGO_FRUIT_TEAS);
-    });
+    expect(swiggy.offers[0].headline).toBe('Buy 1 Get 1');
+    expect(swiggy.offers[0].items).toBe(BOGO_FRUIT_TEAS);
+    expect(swiggy.offers[0].condition).toMatch(/swiggy only/i);
+    expect(zomato.offers.map((offer) => offer.headline)).not.toContain('Buy 1 Get 1');
+  });
+
+  it('leads Zomato with the passionfruit discount, badged new', () => {
+    const offer = zomato.offers[0];
+    expect(offer.id).toBe('z-passionfruit');
+    expect(offer.headline).toBe('30% off');
+    expect(offer.isNew).toBe(true);
+    expect(offer.condition).toMatch(/no minimum order/i);
+    expect(offer.items).toBe(PASSIONFRUIT_DRINKS);
+  });
+
+  it('scopes the passionfruit discount to the two drinks still on the menu', () => {
+    // Pomelo Passion Twist is in older price exports but is delisted, and
+    // "Passion Matcha Twist" never existed at all. Neither belongs here.
+    expect(PASSIONFRUIT_DRINKS).toEqual(['Passion Fruit Rush', 'Exotic Passion Splash']);
+    expect(PASSIONFRUIT_DRINKS).not.toContain('Pomelo Passion Twist');
+    expect(PASSIONFRUIT_DRINKS.some((drink) => /matcha/i.test(drink))).toBe(false);
   });
 
   it('carries no Buy 2 Get 1 anywhere — that offer went inactive', () => {
@@ -94,12 +111,10 @@ describe('the September 2026 line-up', () => {
     expect(headlines).not.toContain('Buy 2 Get 1');
   });
 
-  it('scopes both platforms to the same seven Fruit Teas', () => {
+  it('keeps the Fruit Tea list at seven distinct drinks', () => {
     expect(BOGO_FRUIT_TEAS).toHaveLength(7);
     expect(new Set(BOGO_FRUIT_TEAS).size).toBe(7);
-    expect(zomato.offers[0].items).toBe(BOGO_FRUIT_TEAS);
     expect(swiggy.offers[0].items).toBe(BOGO_FRUIT_TEAS);
-    expect(zomato.offers[0].who).toBe(swiggy.offers[0].who);
     expect(swiggy.offers[0].code).toBe('BUY1GET1');
     BOGO_FRUIT_TEAS.forEach((tea) => {
       expect(typeof tea).toBe('string');
@@ -144,9 +159,10 @@ describe('the September 2026 line-up', () => {
     expect(zomato.offers.find((o) => o.id === 'z-free-nachos').isNew).toBeUndefined();
   });
 
-  it('badges exactly the two offers that launched on 1 September', () => {
+  it('badges only the passionfruit discount, the one that launched today', () => {
+    // The Swiggy BOGO lost its badge at sixteen days old.
     const badged = PLATFORM_OFFERS.flatMap((p) => p.offers).filter((o) => o.isNew);
-    expect(badged.map((o) => o.id)).toEqual(['z-b1g1', 's-b1g1']);
+    expect(badged.map((o) => o.id)).toEqual(['z-passionfruit']);
   });
 
   it('gives any items list at least one drink, and only strings', () => {
