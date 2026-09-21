@@ -1,6 +1,8 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { ThemeProvider } from './ThemeContext';
 import Offers from './Offers';
 import {
   PLATFORM_OFFERS, IN_STORE_OFFER, BOGO_FRUIT_TEAS, PASSIONFRUIT_DRINKS,
@@ -9,9 +11,11 @@ import {
 
 const renderOffers = () =>
   render(
-    <MemoryRouter initialEntries={['/offers']}>
-      <Offers />
-    </MemoryRouter>
+    <ThemeProvider>
+      <MemoryRouter initialEntries={['/offers']}>
+        <Offers />
+      </MemoryRouter>
+    </ThemeProvider>
   );
 
 describe('Offers page after the spin-wheel retirement', () => {
@@ -124,5 +128,41 @@ describe('Offers page, bank-funded offers', () => {
   it('marks them as the bank\'s, so nobody reads them as our discount', () => {
     renderOffers();
     expect(screen.getByText(/funded by the card issuer, not by us/i)).toBeInTheDocument();
+  });
+});
+
+describe('Offers page navigation', () => {
+  // Offers used to hand-roll its own <nav>. It was the only page that did, and
+  // the dark-mode toggle lives in the shared Navbar, so this page never had one.
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
+  });
+
+  it('offers a dark-mode toggle, like every other page', () => {
+    renderOffers();
+    expect(screen.getByRole('button', { name: /switch to dark mode/i })).toBeInTheDocument();
+  });
+
+  it('switches the theme and says so in the label', async () => {
+    renderOffers();
+    const toggle = screen.getByRole('button', { name: /switch to dark mode/i });
+    await act(async () => { await userEvent.click(toggle); });
+
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(screen.getByRole('button', { name: /switch to light mode/i })).toBeInTheDocument();
+  });
+
+  it('remembers the choice, so it survives a reload', async () => {
+    renderOffers();
+    await act(async () => {
+      await userEvent.click(screen.getByRole('button', { name: /switch to dark mode/i }));
+    });
+    expect(localStorage.getItem('theme')).toBe('dark');
+  });
+
+  it('marks Offers as the current page in the nav', () => {
+    renderOffers();
+    expect(screen.getByRole('link', { name: /^offers$/i })).toHaveClass('active');
   });
 });
