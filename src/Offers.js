@@ -174,6 +174,17 @@ function Offers() {
 
                 <p className="platform-card-footnote">{platform.footnote}</p>
 
+                {platform.bankOffers ? (
+                  <ul className="bank-offer-list">
+                    {platform.bankOffers.map((bank) => (
+                      <li key={bank.id} className="bank-offer">
+                        <span className="bank-offer-label">{bank.label}</span>
+                        <span className="bank-offer-detail">{bank.detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+
                 <a
                   className="btn btn-primary platform-card-cta"
                   href={platform.link}

@@ -2,7 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Offers from './Offers';
-import { PLATFORM_OFFERS, IN_STORE_OFFER, BOGO_FRUIT_TEAS, PASSIONFRUIT_DRINKS, countOffers } from './offersData';
+import {
+  PLATFORM_OFFERS, IN_STORE_OFFER, BOGO_FRUIT_TEAS, PASSIONFRUIT_DRINKS,
+  SWIGGY_BANK_OFFERS, countOffers,
+} from './offersData';
 
 const renderOffers = () =>
   render(
@@ -100,5 +103,26 @@ describe('Offers page, line-up as of 16 September 2026', () => {
   it('no longer advertises the retired Buy 2 Get 1', () => {
     renderOffers();
     expect(screen.queryByText(/buy 2 get 1/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('Offers page, bank-funded offers', () => {
+  it('lists each card offer the bank pays for', () => {
+    renderOffers();
+    SWIGGY_BANK_OFFERS.forEach((bank) => {
+      expect(screen.getByText(bank.label)).toBeInTheDocument();
+      expect(screen.getByText(bank.detail)).toBeInTheDocument();
+    });
+  });
+
+  it('renders them only on the card that has them', () => {
+    renderOffers();
+    expect(document.querySelectorAll('.bank-offer'))
+      .toHaveLength(SWIGGY_BANK_OFFERS.length);
+  });
+
+  it('marks them as the bank\'s, so nobody reads them as our discount', () => {
+    renderOffers();
+    expect(screen.getByText(/funded by the card issuer, not by us/i)).toBeInTheDocument();
   });
 });

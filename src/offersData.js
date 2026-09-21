@@ -20,7 +20,7 @@
 //               customer can see what qualifies without opening the app
 //   isNew     – flags a recently launched offer with a "New" badge
 
-export const LAST_VERIFIED = '2026-09-16';
+export const LAST_VERIFIED = '2026-09-21';
 
 export const ORDER_LINKS = {
   zomato: 'https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore/order',
@@ -48,6 +48,17 @@ export const BOGO_FRUIT_TEAS = [
 export const PASSIONFRUIT_DRINKS = [
   'Passion Fruit Rush',
   'Exotic Passion Splash',
+];
+
+// Card offers running on the Swiggy listing. The bank funds these, not the
+// shop, so they cost nothing and stack on top of our own discounts. They sit
+// outside PLATFORM_OFFERS and outside countOffers() on purpose: the hero
+// counts the offers we pay for, and the bank can withdraw these without
+// telling us.
+export const SWIGGY_BANK_OFFERS = [
+  { id: 'bank-sbi', label: 'Flat \u20B9150 off', detail: 'SBI Mastercard debit cards' },
+  { id: 'bank-visa', label: '10% off up to \u20B975', detail: 'Visa Platinum credit and debit' },
+  { id: 'bank-icici', label: '5% off', detail: 'ICICI Amazon Pay' },
 ];
 
 export const PLATFORM_OFFERS = [
@@ -129,7 +140,8 @@ export const PLATFORM_OFFERS = [
       },
     ],
     footnote:
-      'Bank and UPI offers stack on top. Look for SBI, Visa and BHIM UPI deals at checkout.',
+      'Bank offers below are funded by the card issuer, not by us, and stack on top of the deals above.',
+    bankOffers: SWIGGY_BANK_OFFERS,
   },
 ];
 

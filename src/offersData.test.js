@@ -1,5 +1,6 @@
 import {
   PLATFORM_OFFERS, COMBOS, ORDER_LINKS, LAST_VERIFIED, IN_STORE_OFFER,
+  SWIGGY_BANK_OFFERS,
   BOGO_FRUIT_TEAS, PASSIONFRUIT_DRINKS, countOffers,
 } from './offersData';
 
@@ -186,6 +187,65 @@ describe('the line-up as of 16 September 2026', () => {
   });
 
   it('was re-verified against the dashboards when TRYNEW was cut to 30%', () => {
-    expect(LAST_VERIFIED).toBe('2026-09-16');
+    expect(LAST_VERIFIED).toBe('2026-09-21');
+  });
+});
+
+describe('bank-funded offers', () => {
+  // The bank pays for these, not the shop. They must never be counted as ours:
+  // the hero count drives what a customer expects us to honour, and the bank
+  // can withdraw a card offer without telling us.
+  const swiggy = PLATFORM_OFFERS.find((p) => p.id === 'swiggy');
+  const zomato = PLATFORM_OFFERS.find((p) => p.id === 'zomato');
+
+  it('hangs the card offers off Swiggy, the only listing that shows them', () => {
+    expect(swiggy.bankOffers).toBe(SWIGGY_BANK_OFFERS);
+    expect(zomato.bankOffers).toBeUndefined();
+  });
+
+  it('keeps them out of the offer count we promise', () => {
+    const ours = PLATFORM_OFFERS.flatMap((p) => p.offers).length;
+    expect(countOffers()).toBe(ours);
+    const ids = PLATFORM_OFFERS.flatMap((p) => p.offers.map((o) => o.id));
+    SWIGGY_BANK_OFFERS.forEach((bank) => expect(ids).not.toContain(bank.id));
+  });
+
+  it('says on the card that the bank funds them, not us', () => {
+    expect(swiggy.footnote).toMatch(/funded by the card issuer, not by us/i);
+  });
+
+  it('gives every card offer a label, a detail and a unique id', () => {
+    expect(SWIGGY_BANK_OFFERS.length).toBeGreaterThan(0);
+    const ids = SWIGGY_BANK_OFFERS.map((b) => b.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    SWIGGY_BANK_OFFERS.forEach((bank) => {
+      expect(bank.label.trim().length).toBeGreaterThan(0);
+      expect(bank.detail.trim().length).toBeGreaterThan(0);
+    });
+  });
+
+  it('names the three cards the dashboard lists', () => {
+    const detail = SWIGGY_BANK_OFFERS.map((b) => b.detail).join(' | ');
+    expect(detail).toMatch(/SBI Mastercard/i);
+    expect(detail).toMatch(/Visa Platinum/i);
+    expect(detail).toMatch(/ICICI Amazon Pay/i);
+  });
+});
+
+describe('no offer overstates what the apps will honour', () => {
+  it('caps the best first-order claim at 40%, since TRYNEW dropped to 30%', () => {
+    // The poster footer quotes this figure. Zomato's 40% up to Rs 80 is now
+    // the best new-customer deal on either app.
+    const firstOrder = PLATFORM_OFFERS.flatMap((p) => p.offers)
+      .filter((o) => /first order|new to/i.test(o.who))
+      .map((o) => Number(o.headline.match(/(\d+)%/)?.[1]));
+    expect(firstOrder.length).toBeGreaterThan(0);
+    expect(Math.max(...firstOrder)).toBe(40);
+  });
+
+  it('runs the Buy 1 Get 1 on Swiggy only', () => {
+    const bogo = PLATFORM_OFFERS.flatMap((p) => p.offers.map((o) => ({ ...o, platform: p.id })))
+      .filter((o) => /buy 1 get 1/i.test(o.headline));
+    expect(bogo.map((o) => o.platform)).toEqual(['swiggy']);
   });
 });
