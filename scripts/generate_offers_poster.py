@@ -43,8 +43,9 @@ ZOMATO_URL = "https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore/order"
 SWIGGY_URL = "https://www.swiggy.com/city/kolkata/blend-n-bubbles-barrackpore-rest1401296"
 OFFERS_URL = "https://blendnbubbles.com/offers"
 
-# The seven drinks the Buy 1 Get 1 covers on both apps, mirroring
-# BOGO_FRUIT_TEAS in src/offersData.js. Printed so the counter is not asked.
+# The seven drinks the Swiggy Buy 1 Get 1 covers, mirroring
+# BOGO_FRUIT_TEAS in src/offersData.js. Swiggy only since 16 September, when
+# the Zomato copy was stopped. Printed so the counter is not asked.
 FRUIT_TEAS = [
     "Taiwan Pink Guava Splash",
     "Raw Mango Mist Pop",
@@ -335,7 +336,7 @@ def build_poster() -> Path:
           "Barrackpore, Kolkata", _serif(32, italic=True), MUTED, anchor="lm")
 
     _ribbon(draw, (W - margin - 470, 150, W - margin, 226),
-            "SEPTEMBER ONLY", _font(34, bold=True))
+            "ON NOW", _font(34, bold=True))
 
     # ── Hero: numerals left, illustration right ─────────────────
     hero_top = 380
@@ -351,7 +352,7 @@ def build_poster() -> Path:
     y = hero_top + 330
     y += _text(draw, margin, y, "BUY ONE", _font(96, bold=True), CREAM)[1] + 36
     y += _text(draw, margin, y, "GET ONE FREE", _font(96, bold=True), GOLD)[1] + 44
-    _text(draw, margin, y, "on our Fruit Teas", _serif(56, italic=True), CREAM)
+    _text(draw, margin, y, "on Swiggy \u00b7 all seven Fruit Teas", _serif(56, italic=True), CREAM)
 
     art = _cup_pair(700, 900, TEA_COLOURS["Taiwan Pink Guava Splash"],
                     TEA_COLOURS["Tropical Pineapple Pop"])
@@ -361,8 +362,8 @@ def build_poster() -> Path:
     y = 1290
     draw.line([(margin, y), (W - margin, y)], fill=GOLD, width=3)
     y += 30
-    _text(draw, margin, y, "ALL SEVEN, ON BOTH APPS", _font(38, bold=True), GOLD)
-    _text(draw, W - margin, y + 6, "no minimum order  ·  from ₹210",
+    _text(draw, margin, y, "THE SEVEN FRUIT TEAS", _font(38, bold=True), GOLD)
+    _text(draw, W - margin, y + 6, "Swiggy only  \u00b7  no minimum order  \u00b7  from \u20B9210",
           _serif(34, italic=True), MUTED, anchor="rt")
     y += 84
 
@@ -386,15 +387,18 @@ def build_poster() -> Path:
     label_font, note_font = _font(46, bold=True), _serif(32)
 
     order_col = (W - margin * 2) // 2
-    for x0, url, name, colour, note in (
-        (margin, ZOMATO_URL, "ZOMATO", ZOMATO_RED, "No code needed"),
-        (margin + order_col, SWIGGY_URL, "SWIGGY", SWIGGY_ORANGE, f"Code {SWIGGY_CODE}"),
+    for x0, url, name, colour, offer, note in (
+        (margin, ZOMATO_URL, "ZOMATO", ZOMATO_RED,
+         "30% off passionfruit", "No code needed"),
+        (margin + order_col, SWIGGY_URL, "SWIGGY", SWIGGY_ORANGE,
+         "Buy 1 Get 1", f"Code {SWIGGY_CODE}"),
     ):
         poster.alpha_composite(_qr_card(url, qr_px, pad), dest=(x0, y))
         tx = x0 + card + 34
-        _text(draw, tx, y + 96, name, label_font, colour)
-        _text(draw, tx, y + 158, "Scan to order", _serif(34), CREAM)
-        _text(draw, tx, y + 206, note, note_font, MUTED)
+        _text(draw, tx, y + 74, name, label_font, colour)
+        _text(draw, tx, y + 140, offer, _font(36, bold=True), CREAM)
+        _text(draw, tx, y + 194, note, note_font, MUTED)
+        _text(draw, tx, y + 240, "Scan to order", _serif(30), MUTED)
 
     y += card + 74
 
@@ -403,7 +407,7 @@ def build_poster() -> Path:
     _text(draw, W // 2, y + 46, "SCAN  ·  ORDER  ·  SIP", _font(46, bold=True),
           TEAL_DARKEST, anchor="mm")
     y += 92 + 34
-    _text(draw, W // 2, y, "New here? Up to 50% off your first order",
+    _text(draw, W // 2, y, "New here? Up to 40% off your first order",
           _serif(36, italic=True), MUTED, anchor="mt")
 
     print(f"  poster content ends at y={y + 46}, frame inner bottom={H - inset}")
@@ -432,8 +436,8 @@ def build_sticker() -> Path:
     font = _fit_font(draw, "1+1", _chord_width(S, y, margin=40), 120, bold=True)
     y += _text(draw, cx, y, "1+1", font, GOLD, anchor="mt")[1] + 16
 
-    font = _fit_font(draw, "ON FRUIT TEAS", _chord_width(S, y, margin=40), 34, bold=True)
-    y += _text(draw, cx, y, "ON FRUIT TEAS", font, CREAM, anchor="mt")[1] + 20
+    font = _fit_font(draw, "FRUIT TEAS \u00b7 SWIGGY", _chord_width(S, y, margin=40), 34, bold=True)
+    y += _text(draw, cx, y, "FRUIT TEAS \u00b7 SWIGGY", font, CREAM, anchor="mt")[1] + 20
 
     card = _qr_card(OFFERS_URL, 224, 11)
     img.alpha_composite(card, dest=(cx - card.size[0] // 2, y))

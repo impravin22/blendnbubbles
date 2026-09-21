@@ -20,16 +20,18 @@
 //               customer can see what qualifies without opening the app
 //   isNew     – flags a recently launched offer with a "New" badge
 
-export const LAST_VERIFIED = '2026-09-01';
+export const LAST_VERIFIED = '2026-09-21';
 
 export const ORDER_LINKS = {
   zomato: 'https://www.zomato.com/kolkata/blend-n-bubbles-barrackpore/order',
   swiggy: 'https://www.swiggy.com/city/kolkata/blend-n-bubbles-barrackpore-rest1401296',
 };
 
-// Both platforms limit the Buy 1 Get 1 to these seven Fruit Teas, exactly as
-// the offer item pickers list them. Kept here rather than derived from
-// menuData so the offer stays truthful even if the menu is reorganised.
+// The Buy 1 Get 1 now runs on Swiggy only: Zomato's copy was stopped on
+// 16 September to free the single Zomato discount slot PetPooja allows per
+// outlet. These are the seven Fruit Teas exactly as Swiggy's item picker
+// lists them. Kept here rather than derived from menuData so the offer stays
+// truthful even if the menu is reorganised.
 export const BOGO_FRUIT_TEAS = [
   'Taiwan Pink Guava Splash',
   'Raw Mango Mist Pop',
@@ -40,6 +42,25 @@ export const BOGO_FRUIT_TEAS = [
   'Kiwi Island Tea',
 ];
 
+// The two passionfruit drinks still on the menu. A third, Pomelo Passion
+// Twist, appears in older Zomato price exports but has been delisted and is
+// not in the POS item tree, so it is deliberately absent here.
+export const PASSIONFRUIT_DRINKS = [
+  'Passion Fruit Rush',
+  'Exotic Passion Splash',
+];
+
+// Card offers running on the Swiggy listing. The bank funds these, not the
+// shop, so they cost nothing and stack on top of our own discounts. They sit
+// outside PLATFORM_OFFERS and outside countOffers() on purpose: the hero
+// counts the offers we pay for, and the bank can withdraw these without
+// telling us.
+export const SWIGGY_BANK_OFFERS = [
+  { id: 'bank-sbi', label: 'Flat \u20B9150 off', detail: 'SBI Mastercard debit cards' },
+  { id: 'bank-visa', label: '10% off up to \u20B975', detail: 'Visa Platinum credit and debit' },
+  { id: 'bank-icici', label: '5% off', detail: 'ICICI Amazon Pay' },
+];
+
 export const PLATFORM_OFFERS = [
   {
     id: 'zomato',
@@ -48,11 +69,11 @@ export const PLATFORM_OFFERS = [
     link: ORDER_LINKS.zomato,
     offers: [
       {
-        id: 'z-b1g1',
-        headline: 'Buy 1 Get 1',
-        who: 'Everyone, on all seven Fruit Teas',
-        condition: 'No minimum order · all of September',
-        items: BOGO_FRUIT_TEAS,
+        id: 'z-passionfruit',
+        headline: '30% off',
+        who: 'Everyone, on both passionfruit drinks',
+        condition: 'No minimum order · until 16 October',
+        items: PASSIONFRUIT_DRINKS,
         isNew: true,
       },
       {
@@ -89,15 +110,14 @@ export const PLATFORM_OFFERS = [
         id: 's-b1g1',
         headline: 'Buy 1 Get 1',
         who: 'Everyone, on all seven Fruit Teas',
-        condition: 'No minimum order',
+        condition: 'No minimum order · Swiggy only',
         code: 'BUY1GET1',
         items: BOGO_FRUIT_TEAS,
-        isNew: true,
       },
       {
         id: 's-trynew',
-        headline: '50% off',
-        cap: 'up to ₹100',
+        headline: '30% off',
+        cap: 'up to ₹75',
         who: 'New to BlendNBubbles',
         condition: 'Min order ₹179',
         code: 'TRYNEW',
@@ -120,7 +140,8 @@ export const PLATFORM_OFFERS = [
       },
     ],
     footnote:
-      'Bank and UPI offers stack on top. Look for SBI, Visa and BHIM UPI deals at checkout.',
+      'Bank offers below are funded by the card issuer, not by us, and stack on top of the deals above.',
+    bankOffers: SWIGGY_BANK_OFFERS,
   },
 ];
 

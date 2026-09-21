@@ -2107,6 +2107,35 @@ section h2::after {
   color: var(--light-text);
 }
 
+/* Bank-funded offers. Deliberately quieter than a platform offer: the shop
+   does not pay for these and cannot promise them, so they read as a note
+   rather than as one of our own deals. */
+.bank-offer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.bank-offer {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.bank-offer-label {
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.bank-offer-detail {
+  color: var(--light-text);
+}
+
 .platform-card-cta {
   /* auto pushes the button to the card foot so both cards line up even when
      one platform lists more offers than the other */

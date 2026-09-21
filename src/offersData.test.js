@@ -1,6 +1,7 @@
 import {
   PLATFORM_OFFERS, COMBOS, ORDER_LINKS, LAST_VERIFIED, IN_STORE_OFFER,
-  BOGO_FRUIT_TEAS, countOffers,
+  SWIGGY_BANK_OFFERS,
+  BOGO_FRUIT_TEAS, PASSIONFRUIT_DRINKS, countOffers,
 } from './offersData';
 
 describe('offersData', () => {
@@ -66,7 +67,7 @@ describe('offersData', () => {
   });
 });
 
-describe('the September 2026 line-up', () => {
+describe('the line-up as of 16 September 2026', () => {
   // These assertions exist so a stale offer cannot survive a careless edit:
   // the page is a promise to a customer standing in front of the app.
   const zomato = PLATFORM_OFFERS.find((p) => p.id === 'zomato');
@@ -78,15 +79,32 @@ describe('the September 2026 line-up', () => {
     expect(countOffers()).toBe(8);
   });
 
-  it('leads each platform with the Buy 1 Get 1, badged new', () => {
-    expect(zomato.offers[0].id).toBe('z-b1g1');
+  it('runs the Buy 1 Get 1 on Swiggy only, since Zomato\'s copy was stopped', () => {
+    // PetPooja allows one Zomato discount per outlet. The Fruit Tea BOGO held
+    // that slot, took zero Zomato orders in sixteen days, and was stopped on
+    // 16 September so the passionfruit discount could use it.
     expect(swiggy.offers[0].id).toBe('s-b1g1');
-    [zomato.offers[0], swiggy.offers[0]].forEach((offer) => {
-      expect(offer.headline).toBe('Buy 1 Get 1');
-      expect(offer.isNew).toBe(true);
-      expect(offer.condition).toMatch(/no minimum order/i);
-      expect(offer.items).toBe(BOGO_FRUIT_TEAS);
-    });
+    expect(swiggy.offers[0].headline).toBe('Buy 1 Get 1');
+    expect(swiggy.offers[0].items).toBe(BOGO_FRUIT_TEAS);
+    expect(swiggy.offers[0].condition).toMatch(/swiggy only/i);
+    expect(zomato.offers.map((offer) => offer.headline)).not.toContain('Buy 1 Get 1');
+  });
+
+  it('leads Zomato with the passionfruit discount, badged new', () => {
+    const offer = zomato.offers[0];
+    expect(offer.id).toBe('z-passionfruit');
+    expect(offer.headline).toBe('30% off');
+    expect(offer.isNew).toBe(true);
+    expect(offer.condition).toMatch(/no minimum order/i);
+    expect(offer.items).toBe(PASSIONFRUIT_DRINKS);
+  });
+
+  it('scopes the passionfruit discount to the two drinks still on the menu', () => {
+    // Pomelo Passion Twist is in older price exports but is delisted, and
+    // "Passion Matcha Twist" never existed at all. Neither belongs here.
+    expect(PASSIONFRUIT_DRINKS).toEqual(['Passion Fruit Rush', 'Exotic Passion Splash']);
+    expect(PASSIONFRUIT_DRINKS).not.toContain('Pomelo Passion Twist');
+    expect(PASSIONFRUIT_DRINKS.some((drink) => /matcha/i.test(drink))).toBe(false);
   });
 
   it('carries no Buy 2 Get 1 anywhere — that offer went inactive', () => {
@@ -94,12 +112,10 @@ describe('the September 2026 line-up', () => {
     expect(headlines).not.toContain('Buy 2 Get 1');
   });
 
-  it('scopes both platforms to the same seven Fruit Teas', () => {
+  it('keeps the Fruit Tea list at seven distinct drinks', () => {
     expect(BOGO_FRUIT_TEAS).toHaveLength(7);
     expect(new Set(BOGO_FRUIT_TEAS).size).toBe(7);
-    expect(zomato.offers[0].items).toBe(BOGO_FRUIT_TEAS);
     expect(swiggy.offers[0].items).toBe(BOGO_FRUIT_TEAS);
-    expect(zomato.offers[0].who).toBe(swiggy.offers[0].who);
     expect(swiggy.offers[0].code).toBe('BUY1GET1');
     BOGO_FRUIT_TEAS.forEach((tea) => {
       expect(typeof tea).toBe('string');
@@ -117,6 +133,23 @@ describe('the September 2026 line-up', () => {
       .toEqual(['BUY1GET1', 'TRYNEW', 'SWIGGYIT', 'MISSEDYOU']);
   });
 
+  it('carries TRYNEW at 30% capped at ₹75, cut from 50% on 16 September', () => {
+    // The 50% version spent ₹2,897 over three months for 29 first orders and
+    // zero repeats. If anyone restores it, this test is the tripwire.
+    const trynew = swiggy.offers.find((offer) => offer.id === 's-trynew');
+    expect(trynew.headline).toBe('30% off');
+    expect(trynew.cap).toBe('up to ₹75');
+    expect(trynew.condition).toBe('Min order ₹179');
+  });
+
+  it('runs no offer deeper than 40% off on Swiggy', () => {
+    const rates = swiggy.offers
+      .map((offer) => Number((offer.headline.match(/^(\d+)% off$/) || [])[1]))
+      .filter((rate) => !Number.isNaN(rate));
+    expect(rates.length).toBeGreaterThan(0);
+    rates.forEach((rate) => expect(rate).toBeLessThanOrEqual(40));
+  });
+
   it('spells out the MRP exclusion on the two percentage offers', () => {
     ['z-first-order', 'z-everyone'].forEach((id) => {
       expect(zomato.offers.find((o) => o.id === id).condition).toMatch(/excludes MRP items/);
@@ -127,9 +160,10 @@ describe('the September 2026 line-up', () => {
     expect(zomato.offers.find((o) => o.id === 'z-free-nachos').isNew).toBeUndefined();
   });
 
-  it('badges exactly the two offers that launched on 1 September', () => {
+  it('badges only the passionfruit discount, the one that launched today', () => {
+    // The Swiggy BOGO lost its badge at sixteen days old.
     const badged = PLATFORM_OFFERS.flatMap((p) => p.offers).filter((o) => o.isNew);
-    expect(badged.map((o) => o.id)).toEqual(['z-b1g1', 's-b1g1']);
+    expect(badged.map((o) => o.id)).toEqual(['z-passionfruit']);
   });
 
   it('gives any items list at least one drink, and only strings', () => {
@@ -152,7 +186,66 @@ describe('the September 2026 line-up', () => {
     expect(IN_STORE_OFFER.who).toMatch(/peach/i);
   });
 
-  it('was verified against the dashboards on the day the offers went live', () => {
-    expect(LAST_VERIFIED).toBe('2026-09-01');
+  it('was re-verified against the dashboards when TRYNEW was cut to 30%', () => {
+    expect(LAST_VERIFIED).toBe('2026-09-21');
+  });
+});
+
+describe('bank-funded offers', () => {
+  // The bank pays for these, not the shop. They must never be counted as ours:
+  // the hero count drives what a customer expects us to honour, and the bank
+  // can withdraw a card offer without telling us.
+  const swiggy = PLATFORM_OFFERS.find((p) => p.id === 'swiggy');
+  const zomato = PLATFORM_OFFERS.find((p) => p.id === 'zomato');
+
+  it('hangs the card offers off Swiggy, the only listing that shows them', () => {
+    expect(swiggy.bankOffers).toBe(SWIGGY_BANK_OFFERS);
+    expect(zomato.bankOffers).toBeUndefined();
+  });
+
+  it('keeps them out of the offer count we promise', () => {
+    const ours = PLATFORM_OFFERS.flatMap((p) => p.offers).length;
+    expect(countOffers()).toBe(ours);
+    const ids = PLATFORM_OFFERS.flatMap((p) => p.offers.map((o) => o.id));
+    SWIGGY_BANK_OFFERS.forEach((bank) => expect(ids).not.toContain(bank.id));
+  });
+
+  it('says on the card that the bank funds them, not us', () => {
+    expect(swiggy.footnote).toMatch(/funded by the card issuer, not by us/i);
+  });
+
+  it('gives every card offer a label, a detail and a unique id', () => {
+    expect(SWIGGY_BANK_OFFERS.length).toBeGreaterThan(0);
+    const ids = SWIGGY_BANK_OFFERS.map((b) => b.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    SWIGGY_BANK_OFFERS.forEach((bank) => {
+      expect(bank.label.trim().length).toBeGreaterThan(0);
+      expect(bank.detail.trim().length).toBeGreaterThan(0);
+    });
+  });
+
+  it('names the three cards the dashboard lists', () => {
+    const detail = SWIGGY_BANK_OFFERS.map((b) => b.detail).join(' | ');
+    expect(detail).toMatch(/SBI Mastercard/i);
+    expect(detail).toMatch(/Visa Platinum/i);
+    expect(detail).toMatch(/ICICI Amazon Pay/i);
+  });
+});
+
+describe('no offer overstates what the apps will honour', () => {
+  it('caps the best first-order claim at 40%, since TRYNEW dropped to 30%', () => {
+    // The poster footer quotes this figure. Zomato's 40% up to Rs 80 is now
+    // the best new-customer deal on either app.
+    const firstOrder = PLATFORM_OFFERS.flatMap((p) => p.offers)
+      .filter((o) => /first order|new to/i.test(o.who))
+      .map((o) => Number(o.headline.match(/(\d+)%/)?.[1]));
+    expect(firstOrder.length).toBeGreaterThan(0);
+    expect(Math.max(...firstOrder)).toBe(40);
+  });
+
+  it('runs the Buy 1 Get 1 on Swiggy only', () => {
+    const bogo = PLATFORM_OFFERS.flatMap((p) => p.offers.map((o) => ({ ...o, platform: p.id })))
+      .filter((o) => /buy 1 get 1/i.test(o.headline));
+    expect(bogo.map((o) => o.platform)).toEqual(['swiggy']);
   });
 });
