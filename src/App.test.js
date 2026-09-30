@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
+import { PARTNERS } from './partnerOrderData';
 
 // Smoke test: mounting <App /> exercises the react-router-dom imports
 // (BrowserRouter, Routes, Route, Link, useLocation) and the homepage render.
@@ -65,11 +66,11 @@ describe('/events', () => {
   });
 });
 
-// The /nail URL is printed on a physical nail-studio coupon QR. A dropped or
-// renamed route cannot be recalled once the coupons are out, so it is asserted
-// through <App /> — mounting <NailOrder /> directly would still pass with the
-// route deleted, which is exactly the failure this guards.
-describe('/nail', () => {
+// Partner URLs are printed on physical coupon QRs. A dropped or renamed route
+// cannot be recalled once the coupons are out, so every partner page and the
+// legacy /nail QR are asserted through <App />: mounting <PartnerOrder />
+// directly would still pass with the route deleted.
+describe('partner order routes', () => {
   const visit = (path) => {
     window.history.pushState({}, '', path);
     return render(<App />);
@@ -79,12 +80,27 @@ describe('/nail', () => {
     window.history.pushState({}, '', '/');
   });
 
-  test('serves the nail studio order page', () => {
+  test.each(PARTNERS.map((partner) => [partner.slug, partner]))('/p/%s serves that partner\'s order page', (slug, partner) => {
+    visit(`/p/${slug}`);
+
+    expect(screen.getByText(`For ${partner.name} clients`)).toBeInTheDocument();
+    expect(screen.getByText(`Code ${partner.code}`)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /pick your drinks/i })).toBeInTheDocument();
+  });
+
+  test('the first nail-studio QR, /nail, lands on the Oh Nails page', () => {
     visit('/nail');
 
-    expect(screen.getByRole('heading', { name: /fresh set/i })).toBeInTheDocument();
-    expect(screen.getByText(/BNB-NAIL15/)).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /pick your drinks/i })).toBeInTheDocument();
+    expect(screen.getByText('For Oh Nails clients')).toBeInTheDocument();
+    expect(screen.getByText('Code BNB-OH-NAIL')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/p/oh-nails');
+  });
+
+  test('an unknown partner link points people to the menu instead of a blank page', () => {
+    visit('/p/not-a-partner');
+
+    expect(screen.getByRole('heading', { name: /this offer link isn't active/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /full menu/i })).toHaveAttribute('href', '/menu');
   });
 });
 

@@ -1,0 +1,7 @@
+[
+  { "slug": "oh-nails", "name": "Oh Nails", "kind": "nail", "code": "BNB-OH-NAIL" },
+  { "slug": "artifice-studio", "name": "Artifice Studio", "kind": "tattoo", "code": "BNB-ARTIFICE" },
+  { "slug": "kanchiwala", "name": "Kanchiwala", "kind": "parlour", "code": "BNB-KANCHIWALA" },
+  { "slug": "headliners", "name": "Headliners", "kind": "parlour", "code": "BNB-HEADLINERS" },
+  { "slug": "maroon", "name": "Maroon", "kind": "parlour", "code": "BNB-MAROON" }
+]

@@ -1,24 +1,112 @@
-// ─── Nail studio order page (/nail) ─────────────────────────
-// The nail-studio coupon QR opens this page. Customers pick drinks and fill
-// in their name and studio before WhatsApp opens, so the shop receives a
-// complete order instead of a blank "My nail studio:" message to chase.
+// ─── Partner order pages (/p/:slug) ──────────────────────────
+// Every partner venue (nail studio, tattoo studio, parlour) has its own page
+// and coupon code. The QR on that partner's coupon card opens /p/<slug>:
+// customers pick drinks and see the bill with the partner's code applied
+// before WhatsApp opens, so the shop receives a complete order that already
+// says which partner sent it.
 //
-// Prices come from MENU, so /nail can never disagree with /menu. Menu
-// prices already include 5% GST (PetPooja bills a ₹120 soda as 114.29 +
-// 5.72 tax), and the PetPooja discount "BNB-NAIL15 Nail studios" comes off
-// the pre-tax core total, so the amount to pay is simply the menu total
-// less 15%. The cashier still applies the discount in PetPooja at billing.
+// Partners live in partnerOffers.json, which scripts/partner-pages.js also
+// reads to publish one static page per partner. Prices come from MENU, so
+// these pages never disagree with /menu. Menu prices include 5% GST
+// (PetPooja bills a ₹120 soda as 114.29 + 5.72 tax), and each partner's
+// PetPooja discount comes off the pre-tax core total, so the amount to pay
+// is the menu total less the discount. The cashier still applies the
+// discount in PetPooja at billing.
 
 import { MENU, photoSlug } from './menuData';
+import PARTNER_LIST from './partnerOffers.json';
 
-/** The partner offer printed on the coupon card and set up in PetPooja. */
-export const NAIL_OFFER = Object.freeze({
-  code: 'BNB-NAIL15',
+/** Terms shared by every partner code, matching the PetPooja discounts. */
+export const PARTNER_TERMS = Object.freeze({
   percentOff: 15,
   minimumBill: 199,
   validUntil: '31 Dec 2026',
   whatsappNumber: '919330697501',
 });
+
+/** Page copy per kind of venue. */
+export const PARTNER_KINDS = Object.freeze({
+  nail: Object.freeze({
+    title: 'Fresh set?',
+    titleAccent: 'Fresh sip.',
+    lede: 'Boba teas, fruit teas and smoothies while your nails dry.',
+  }),
+  tattoo: Object.freeze({
+    title: 'Fresh ink?',
+    titleAccent: 'Cold drink.',
+    lede: 'Cold coffees, boba teas and smoothies for the long sit.',
+  }),
+  parlour: Object.freeze({
+    title: 'Fresh look?',
+    titleAccent: 'Fresh sip.',
+    lede: 'Boba teas, fruit teas and smoothies while you are in the chair.',
+  }),
+});
+
+// Slugs become URL paths and build folders, so keep them to a-z, 0-9 and single hyphens.
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const CODE_PATTERN = /^BNB-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
+
+/**
+ * Checks the partner list and freezes each entry.
+ *
+ * @param {Array<{slug: string, name: string, kind: string, code: string}>} partners Raw partner entries.
+ * @returns {Array<Object>} The same partners, frozen.
+ * @throws {Error} On a malformed slug or code, an unknown kind, a blank name,
+ *     or a slug or code used twice.
+ */
+export function validatePartners(partners) {
+  const slugs = new Set();
+  const codes = new Set();
+  return partners.map((partner) => {
+    if (!SLUG_PATTERN.test(partner.slug)) {
+      throw new Error(`Bad partner slug: ${partner.slug}`);
+    }
+    if (!CODE_PATTERN.test(partner.code)) {
+      throw new Error(`Bad partner code: ${partner.code}`);
+    }
+    if (!PARTNER_KINDS[partner.kind]) {
+      throw new Error(`Unknown partner kind: ${partner.kind}`);
+    }
+    if (typeof partner.name !== 'string' || !partner.name.trim()) {
+      throw new Error(`Partner ${partner.slug} has no name`);
+    }
+    if (slugs.has(partner.slug)) {
+      throw new Error(`Duplicate partner slug: ${partner.slug}`);
+    }
+    if (codes.has(partner.code)) {
+      throw new Error(`Duplicate partner code: ${partner.code}`);
+    }
+    slugs.add(partner.slug);
+    codes.add(partner.code);
+    return Object.freeze({ ...partner });
+  });
+}
+
+export const PARTNERS = Object.freeze(validatePartners(PARTNER_LIST));
+
+/**
+ * Finds a partner by URL slug.
+ *
+ * @param {string} slug The :slug route parameter.
+ * @param {Array<Object>} partners Partners to search; defaults to PARTNERS.
+ * @returns {?Object} The partner, or null for an unknown slug.
+ */
+export function findPartner(slug, partners = PARTNERS) {
+  return partners.find((partner) => partner.slug === slug) ?? null;
+}
+
+/**
+ * Combines the shared terms with one partner's code and name.
+ *
+ * @param {{code: string, name: string}} partner A partner.
+ * @param {Object} terms Shared terms; defaults to PARTNER_TERMS.
+ * @returns {{code: string, partnerName: string, percentOff: number, minimumBill: number,
+ *     validUntil: string, whatsappNumber: string}} The partner's offer.
+ */
+export function offerFor(partner, terms = PARTNER_TERMS) {
+  return Object.freeze({ ...terms, code: partner.code, partnerName: partner.name });
+}
 
 /**
  * Best sellers by POS quantity, hot and cold combined, from the PetPooja
@@ -53,7 +141,7 @@ export const TEMPERATURE_LABELS = Object.freeze({ cold: 'Cold', hot: 'Hot' });
  * @returns {Array<{name: string, desc: string, hot: ?number, cold: ?number, photo: string}>}
  *     One entry per name, with the photo path /menu uses.
  * @throws {Error} When a name is not a temperature-priced drink on the menu,
- *     so a renamed menu item fails the tests instead of vanishing from /nail.
+ *     so a renamed menu item fails the tests instead of vanishing from the page.
  */
 export function resolveDrinks(names, menu) {
   const drinksByName = new Map();
@@ -75,8 +163,8 @@ export function resolveDrinks(names, menu) {
   });
 }
 
-/** The drinks /nail shows, resolved once at load. */
-export const NAIL_DRINKS = resolveDrinks(TOP_DRINK_NAMES, MENU);
+/** The drinks every partner page shows, resolved once at load. */
+export const ORDER_DRINKS = resolveDrinks(TOP_DRINK_NAMES, MENU);
 
 /**
  * Builds the key for one drink at one temperature in the quantities map.
@@ -129,7 +217,7 @@ export function orderLines(quantities, drinks) {
  * Sums the menu prices of the order lines.
  *
  * @param {Array<{lineTotal: number}>} lines Order lines.
- * @returns {number} Menu total in rupees, before tax and discount.
+ * @returns {number} Menu total in rupees, GST included, before the discount.
  */
 export function orderSubtotal(lines) {
   return lines.reduce((total, line) => total + line.lineTotal, 0);
@@ -152,7 +240,7 @@ export function drinkCount(lines) {
  * @param {{percentOff: number, minimumBill: number}} offer The offer.
  * @returns {number} The saving, or 0 below the minimum bill.
  */
-export function couponSaving(subtotal, offer = NAIL_OFFER) {
+export function couponSaving(subtotal, offer) {
   if (subtotal < offer.minimumBill) {
     return 0;
   }
@@ -166,25 +254,22 @@ export function couponSaving(subtotal, offer = NAIL_OFFER) {
  * @param {{percentOff: number, minimumBill: number}} offer The offer.
  * @returns {number} Amount to pay in rupees.
  */
-export function amountToPay(subtotal, offer = NAIL_OFFER) {
+export function amountToPay(subtotal, offer) {
   return subtotal - couponSaving(subtotal, offer);
 }
 
 /**
  * Says what still stops the order being sent.
  *
- * @param {{lines: Array, customerName: string, studioName: string}} order The order so far.
+ * @param {{lines: Array, customerName: string}} order The order so far.
  * @returns {?string} The first missing piece, or null when the order is complete.
  */
-export function missingForOrder({ lines, customerName, studioName }) {
+export function missingForOrder({ lines, customerName }) {
   if (lines.length === 0) {
     return 'Pick at least one drink';
   }
   if (!customerName.trim()) {
     return 'Add your name';
-  }
-  if (!studioName.trim()) {
-    return 'Add your nail studio';
   }
   return null;
 }
@@ -196,16 +281,16 @@ function singleLine(text) {
 
 /**
  * Writes the WhatsApp message the shop receives. It always starts with
- * "NAIL ORDER" so staff can search for these chats.
+ * "BNB ORDER" and the partner's code, so staff can search for these chats
+ * and know which partner sent the customer.
  *
- * @param {{lines: Array, customerName: string, studioName: string, note: (string|undefined)}} order
- *     A complete order.
- * @param {Object} offer The offer; defaults to NAIL_OFFER.
- * @returns {string} The message text, using WhatsApp's *bold* markup for the header.
+ * @param {{lines: Array, customerName: string, note: (string|undefined)}} order A complete order.
+ * @param {Object} offer The partner's offer from offerFor().
+ * @returns {string} The message text, using WhatsApp's *bold* markup.
  * @throws {Error} When the order is incomplete, so a blank order can never be built.
  */
-export function buildOrderMessage({ lines, customerName, studioName, note = '' }, offer = NAIL_OFFER) {
-  const missing = missingForOrder({ lines, customerName, studioName });
+export function buildOrderMessage({ lines, customerName, note = '' }, offer) {
+  const missing = missingForOrder({ lines, customerName });
   if (missing) {
     throw new Error(`Order is incomplete: ${missing}`);
   }
@@ -215,8 +300,8 @@ export function buildOrderMessage({ lines, customerName, studioName, note = '' }
     ? [`Coupon ${offer.code} (${offer.percentOff}% off): -₹${saving}`, `*To pay: ₹${amountToPay(subtotal, offer)}*`]
     : [`*To pay: ₹${subtotal}*`, `(${offer.code} starts at ₹${offer.minimumBill}, so no discount on this order)`];
   const message = [
-    `*NAIL ORDER · ${offer.code}*`,
-    `Studio: ${singleLine(studioName)}`,
+    `*BNB ORDER · ${offer.code}*`,
+    `Partner: ${offer.partnerName}`,
     `Name: ${singleLine(customerName)}`,
     '',
     ...lines.map(
@@ -237,9 +322,9 @@ export function buildOrderMessage({ lines, customerName, studioName, note = '' }
  * Builds the click-to-chat link that opens WhatsApp with the message typed in.
  *
  * @param {string} message Message text.
- * @param {{whatsappNumber: string}} offer The offer; defaults to NAIL_OFFER.
+ * @param {{whatsappNumber: string}} offer The offer.
  * @returns {string} A wa.me URL.
  */
-export function whatsappOrderUrl(message, offer = NAIL_OFFER) {
+export function whatsappOrderUrl(message, offer) {
   return `https://wa.me/${offer.whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
