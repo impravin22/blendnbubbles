@@ -56,6 +56,8 @@ jobs:
           set -euo pipefail
           test -f build/index.html
           test -f build/events/index.html
+          # The nail-studio coupon QR is printed with this URL; it must deploy.
+          test -f build/nail/index.html
           test -f build/CNAME
           grep -q "blendnbubbles.com" build/CNAME
 
