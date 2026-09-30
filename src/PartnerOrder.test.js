@@ -71,6 +71,9 @@ describe('partner order page', () => {
     expect(screen.getByTestId('partner-amount-to-pay')).toHaveTextContent('₹304');
     expect(screen.getByText('-₹54')).toBeInTheDocument();
     expect(screen.getByText('2 drinks · You pay ₹304')).toBeInTheDocument();
+    // The hint is only true below the minimum; leaving it up next to an applied
+    // discount would tell a qualifying customer to keep spending.
+    expect(screen.queryByText(/more to get 15% off/i)).not.toBeInTheDocument();
 
     const link = screen.getByRole('link', { name: /send order on whatsapp/i });
     expect(link.getAttribute('href').startsWith('https://wa.me/919330697501?text=')).toBe(true);

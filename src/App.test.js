@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
-import { PARTNERS } from './partnerOrderData';
+import { PARTNERS, PARTNER_KINDS } from './partnerOrderData';
 
 // Smoke test: mounting <App /> exercises the react-router-dom imports
 // (BrowserRouter, Routes, Route, Link, useLocation) and the homepage render.
@@ -86,6 +86,13 @@ describe('partner order routes', () => {
     expect(screen.getByText(`For ${partner.name} clients`)).toBeInTheDocument();
     expect(screen.getByText(`Code ${partner.code}`)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /pick your drinks/i })).toBeInTheDocument();
+
+    // The kind picks the whole hero. Asserting it from PARTNER_KINDS here
+    // covers all three kinds on every run: parlour is 3 of the 5 partners and
+    // had no assertion anywhere, so its copy could be garbled and stay green.
+    const copy = PARTNER_KINDS[partner.kind];
+    expect(screen.getByRole('heading', { name: `${copy.title} ${copy.titleAccent}` })).toBeInTheDocument();
+    expect(screen.getByText(copy.lede)).toBeInTheDocument();
   });
 
   test('the first nail-studio QR, /nail, lands on the Oh Nails page', () => {

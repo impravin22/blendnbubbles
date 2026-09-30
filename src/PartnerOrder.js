@@ -256,6 +256,16 @@ function PartnerOrderPage({ partner }) {
 function PartnerNotFound() {
   const scrolled = useScrolled();
   useBootstrapScript();
+
+  // Without this the dead link is served under the homepage title and the
+  // homepage canonical, so a retired partner URL looks like the front page to
+  // a search engine and to anyone reading the tab.
+  useEffect(() => {
+    document.title = 'Offer link not active - BlendNBubbles';
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', 'https://blendnbubbles.com/menu');
+  }, []);
+
   return (
     <div className="PartnerOrder">
       <Navbar scrolled={scrolled} />

@@ -338,3 +338,9 @@
   color: var(--light-text);
   margin: 0 0 16px;
 }
+
+.partner-lede a {
+  /* Same reason as .partner-section-lede a: without this the link falls
+     through to Bootstrap's default blue, which fails AA in both themes. */
+  color: var(--primary);
+}

@@ -22,6 +22,7 @@ import {
   missingForOrder,
   buildOrderMessage,
   whatsappOrderUrl,
+  PARTNER_KINDS,
 } from './partnerOrderData';
 
 const drink = (name) => ORDER_DRINKS.find((item) => item.name === name);
@@ -29,14 +30,28 @@ const OH_NAILS = offerFor(findPartner('oh-nails'));
 const partner = (overrides) => ({ slug: 'test-venue', name: 'Test Venue', kind: 'parlour', code: 'BNB-TEST', ...overrides });
 
 describe('partners', () => {
-  test('the five signed partners, each with its own code', () => {
-    expect(PARTNERS.map((item) => [item.name, item.code])).toEqual([
-      ['Oh Nails', 'BNB-OH-NAIL'],
-      ['Artifice Studio', 'BNB-ARTIFICE'],
-      ['Kanchiwala', 'BNB-KANCHIWALA'],
-      ['Headliners', 'BNB-HEADLINERS'],
-      ['Maroon', 'BNB-MAROON'],
+  test('the five signed partners, each with its own slug, kind and code', () => {
+    // slug is the printed URL and kind picks the hero copy, so both are pinned
+    // here: changing either silently would reprint wrong or reword a live page.
+    expect(PARTNERS.map((item) => [item.slug, item.name, item.kind, item.code])).toEqual([
+      ['oh-nails', 'Oh Nails', 'nail', 'BNB-OH-NAIL'],
+      ['artifice-studio', 'Artifice Studio', 'tattoo', 'BNB-ARTIFICE'],
+      ['kanchiwala', 'Kanchiwala', 'parlour', 'BNB-KANCHIWALA'],
+      ['headliners', 'Headliners', 'parlour', 'BNB-HEADLINERS'],
+      ['maroon', 'Maroon', 'parlour', 'BNB-MAROON'],
     ]);
+  });
+
+  test('the hero copy for each kind, pinned literally', () => {
+    // Deriving this from PARTNER_KINDS would be tautological: garbling the
+    // copy would move the expectation with it. Verified by mutation — editing
+    // any string below fails this test.
+    expect(PARTNER_KINDS.nail).toMatchObject({ title: 'Fresh set?', titleAccent: 'Fresh sip.' });
+    expect(PARTNER_KINDS.tattoo).toMatchObject({ title: 'Fresh ink?', titleAccent: 'Cold drink.' });
+    expect(PARTNER_KINDS.parlour).toMatchObject({ title: 'Fresh look?', titleAccent: 'Fresh sip.' });
+    Object.values(PARTNER_KINDS).forEach((copy) => {
+      expect(copy.lede.trim().length).toBeGreaterThan(0);
+    });
   });
 
   test('findPartner returns the partner for a known slug and null otherwise', () => {
