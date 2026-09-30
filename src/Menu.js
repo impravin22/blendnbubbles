@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { MENU } from './menuData';
+import { MENU, photoSlug } from './menuData';
 import './App.css';
 import Navbar from './Navbar';
 
@@ -9,12 +9,6 @@ const FILTERS = [{ id: 'all', label: 'All' }, ...MENU.map((c) => ({ id: c.id, la
 // Render a single price value, or a dash when that option is not offered.
 function priceText(value) {
   return value != null ? `₹${value}` : '-';
-}
-
-// Drink photos live at /menu-photos/<slug>.webp, named by this slug rule
-// (matches the conversion script that produced them from the Zomato shoot).
-function photoSlug(name) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 function Menu() {

@@ -6,6 +6,13 @@
 // price means that temperature is not offered (rendered as a dash). Toppings
 // use type 'single' with one price. `desc` is the customer-facing blurb.
 
+// Drink photos live at /menu-photos/<slug>.webp, named by this slug rule
+// (matches the conversion script that produced them from the Zomato shoot).
+// Shared by /menu and /nail so both pages resolve the same file.
+export function photoSlug(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 export const MENU = [
   {
     id: 'soda',

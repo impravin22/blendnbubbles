@@ -16,6 +16,7 @@ import BobaCatcher from './BobaCatcher';
 import HallOfFame from './HallOfFame';
 import Reports from './Reports';
 import Partners from './Partners';
+import NailOrder from './NailOrder';
 import Navbar from './Navbar';
 import { ThemeProvider } from './ThemeContext';
 
@@ -112,6 +113,7 @@ function AnimatedRoutes() {
             <Route path="/play/football" element={<HallOfFame />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/partners" element={<Partners />} />
+            <Route path="/nail" element={<NailOrder />} />
           </Routes>
         </div>
       </CSSTransition>

@@ -9,6 +9,15 @@ import { CATERING_PACKAGES, CATERING_STEPS } from './cateringData';
 
 jest.mock('./eventsClient');
 
+// The form refuses past dates, so a fixed date turns this suite into a time
+// bomb (2026-09-14 started failing on 15 Sep). Always book 30 days ahead.
+const EVENT_DATE = (() => {
+  const date = new Date();
+  date.setDate(date.getDate() + 30);
+  const pad = (number) => String(number).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+})();
+
 const renderEvents = () =>
   render(
     <ThemeProvider>
@@ -23,7 +32,7 @@ const fillRequired = () => {
   fireEvent.change(screen.getByLabelText(/email \*/i), { target: { value: 'ananya@example.com' } });
   fireEvent.change(screen.getByLabelText(/phone number \*/i), { target: { value: '+91 98301 22334' } });
   fireEvent.change(screen.getByLabelText(/event type \*/i), { target: { value: 'College fest' } });
-  fireEvent.change(screen.getByLabelText(/event date \*/i), { target: { value: '2026-09-14' } });
+  fireEvent.change(screen.getByLabelText(/event date \*/i), { target: { value: EVENT_DATE } });
   fireEvent.change(screen.getByLabelText(/approx\. guests \*/i), { target: { value: '100 – 250' } });
 };
 
@@ -71,7 +80,7 @@ describe('Events page', () => {
     fillRequired();
     fireEvent.click(screen.getByRole('button', { name: /send event request/i }));
     expect(await screen.findByRole('heading', { name: /request received/i })).toBeInTheDocument();
-    expect(screen.getByText(/2026-09-14/)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(EVENT_DATE))).toBeInTheDocument();
     expect(eventsClient.submitEventRequest).toHaveBeenCalledTimes(1);
     expect(eventsClient.submitEventRequest.mock.calls[0][0]).toMatchObject({
       name: 'Ananya Sen',

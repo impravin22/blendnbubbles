@@ -1,0 +1,339 @@
+/* ─── /nail: nail studio order page ─────────────────────────── */
+
+/* The shared --input-border is below the 3:1 non-text contrast minimum against
+   both the field fill and the page, in both themes, so the form fields have no
+   perceivable edge. These values clear it: #6c757d is 4.68:1 on #ffffff, and
+   #8a8a8a is 3.96:1 on the dark field fill #2d2d2d. */
+:root {
+  --nail-field-border: #6c757d;
+}
+
+[data-theme='dark'] {
+  --nail-field-border: #8a8a8a;
+}
+
+.nail-order-page {
+  padding-top: 110px;
+  background: var(--background);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.nail-order-container {
+  max-width: 720px;
+  padding-bottom: 24px;
+}
+
+.nail-hero {
+  margin-bottom: 28px;
+}
+
+.nail-eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.nail-title {
+  font-size: clamp(2rem, 7vw, 2.8rem);
+  line-height: 1.05;
+  color: var(--primary);
+  margin: 0 0 16px;
+}
+
+.nail-title span {
+  /* --secondary is 2.91:1 on the cream background; index.css defines
+     --accent-text (#8a5a2e light, #d4a773 dark) for warm accent text. */
+  color: var(--accent-text);
+}
+
+.nail-coupon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 12px 16px;
+  border: 2px dashed var(--secondary);
+  border-radius: 14px;
+  background: var(--card-bg);
+  font-size: 0.98rem;
+}
+
+.nail-coupon-code {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--primary);
+}
+
+.nail-coupon-validity {
+  color: var(--light-text);
+  font-size: 0.88rem;
+}
+
+.nail-section-title {
+  font-size: 1.25rem;
+  color: var(--primary);
+  margin: 28px 0 6px;
+}
+
+.nail-section-lede {
+  color: var(--light-text);
+  font-size: 0.92rem;
+  margin-bottom: 14px;
+}
+
+.nail-section-lede a {
+  color: var(--primary);
+}
+
+.nail-drinks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.nail-drink {
+  display: flex;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.nail-drink-photo {
+  flex: 0 0 88px;
+  width: 88px;
+  height: 110px;
+  object-fit: cover;
+  object-position: center 55%;
+  border-radius: 44px 44px 10px 10px;
+  border: 2px solid var(--secondary-light);
+}
+
+.nail-drink-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.nail-drink-name {
+  font-size: 1.05rem;
+  margin: 2px 0 4px;
+  color: var(--text);
+}
+
+.nail-drink-desc {
+  font-size: 0.85rem;
+  color: var(--light-text);
+  margin: 0 0 8px;
+}
+
+.nail-drink-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.nail-drink-price {
+  font-size: 0.92rem;
+}
+
+.nail-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--input-border);
+  border-radius: 999px;
+  /* No `overflow: hidden` here. Nothing inside paints into the rounded
+     corners, so clipping bought nothing, but it swallowed the global
+     :focus-visible ring (drawn at outline-offset: 2px, outside the padding
+     box) and zeroed the flex minimum size, squashing the buttons at 320px. */
+  flex: 0 0 auto;
+}
+
+.nail-stepper-button {
+  width: 40px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.nail-stepper-button:disabled {
+  color: var(--input-border);
+}
+
+.nail-stepper-count {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.nail-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.nail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.nail-field input {
+  padding: 10px 12px;
+  /* --input-border is under 3:1 against both the field fill and the page, so
+     the field edge is not a perceivable boundary. These clear 3:1 on both. */
+  border: 1px solid var(--nail-field-border);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-weight: 400;
+}
+
+.nail-field-wide {
+  grid-column: 1 / -1;
+}
+
+.nail-bill {
+  margin-top: 8px;
+  padding: 4px 16px 14px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.nail-bill-rows {
+  margin: 0;
+}
+
+.nail-bill-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.nail-bill-row dt {
+  font-weight: 400;
+}
+
+.nail-bill-row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.nail-bill-saving {
+  color: var(--accent-text);
+}
+
+.nail-bill-total {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--input-border);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.nail-bill-total dt {
+  font-weight: 700;
+}
+
+.nail-bill-hint {
+  margin: 8px 0 0;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.nail-bill-footnote {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--light-text);
+}
+
+.nail-order-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: var(--card-bg);
+  border-top: 1px solid var(--input-border);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.nail-order-bar-inner {
+  max-width: 720px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.nail-order-summary {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.nail-send {
+  flex: 0 0 auto;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--input-border);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  text-align: center;
+}
+
+.nail-send-ready {
+  background: #1f7a4d;
+  color: #ffffff;
+}
+
+.nail-send-ready:hover,
+.nail-send-ready:focus {
+  background: #186540;
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .nail-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .nail-order-bar-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nail-order-summary {
+    text-align: center;
+  }
+}
+
+/* The coupon QR is scanned on a phone, so the steppers are a touch-first
+   control. They stay compact for a mouse and reach the 44x44 target on any
+   coarse pointer or narrow screen. */
+@media (pointer: coarse), (max-width: 820px) {
+  .nail-stepper-button {
+    width: 44px;
+    height: 44px;
+  }
+}
