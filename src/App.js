@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -16,7 +16,7 @@ import BobaCatcher from './BobaCatcher';
 import HallOfFame from './HallOfFame';
 import Reports from './Reports';
 import Partners from './Partners';
-import NailOrder from './NailOrder';
+import PartnerOrder from './PartnerOrder';
 import Navbar from './Navbar';
 import { ThemeProvider } from './ThemeContext';
 
@@ -113,7 +113,11 @@ function AnimatedRoutes() {
             <Route path="/play/football" element={<HallOfFame />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/partners" element={<Partners />} />
-            <Route path="/nail" element={<NailOrder />} />
+            <Route path="/p/:slug" element={<PartnerOrder />} />
+            {/* /nail was the first, generic nail-studio QR (v1.1.0). Oh Nails is the
+                only nail studio partner, so any card already out still lands on an
+                order page with a live code. */}
+            <Route path="/nail" element={<Navigate to="/p/oh-nails" replace />} />
           </Routes>
         </div>
       </CSSTransition>

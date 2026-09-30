@@ -56,8 +56,11 @@ jobs:
           set -euo pipefail
           test -f build/index.html
           test -f build/events/index.html
-          # The nail-studio coupon QR is printed with this URL; it must deploy.
+          # Coupon QRs are printed with these URLs; every one must deploy.
           test -f build/nail/index.html
+          for slug in $(node -e "console.log(require('./src/partnerOffers.json').map((p) => p.slug).join(' '))"); do
+            test -f "build/p/$slug/index.html"
+          done
           test -f build/CNAME
           grep -q "blendnbubbles.com" build/CNAME
 

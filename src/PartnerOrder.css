@@ -1,34 +1,34 @@
-/* ─── /nail: nail studio order page ─────────────────────────── */
+/* ─── /p/:slug: partner order pages ─────────────────────────── */
 
 /* The shared --input-border is below the 3:1 non-text contrast minimum against
    both the field fill and the page, in both themes, so the form fields have no
    perceivable edge. These values clear it: #6c757d is 4.68:1 on #ffffff, and
    #8a8a8a is 3.96:1 on the dark field fill #2d2d2d. */
 :root {
-  --nail-field-border: #6c757d;
+  --partner-field-border: #6c757d;
 }
 
 [data-theme='dark'] {
-  --nail-field-border: #8a8a8a;
+  --partner-field-border: #8a8a8a;
 }
 
-.nail-order-page {
+.partner-order-page {
   padding-top: 110px;
   background: var(--background);
   color: var(--text);
   min-height: 100vh;
 }
 
-.nail-order-container {
+.partner-order-container {
   max-width: 720px;
   padding-bottom: 24px;
 }
 
-.nail-hero {
+.partner-hero {
   margin-bottom: 28px;
 }
 
-.nail-eyebrow {
+.partner-eyebrow {
   margin: 0 0 6px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -37,20 +37,20 @@
   color: var(--accent-text);
 }
 
-.nail-title {
+.partner-title {
   font-size: clamp(2rem, 7vw, 2.8rem);
   line-height: 1.05;
   color: var(--primary);
-  margin: 0 0 16px;
+  margin: 0 0 10px;
 }
 
-.nail-title span {
+.partner-title span {
   /* --secondary is 2.91:1 on the cream background; index.css defines
      --accent-text (#8a5a2e light, #d4a773 dark) for warm accent text. */
   color: var(--accent-text);
 }
 
-.nail-coupon {
+.partner-coupon {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -62,34 +62,34 @@
   font-size: 0.98rem;
 }
 
-.nail-coupon-code {
+.partner-coupon-code {
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--primary);
 }
 
-.nail-coupon-validity {
+.partner-coupon-validity {
   color: var(--light-text);
   font-size: 0.88rem;
 }
 
-.nail-section-title {
+.partner-section-title {
   font-size: 1.25rem;
   color: var(--primary);
   margin: 28px 0 6px;
 }
 
-.nail-section-lede {
+.partner-section-lede {
   color: var(--light-text);
   font-size: 0.92rem;
   margin-bottom: 14px;
 }
 
-.nail-section-lede a {
+.partner-section-lede a {
   color: var(--primary);
 }
 
-.nail-drinks {
+.partner-drinks {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -97,7 +97,7 @@
   gap: 12px;
 }
 
-.nail-drink {
+.partner-drink {
   display: flex;
   gap: 14px;
   padding: 12px;
@@ -106,7 +106,7 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
 }
 
-.nail-drink-photo {
+.partner-drink-photo {
   flex: 0 0 88px;
   width: 88px;
   height: 110px;
@@ -116,24 +116,24 @@
   border: 2px solid var(--secondary-light);
 }
 
-.nail-drink-body {
+.partner-drink-body {
   flex: 1;
   min-width: 0;
 }
 
-.nail-drink-name {
+.partner-drink-name {
   font-size: 1.05rem;
   margin: 2px 0 4px;
   color: var(--text);
 }
 
-.nail-drink-desc {
+.partner-drink-desc {
   font-size: 0.85rem;
   color: var(--light-text);
   margin: 0 0 8px;
 }
 
-.nail-drink-option {
+.partner-drink-option {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -141,11 +141,11 @@
   margin-top: 6px;
 }
 
-.nail-drink-price {
+.partner-drink-price {
   font-size: 0.92rem;
 }
 
-.nail-stepper {
+.partner-stepper {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--input-border);
@@ -157,7 +157,7 @@
   flex: 0 0 auto;
 }
 
-.nail-stepper-button {
+.partner-stepper-button {
   width: 40px;
   height: 36px;
   border: 0;
@@ -168,24 +168,24 @@
   line-height: 1;
 }
 
-.nail-stepper-button:disabled {
+.partner-stepper-button:disabled {
   color: var(--input-border);
 }
 
-.nail-stepper-count {
+.partner-stepper-count {
   min-width: 28px;
   text-align: center;
   font-weight: 700;
 }
 
-.nail-fields {
+.partner-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 14px;
 }
 
-.nail-field {
+.partner-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -193,22 +193,18 @@
   font-weight: 600;
 }
 
-.nail-field input {
+.partner-field input {
   padding: 10px 12px;
   /* --input-border is under 3:1 against both the field fill and the page, so
      the field edge is not a perceivable boundary. These clear 3:1 on both. */
-  border: 1px solid var(--nail-field-border);
+  border: 1px solid var(--partner-field-border);
   border-radius: 10px;
   background: var(--input-bg);
   color: var(--text);
   font-weight: 400;
 }
 
-.nail-field-wide {
-  grid-column: 1 / -1;
-}
-
-.nail-bill {
+.partner-bill {
   margin-top: 8px;
   padding: 4px 16px 14px;
   border-radius: 16px;
@@ -216,31 +212,31 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
 }
 
-.nail-bill-rows {
+.partner-bill-rows {
   margin: 0;
 }
 
-.nail-bill-row {
+.partner-bill-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   padding: 6px 0;
 }
 
-.nail-bill-row dt {
+.partner-bill-row dt {
   font-weight: 400;
 }
 
-.nail-bill-row dd {
+.partner-bill-row dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
 
-.nail-bill-saving {
+.partner-bill-saving {
   color: var(--accent-text);
 }
 
-.nail-bill-total {
+.partner-bill-total {
   margin-top: 4px;
   padding-top: 10px;
   border-top: 1px dashed var(--input-border);
@@ -249,23 +245,23 @@
   color: var(--primary);
 }
 
-.nail-bill-total dt {
+.partner-bill-total dt {
   font-weight: 700;
 }
 
-.nail-bill-hint {
+.partner-bill-hint {
   margin: 8px 0 0;
   font-weight: 600;
   color: var(--accent-text);
 }
 
-.nail-bill-footnote {
+.partner-bill-footnote {
   margin: 8px 0 0;
   font-size: 0.82rem;
   color: var(--light-text);
 }
 
-.nail-order-bar {
+.partner-order-bar {
   position: sticky;
   bottom: 0;
   z-index: 10;
@@ -274,7 +270,7 @@
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
 }
 
-.nail-order-bar-inner {
+.partner-order-bar-inner {
   max-width: 720px;
   display: flex;
   align-items: center;
@@ -284,12 +280,12 @@
   padding-bottom: 10px;
 }
 
-.nail-order-summary {
+.partner-order-summary {
   font-weight: 700;
   font-size: 0.95rem;
 }
 
-.nail-send {
+.partner-send {
   flex: 0 0 auto;
   padding: 11px 18px;
   border: 0;
@@ -302,28 +298,28 @@
   text-align: center;
 }
 
-.nail-send-ready {
+.partner-send-ready {
   background: #1f7a4d;
   color: #ffffff;
 }
 
-.nail-send-ready:hover,
-.nail-send-ready:focus {
+.partner-send-ready:hover,
+.partner-send-ready:focus {
   background: #186540;
   color: #ffffff;
 }
 
 @media (max-width: 480px) {
-  .nail-fields {
+  .partner-fields {
     grid-template-columns: 1fr;
   }
 
-  .nail-order-bar-inner {
+  .partner-order-bar-inner {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .nail-order-summary {
+  .partner-order-summary {
     text-align: center;
   }
 }
@@ -332,8 +328,19 @@
    control. They stay compact for a mouse and reach the 44x44 target on any
    coarse pointer or narrow screen. */
 @media (pointer: coarse), (max-width: 820px) {
-  .nail-stepper-button {
+  .partner-stepper-button {
     width: 44px;
     height: 44px;
   }
+}
+
+.partner-lede {
+  color: var(--light-text);
+  margin: 0 0 16px;
+}
+
+.partner-lede a {
+  /* Same reason as .partner-section-lede a: without this the link falls
+     through to Bootstrap's default blue, which fails AA in both themes. */
+  color: var(--primary);
 }
