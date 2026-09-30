@@ -72,6 +72,28 @@ describe('/nail order page', () => {
     expect(message).toContain('*To pay: ₹304*');
   });
 
+  test('carries the note through to the message, and omits it when blank', () => {
+    renderPage();
+    userEvent.click(screen.getByRole('button', { name: 'Add one Royal Taro Mist cold' }));
+    userEvent.type(screen.getByLabelText('Your name'), 'Priya');
+    userEvent.type(screen.getByLabelText('Nail studio'), 'Glossy Tips');
+    expect(sentMessage()).not.toContain('Note:');
+
+    userEvent.type(screen.getByLabelText('Note (optional)'), 'less ice');
+    expect(sentMessage()).toContain('Note: less ice');
+  });
+
+  test('shows a stepper only for the temperatures a drink is actually sold at', () => {
+    renderPage();
+    // Cafe Mocha is cold-only on the menu; a hot stepper here would offer a
+    // drink the shop does not make.
+    expect(screen.getByRole('button', { name: 'Add one Cafe Mocha cold' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add one Cafe Mocha hot' })).not.toBeInTheDocument();
+    // Caramel Boba Coffee is sold both ways, so both must be offered.
+    expect(screen.getByRole('button', { name: 'Add one Caramel Boba Coffee cold' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add one Caramel Boba Coffee hot' })).toBeInTheDocument();
+  });
+
   test('removing the last drink takes the send link away again', () => {
     renderPage();
     userEvent.type(screen.getByLabelText('Your name'), 'Priya');

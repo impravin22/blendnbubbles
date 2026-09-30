@@ -82,6 +82,20 @@ describe('orderLines', () => {
     expect(orderLines(quantities, NAIL_DRINKS)).toEqual([]);
   });
 
+  test('sums the bill and the drink count across several drinks', () => {
+    // 2 x Caramel cold (179) = 358, 1 x Caramel hot (149) = 149,
+    // 1 x Royal Taro Mist cold (179) = 179. Total 686 over 4 drinks.
+    const quantities = {
+      [lineKey('Caramel Boba Coffee', 'cold')]: 2,
+      [lineKey('Caramel Boba Coffee', 'hot')]: 1,
+      [lineKey('Royal Taro Mist', 'cold')]: 1,
+    };
+    const lines = orderLines(quantities, NAIL_DRINKS);
+    expect(lines).toHaveLength(3);
+    expect(orderSubtotal(lines)).toBe(686);
+    expect(drinkCount(lines)).toBe(4);
+  });
+
   test('an empty order has no lines, no drinks and a zero total', () => {
     const lines = orderLines({}, NAIL_DRINKS);
     expect(lines).toEqual([]);
@@ -177,5 +191,19 @@ describe('whatsappOrderUrl', () => {
     const url = whatsappOrderUrl('*NAIL ORDER*\n2 x Tea = ₹358 & more');
     expect(url.startsWith('https://wa.me/919330697501?text=')).toBe(true);
     expect(decodeURIComponent(url.split('?text=')[1])).toBe('*NAIL ORDER*\n2 x Tea = ₹358 & more');
+  });
+
+  test('percent-encodes the characters that would otherwise truncate the order', () => {
+    // Round-tripping through decodeURIComponent would also pass for an encoder
+    // that emitted the text raw, so assert the encoded query directly. A bare
+    // & ends the parameter and a bare # starts the fragment: either silently
+    // cuts the order short on the shop's phone.
+    const query = whatsappOrderUrl('Tea & Boba\n#1 order').split('?text=')[1];
+    expect(query).toContain('%26');
+    expect(query).toContain('%0A');
+    expect(query).toContain('%23');
+    expect(query).not.toContain('&');
+    expect(query).not.toContain('#');
+    expect(query).not.toContain(' ');
   });
 });

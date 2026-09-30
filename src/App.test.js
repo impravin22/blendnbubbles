@@ -65,6 +65,29 @@ describe('/events', () => {
   });
 });
 
+// The /nail URL is printed on a physical nail-studio coupon QR. A dropped or
+// renamed route cannot be recalled once the coupons are out, so it is asserted
+// through <App /> — mounting <NailOrder /> directly would still pass with the
+// route deleted, which is exactly the failure this guards.
+describe('/nail', () => {
+  const visit = (path) => {
+    window.history.pushState({}, '', path);
+    return render(<App />);
+  };
+
+  afterEach(() => {
+    window.history.pushState({}, '', '/');
+  });
+
+  test('serves the nail studio order page', () => {
+    visit('/nail');
+
+    expect(screen.getByRole('heading', { name: /fresh set/i })).toBeInTheDocument();
+    expect(screen.getByText(/BNB-NAIL15/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /pick your drinks/i })).toBeInTheDocument();
+  });
+});
+
 test('renders router Links that resolve to the menu route', () => {
   render(<App />);
   // Verify react-router-dom's Link rendered a working anchor to /menu.
